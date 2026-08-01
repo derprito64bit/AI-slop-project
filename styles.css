@@ -1,0 +1,71 @@
+body{
+  background: rgb(65, 61, 59);
+  margin: 5px;
+  font-family: consolas;
+}
+
+pt{
+  color: rgb(62, 224, 207);
+  font-family: consolas;
+}
+
+pspt{
+  color: rgb(62, 224, 207);
+  font-family: consolas;
+  font-size: 40px;
+}
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+h1 {
+  color: rgb(62, 224, 207);
+  text-align: center;
+  font-size: 40px;
+  margin: 45px;
+}
+
+.mypara {
+  color: rgb(62, 224, 207);
+  font-family: consolas;
+  font-size: 75px;
+  text-align: center;
+}
+
+.sangrara {
+  color: rgb(255, 255, 255);
+  font-family: consolas;
+  font-size: 45px;
+  text-align: center;
+}
+
+.navbar ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background-color: #333;
+  display: flex;
+  justify-content: space-around;
+}
+
+.navbar li a {
+  display: block;
+  color: white;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+  font-family: consolas;
+  font-size: 20px;
+}
+
+.navbar li a:hover {
+  background-color: #111;
+}
+
+.navbar li a.active {
+  background-color: #04AA6D;
+  color: white;
+}
