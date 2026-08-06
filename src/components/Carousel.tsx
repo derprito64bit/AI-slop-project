@@ -27,6 +27,8 @@ type CarouselProps = {
   pauseOnHover?: boolean
   fade?: boolean
   showCaptions?: boolean
+  /** where in the loop to begin, 0–1 (0.5 = start halfway through, already flowing) */
+  startOffset?: number
   className?: string
 }
 
@@ -41,12 +43,17 @@ export default function Carousel({
   pauseOnHover = true,
   fade = true,
   showCaptions = true,
+  startOffset = 0,
   className = '',
 }: CarouselProps) {
   if (!items.length) return null
 
   // Duplicate the list so the -50% slide loops seamlessly.
   const loop = [...items, ...items]
+
+  // A negative animation-delay begins the loop partway through, so tiles are
+  // already spread across the band at load instead of entering from an edge.
+  const delay = -(((startOffset % 1) + 1) % 1) * speed
 
   return (
     <div
@@ -65,7 +72,11 @@ export default function Carousel({
       <ul
         className="marquee-track flex w-max list-none"
         data-direction={direction}
-        style={{ gap: `${gap}px`, ['--marquee-duration' as string]: `${speed}s` }}
+        style={{
+          gap: `${gap}px`,
+          ['--marquee-duration' as string]: `${speed}s`,
+          animationDelay: `${delay}s`,
+        }}
       >
         {loop.map((item, i) => (
           <Tile

@@ -1,8 +1,18 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import { motion } from 'motion/react'
 import Reveal from '../components/Reveal'
+import Parallax from '../components/Parallax'
+import CountUp from '../components/CountUp'
 import Carousel from '../components/Carousel'
 import { CAMPUS_ITEMS, POPULAR_ITEMS } from '../data/universities'
+
+const STATS = [
+  { end: 120, suffix: '+', label: 'Programs tracked' },
+  { end: 20, suffix: '+', label: 'Ontario universities' },
+  { end: 3500, suffix: '+', label: 'Data points' },
+  { end: 100, suffix: '%', label: 'Sources cited' },
+]
 
 const STEPS = [
   { n: '01', title: 'Build your profile', body: 'Add your grades, interests, budget, and the kind of campus life you want.' },
@@ -24,13 +34,25 @@ const VALUES = [
 ]
 
 export default function Home() {
+  const navigate = useNavigate()
+  const [query, setQuery] = useState('')
+
+  const onSearch = (e: React.FormEvent) => {
+    e.preventDefault()
+    const q = query.trim()
+    navigate(q ? `/explore?q=${encodeURIComponent(q)}` : '/explore')
+  }
+
   return (
     <>
       {/* ================= HERO ================= */}
       <section className="relative overflow-hidden">
         {/* soft background wash */}
         <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-brand-50 to-paper" />
-        <div className="pointer-events-none absolute -right-32 -top-32 -z-10 h-96 w-96 rounded-full bg-brand-100 blur-3xl opacity-60" />
+        {/* parallax accent blob — drifts as you scroll */}
+        <Parallax distance={70} className="pointer-events-none absolute -right-32 -top-32 -z-10">
+          <div className="h-96 w-96 rounded-full bg-brand-100 opacity-60 blur-3xl" />
+        </Parallax>
 
         <div className="mx-auto max-w-6xl px-6 pb-24 pt-20 sm:pt-28">
           <motion.p
@@ -80,6 +102,44 @@ export default function Home() {
               Explore programs
             </Link>
           </motion.div>
+
+          {/* Quick search — routes to Explore with the query */}
+          <motion.form
+            onSubmit={onSearch}
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.7, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            className="mt-8 flex max-w-md items-center gap-2 rounded-full border border-line bg-paper p-1.5 shadow-sm focus-within:border-brand-300"
+          >
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search a program or university…"
+              aria-label="Search programs or universities"
+              className="min-w-0 flex-1 bg-transparent px-4 py-2 text-sm text-ink outline-none placeholder:text-slate"
+            />
+            <button
+              type="submit"
+              className="shrink-0 rounded-full bg-ink px-5 py-2 text-sm font-600 text-white transition-colors hover:bg-brand-600"
+            >
+              Search
+            </button>
+          </motion.form>
+        </div>
+      </section>
+
+      {/* ================= STATS BAND ================= */}
+      <section className="border-y border-line bg-cloud">
+        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-6 py-14 md:grid-cols-4">
+          {STATS.map((s, i) => (
+            <Reveal key={s.label} delay={i * 0.08} className="text-center">
+              <div className="font-display text-4xl font-600 text-brand-600 sm:text-5xl">
+                <CountUp end={s.end} suffix={s.suffix} />
+              </div>
+              <p className="mt-2 text-sm text-slate">{s.label}</p>
+            </Reveal>
+          ))}
         </div>
       </section>
 
@@ -175,6 +235,7 @@ export default function Home() {
             tileWidth={260}
             aspect="4 / 3"
             gap={18}
+            startOffset={0.5}
           />
         </div>
       </section>
