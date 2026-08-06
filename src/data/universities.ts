@@ -14,16 +14,22 @@ export type CarouselItem = {
   href?: string
 }
 
-// Campus / university images band (above "How it works").
+// Resolve a file in /public. BASE_URL is '/' locally and '/AI-slop-project/'
+// on GitHub Pages, so paths stay correct in both.
+const asset = (path: string) => `${import.meta.env.BASE_URL}${path}`
+
+// University wordmarks — rendered as a bare logo band (Carousel variant="logo").
+// Drop the files in public/images/universities/ using these exact names; until
+// then each tile degrades to the university's name as text.
 export const CAMPUS_ITEMS: CarouselItem[] = [
-  { id: 'waterloo', name: 'University of Waterloo', caption: 'Waterloo, ON', gradient: 'from-brand-100 to-brand-50' },
-  { id: 'toronto', name: 'University of Toronto', caption: 'Toronto, ON', gradient: 'from-brand-100 to-cloud' },
-  { id: 'mcmaster', name: 'McMaster University', caption: 'Hamilton, ON', gradient: 'from-brand-50 to-brand-100' },
-  { id: 'queens', name: "Queen's University", caption: 'Kingston, ON', gradient: 'from-cloud to-brand-100' },
-  { id: 'western', name: 'Western University', caption: 'London, ON', gradient: 'from-brand-100 to-brand-50' },
-  { id: 'ottawa', name: 'University of Ottawa', caption: 'Ottawa, ON', gradient: 'from-brand-50 to-cloud' },
-  { id: 'guelph', name: 'University of Guelph', caption: 'Guelph, ON', gradient: 'from-cloud to-brand-50' },
-  { id: 'york', name: 'York University', caption: 'Toronto, ON', gradient: 'from-brand-100 to-brand-50' },
+  { id: 'waterloo', name: 'University of Waterloo', caption: 'Waterloo, ON', img: asset('images/universities/waterloo.png'), gradient: 'from-brand-100 to-brand-50' },
+  { id: 'toronto', name: 'University of Toronto', caption: 'Toronto, ON', img: asset('images/universities/toronto.png'), gradient: 'from-brand-100 to-cloud' },
+  { id: 'mcmaster', name: 'McMaster University', caption: 'Hamilton, ON', img: asset('images/universities/mcmaster.svg'), gradient: 'from-brand-50 to-brand-100' },
+  { id: 'queens', name: "Queen's University", caption: 'Kingston, ON', img: asset('images/universities/queens.svg'), gradient: 'from-cloud to-brand-100' },
+  { id: 'western', name: 'Western University', caption: 'London, ON', img: asset('images/universities/western.png'), gradient: 'from-brand-100 to-brand-50' },
+  { id: 'ottawa', name: 'University of Ottawa', caption: 'Ottawa, ON', img: asset('images/universities/ottawa.svg'), gradient: 'from-brand-50 to-cloud' },
+  { id: 'guelph', name: 'University of Guelph', caption: 'Guelph, ON', img: asset('images/universities/guelph.png'), gradient: 'from-cloud to-brand-50' },
+  { id: 'york', name: 'York University', caption: 'Toronto, ON', img: asset('images/universities/york.svg'), gradient: 'from-brand-100 to-brand-50' },
 ]
 
 // Popular programs band (in the "Popular right now" section).
