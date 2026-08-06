@@ -131,7 +131,7 @@ function Tile({
       )}
 
       {showCaption && (
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-ink/70 to-transparent p-3 pt-8">
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 pt-8">
           <p className="text-sm font-600 leading-tight text-white">{item.name}</p>
           {item.caption && <p className="text-xs text-white/80">{item.caption}</p>}
         </div>

@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { motion } from 'motion/react'
+import { motion, useScroll, useTransform, useReducedMotion } from 'motion/react'
 import Reveal from '../components/Reveal'
 import Parallax from '../components/Parallax'
 import CountUp from '../components/CountUp'
 import Carousel from '../components/Carousel'
+import Roadmap from '../components/Roadmap'
 import { CAMPUS_ITEMS, POPULAR_ITEMS } from '../data/universities'
 
 const STATS = [
@@ -54,7 +55,21 @@ export default function Home() {
           <div className="h-96 w-96 rounded-full bg-brand-100 opacity-60 blur-3xl" />
         </Parallax>
 
-        <div className="mx-auto max-w-6xl px-6 pb-24 pt-20 sm:pt-28">
+        {/* Floating editorial photos — desktop only. Squared frames, slight tilt.
+            Swap the placeholders for real campus/student photos later. */}
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-0 hidden w-1/2 lg:block" aria-hidden="true">
+          <Parallax distance={38} className="absolute right-16 top-20 w-56 rotate-3">
+            <PhotoFrame label="Campus life" gradient="from-brand-100 to-brand-50" ratio="4 / 5" />
+          </Parallax>
+          <Parallax distance={80} className="absolute right-52 top-52 w-44 -rotate-3">
+            <PhotoFrame label="Students" gradient="from-cloud to-brand-100" ratio="1 / 1" />
+          </Parallax>
+          <Parallax distance={56} className="absolute right-6 top-80 w-40 rotate-6">
+            <PhotoFrame label="On campus" gradient="from-brand-50 to-cloud" ratio="4 / 3" />
+          </Parallax>
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-6xl px-6 pb-24 pt-20 sm:pt-28">
           <motion.p
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -121,7 +136,7 @@ export default function Home() {
             />
             <button
               type="submit"
-              className="shrink-0 rounded-full bg-ink px-5 py-2 text-sm font-600 text-white transition-colors hover:bg-brand-600"
+              className="shrink-0 rounded-full bg-brand-500 px-5 py-2 text-sm font-600 text-white transition-colors hover:bg-brand-600"
             >
               Search
             </button>
@@ -130,18 +145,7 @@ export default function Home() {
       </section>
 
       {/* ================= STATS BAND ================= */}
-      <section className="border-y border-line bg-cloud">
-        <div className="mx-auto grid max-w-6xl grid-cols-2 gap-8 px-6 py-14 md:grid-cols-4">
-          {STATS.map((s, i) => (
-            <Reveal key={s.label} delay={i * 0.08} className="text-center">
-              <div className="font-display text-4xl font-600 text-brand-600 sm:text-5xl">
-                <CountUp end={s.end} suffix={s.suffix} />
-              </div>
-              <p className="mt-2 text-sm text-slate">{s.label}</p>
-            </Reveal>
-          ))}
-        </div>
-      </section>
+      <StatsBand />
 
       {/* ============ CAMPUS CAROUSEL (above How it works) ============ */}
       {/* Rotating band of university images. Placeholders for now — set
@@ -169,17 +173,7 @@ export default function Home() {
           <p className="mt-2 max-w-lg text-slate">Three steps from “I have no idea” to a real shortlist.</p>
         </Reveal>
 
-        <div className="mt-12 grid gap-6 md:grid-cols-3">
-          {STEPS.map((s, i) => (
-            <Reveal key={s.n} delay={i * 0.1}>
-              <div className="h-full rounded-2xl border border-line bg-paper p-7 transition-shadow hover:shadow-[0_8px_30px_rgba(20,24,31,0.06)]">
-                <div className="font-display text-4xl font-500 text-brand-300">{s.n}</div>
-                <h3 className="mt-4 text-lg font-600 text-ink">{s.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-slate">{s.body}</p>
-              </div>
-            </Reveal>
-          ))}
-        </div>
+        <Roadmap steps={STEPS} />
       </section>
 
       {/* ================= FEATURED PROGRAMS ================= */}
@@ -266,7 +260,7 @@ export default function Home() {
             <h2 className="mx-auto max-w-2xl font-display text-3xl font-600 text-white sm:text-4xl">
               Stop guessing. See your real odds.
             </h2>
-            <p className="mx-auto mt-4 max-w-lg text-brand-100">
+            <p className="mx-auto mt-4 max-w-lg text-white/80">
               Build a profile in a few minutes and get a shortlist that fits you.
             </p>
             <Link
@@ -279,5 +273,66 @@ export default function Home() {
         </Reveal>
       </section>
     </>
+  )
+}
+
+// A squared, slightly-matted photo frame placeholder. Intentionally NOT
+// pill-rounded — editorial, not corporate. Set a real <img> here later.
+function PhotoFrame({ label, gradient, ratio }: { label: string; gradient: string; ratio: string }) {
+  return (
+    <div className="rounded-md border border-line bg-paper p-1.5 shadow-[0_12px_40px_rgba(20,24,31,0.12)]">
+      <div
+        className={`flex items-end justify-start rounded-sm bg-gradient-to-br ${gradient} p-2`}
+        style={{ aspectRatio: ratio }}
+      >
+        <span className="rounded bg-paper/80 px-1.5 py-0.5 text-[9px] font-600 uppercase tracking-wider text-slate">
+          {label}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+// ================= STATS BAND (with scroll-zoom TEST feature) =================
+// NOTE: the scroll-driven zoom is an experimental effect and can be removed
+// later — just render the grid without the motion.div wrapper / scale style.
+function StatsBand() {
+  const ref = useRef<HTMLDivElement>(null)
+  const reduced = useReducedMotion()
+  const { scrollYProgress } = useScroll({
+    target: ref,
+    offset: ['start end', 'center center'],
+  })
+  // Numbers grow from small to full size as the section scrolls into view.
+  const scale = useTransform(scrollYProgress, [0, 1], [0.55, 1])
+  const opacity = useTransform(scrollYProgress, [0, 0.4], [0.2, 1])
+
+  return (
+    <section ref={ref} className="border-y border-line bg-cloud">
+      <div className="mx-auto max-w-6xl px-6 py-16 text-center">
+        <Reveal>
+          <p className="text-sm font-500 uppercase tracking-wider text-brand-500">
+            What we provide to you
+          </p>
+          <h2 className="mt-2 font-display text-2xl font-600 text-ink sm:text-3xl">
+            Everything you need, in one place.
+          </h2>
+        </Reveal>
+
+        <motion.div
+          style={reduced ? undefined : { scale, opacity }}
+          className="mt-12 grid grid-cols-2 gap-8 md:grid-cols-4"
+        >
+          {STATS.map((s) => (
+            <div key={s.label} className="text-center">
+              <div className="font-display text-5xl font-600 text-brand-600 sm:text-6xl">
+                <CountUp end={s.end} suffix={s.suffix} />
+              </div>
+              <p className="mt-2 text-sm text-slate">{s.label}</p>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+    </section>
   )
 }

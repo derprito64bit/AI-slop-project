@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { NavLink as RouterNavLink, Link } from 'react-router-dom'
 import { NAV_LINKS, BRAND } from '../nav'
+import ThemeToggle from './ThemeToggle'
 
 // Shared top navigation. Sticky, turns solid once the user scrolls.
 export default function Navbar() {
@@ -44,17 +45,23 @@ export default function Navbar() {
               </RouterNavLink>
             </li>
           ))}
+          <li>
+            <ThemeToggle className="ml-1" />
+          </li>
         </ul>
 
-        {/* Mobile toggle */}
-        <button
-          onClick={() => setOpen((v) => !v)}
-          className="flex h-10 w-10 items-center justify-center rounded-lg text-ink md:hidden"
-          aria-label="Toggle menu"
-          aria-expanded={open}
-        >
-          <span className="text-xl">{open ? '✕' : '☰'}</span>
-        </button>
+        {/* Mobile controls */}
+        <div className="flex items-center gap-1 md:hidden">
+          <ThemeToggle />
+          <button
+            onClick={() => setOpen((v) => !v)}
+            className="flex h-10 w-10 items-center justify-center rounded-lg text-ink"
+            aria-label="Toggle menu"
+            aria-expanded={open}
+          >
+            <span className="text-xl">{open ? '✕' : '☰'}</span>
+          </button>
+        </div>
       </nav>
 
       {/* Mobile menu */}
