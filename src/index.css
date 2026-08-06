@@ -35,6 +35,35 @@ html {
   scroll-behavior: smooth;
 }
 
+/* ============================================================
+   Marquee / carousel keyframes.
+   The track holds TWO copies of the items; sliding it -50%
+   creates a seamless infinite loop.
+   ============================================================ */
+@keyframes marquee-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes marquee-right {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
+}
+.marquee-track {
+  animation-name: marquee-left;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-duration: var(--marquee-duration, 40s);
+}
+.marquee-track[data-direction="right"] {
+  animation-name: marquee-right;
+}
+.marquee-paused:hover .marquee-track {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
+}
+
 body {
   background: var(--color-paper);
   color: var(--color-ink);

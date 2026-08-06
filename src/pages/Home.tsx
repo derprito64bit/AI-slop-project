@@ -1,6 +1,8 @@
 import { Link } from 'react-router-dom'
 import { motion } from 'motion/react'
 import Reveal from '../components/Reveal'
+import Carousel from '../components/Carousel'
+import { CAMPUS_ITEMS, POPULAR_ITEMS } from '../data/universities'
 
 const STEPS = [
   { n: '01', title: 'Build your profile', body: 'Add your grades, interests, budget, and the kind of campus life you want.' },
@@ -81,6 +83,25 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ============ CAMPUS CAROUSEL (above How it works) ============ */}
+      {/* Rotating band of university images. Placeholders for now — set
+          `img` on each item in src/data/universities.ts to use real photos. */}
+      <section className="py-10">
+        <Reveal className="mx-auto mb-6 max-w-6xl px-6">
+          <p className="text-sm font-500 uppercase tracking-wider text-brand-500">
+            Universities on the platform
+          </p>
+        </Reveal>
+        <Carousel
+          items={CAMPUS_ITEMS}
+          speed={45}
+          direction="left"
+          tileWidth={320}
+          aspect="16 / 10"
+          gap={20}
+        />
+      </section>
+
       {/* ================= HOW IT WORKS ================= */}
       <section className="mx-auto max-w-6xl px-6 py-20">
         <Reveal>
@@ -138,6 +159,23 @@ export default function Home() {
               </Reveal>
             ))}
           </div>
+        </div>
+
+        {/* Rotating carousel of popular programs — placeholder images for now. */}
+        <Reveal className="mx-auto max-w-6xl px-6 pb-4">
+          <p className="text-sm font-500 uppercase tracking-wider text-brand-500">
+            Trending programs
+          </p>
+        </Reveal>
+        <div className="pb-16">
+          <Carousel
+            items={POPULAR_ITEMS}
+            speed={38}
+            direction="right"
+            tileWidth={260}
+            aspect="4 / 3"
+            gap={18}
+          />
         </div>
       </section>
 
