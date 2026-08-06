@@ -27,9 +27,9 @@ export default function ExplorePreview() {
     <div className="relative">
       {/* graph-paper texture, decorative only */}
       <div className="bg-grid pattern-fade pointer-events-none absolute inset-0 -z-10" aria-hidden="true" />
-      <section className="mx-auto max-w-6xl px-6 py-20">
+      <section className="container-page py-20">
       <Eyebrow>Explore</Eyebrow>
-      <h1 className="mt-2 font-display text-4xl font-600 text-ink">Find your programs.</h1>
+      <h1 className="mt-2 font-display text-display-1 font-600 text-ink">Find your programs.</h1>
 
       {error && <p className="mt-6 text-slate">Couldn’t load the program data. Try refreshing.</p>}
       {!data && !error && <p className="mt-6 text-slate">Loading programs…</p>}
@@ -48,10 +48,13 @@ export default function ExplorePreview() {
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Try “waterloo cs” or “health sciences”…"
             aria-label="Search programs"
-            className="mt-8 w-full rounded-full border border-line bg-paper px-5 py-3 text-sm text-ink outline-none placeholder:text-slate focus:border-brand-300"
+            className="mt-8 w-full max-w-2xl rounded-full border border-line bg-paper px-5 py-3 text-sm text-ink outline-none placeholder:text-slate focus:border-brand-300"
           />
 
-          <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {/* 3 across is the target layout; a 4th column only kicks in on very
+              large monitors, where 3 cards would each be ~540px of mostly
+              whitespace. */}
+          <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3 3xl:grid-cols-4">
             {results.map((p) => {
               const band = difficultyBand(p)
               const school = uniName.get(p.universityId) ?? p.universityId
@@ -90,7 +93,7 @@ export default function ExplorePreview() {
               )
             })}
             {!results.length && (
-              <li className="rounded-lg border border-line bg-paper p-6 text-center text-slate sm:col-span-2 lg:col-span-3">
+              <li className="rounded-lg border border-line bg-paper p-6 text-center text-slate sm:col-span-2 lg:col-span-3 3xl:col-span-4">
                 No programs with enough reported data match that search yet.
               </li>
             )}

@@ -79,6 +79,55 @@
 
   /* Motion */
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Breakpoints beyond Tailwind's 2xl (1536px), for large desktop monitors. */
+  --breakpoint-3xl: 120rem; /* 1920px */
+}
+
+/* ============================================================
+   Page container.
+   One definition for every section's width, so large screens are
+   handled in a single place. Capping at 1152px left ~700px of dead
+   margin on each side of a 2560px monitor — fine on a laptop, far
+   too narrow on a 27".
+   ============================================================ */
+.container-page {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+  max-width: 72rem; /* 1152px — unchanged on laptops */
+}
+@media (min-width: 1536px) {
+  .container-page { max-width: 84rem; padding-inline: 2rem; } /* 1344px */
+}
+@media (min-width: 1920px) {
+  .container-page { max-width: 96rem; padding-inline: 2.5rem; } /* 1536px */
+}
+@media (min-width: 2400px) {
+  .container-page { max-width: 108rem; } /* 1728px */
+}
+
+/* ============================================================
+   Fluid display type. Fixed heading sizes look correct on a laptop
+   and undersized on a large monitor, so these scale with the
+   viewport between sensible floors and ceilings.
+   ============================================================ */
+.text-display-1 {
+  font-size: clamp(2.75rem, 1.5rem + 3.2vw, 5.25rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+.text-display-2 {
+  font-size: clamp(1.875rem, 1.2rem + 1.6vw, 3rem);
+  line-height: 1.15;
+}
+.text-display-3 {
+  font-size: clamp(1.5rem, 1.1rem + 1vw, 2.25rem);
+  line-height: 1.2;
+}
+/* Body copy that should also grow a little on very wide screens. */
+.text-lead {
+  font-size: clamp(1rem, 0.94rem + 0.28vw, 1.25rem);
 }
 
 html {

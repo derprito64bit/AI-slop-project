@@ -90,11 +90,11 @@ function PinnedRoadmap({ steps }: { steps: RoadmapStep[] }) {
   return (
     // Tall track: the sticky child stays full-screen while you scroll through it.
     <section ref={ref} className="relative h-[300vh]">
-      <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden px-6">
-        <div className="mx-auto w-full max-w-6xl">
+      <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
+        <div className="container-page">
           <div className="text-center">
             <p className="text-sm font-500 uppercase tracking-wider text-brand-500">How it works</p>
-            <h2 className="mt-2 font-display text-4xl font-600 text-ink sm:text-5xl">
+            <h2 className="mt-2 font-display text-display-1 font-600 text-ink">
               Three steps from “I have no idea” to a real shortlist.
             </h2>
           </div>

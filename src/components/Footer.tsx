@@ -5,7 +5,7 @@ import { NAV_LINKS, BRAND } from '../nav'
 export default function Footer() {
   return (
     <footer className="mt-24 border-t border-line bg-cloud">
-      <div className="mx-auto grid max-w-6xl gap-10 px-6 py-14 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="container-page grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <div className="font-display text-lg font-600 text-ink">
             {BRAND}<span className="text-brand-500">.</span>
@@ -44,7 +44,7 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-line">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-2 px-6 py-5 text-xs text-slate sm:flex-row">
+        <div className="container-page flex flex-col items-center justify-between gap-2 px-6 py-5 text-xs text-slate sm:flex-row">
           <span>© {BRAND} — student project, in development.</span>
           <span>Made for students, by students.</span>
         </div>

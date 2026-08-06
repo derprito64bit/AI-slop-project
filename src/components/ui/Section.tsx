@@ -20,7 +20,7 @@ export default function Section({
   innerClassName?: string
 } & React.HTMLAttributes<HTMLElement>) {
   const bg = tone === 'cloud' ? 'bg-cloud' : ''
-  const inner = `mx-auto max-w-6xl px-6 ${innerClassName}`
+  const inner = `container-page ${innerClassName}`
 
   if (bleed) {
     return (
