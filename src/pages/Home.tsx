@@ -167,14 +167,10 @@ export default function Home() {
       </section>
 
       {/* ================= HOW IT WORKS ================= */}
-      <section className="mx-auto max-w-6xl px-6 py-20">
-        <Reveal>
-          <h2 className="font-display text-3xl font-600 text-ink">How it works</h2>
-          <p className="mt-2 max-w-lg text-slate">Three steps from “I have no idea” to a real shortlist.</p>
-        </Reveal>
-
-        <Roadmap steps={STEPS} />
-      </section>
+      {/* TEST feature: `pinned` makes this stick to the full screen while the
+          roadmap draws as you scroll. Drop `pinned` to revert to inline. The
+          pinned variant renders its own heading + full-viewport section. */}
+      <Roadmap steps={STEPS} pinned />
 
       {/* ================= FEATURED PROGRAMS ================= */}
       <section className="bg-cloud">
