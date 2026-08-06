@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wireframe · Program detail</title>
+  <link rel="stylesheet" href="wireframe.css">
+</head>
+<body>
+  <div class="wf-banner">WIREFRAME — Program / University detail. Indeed-style layout from the context doc.</div>
+
+  <nav class="navbar">
+    <div class="container">
+      <div class="logo">LOGO</div>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="explore.html">Explore</a></li>
+        <li><a href="program.html" class="active">Program</a></li>
+        <li><a href="community.html">Community</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="profile.html" class="cta">My Profile</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Program header -->
+  <section class="section">
+    <div class="container">
+      <div class="label">Program header</div>
+      <div class="box" style="flex-direction:column;align-items:flex-start;gap:6px;">
+        <strong>Program name — e.g. Computer Science (BSc)</strong>
+        <span>Institution · Location</span>
+        <span>Key stats: accepted avg · seats · difficulty</span>
+      </div>
+      <div class="grid grid-2" style="margin-top:12px;">
+        <div class="box" style="min-height:44px;">Primary action — "Apply" / official link (embed slot)</div>
+        <div class="box" style="min-height:44px;">Save to profile · Share</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main two-column: details + how you align -->
+  <section class="section">
+    <div class="container">
+      <div class="sidebar-layout" style="grid-template-columns: 1fr 300px;">
+        <!-- Left: details -->
+        <div>
+          <div class="label">How this aligns with your profile</div>
+          <div class="box" style="flex-direction:column;align-items:stretch;gap:8px;">
+            <div class="box" style="min-height:38px;">✓ Your average vs. accepted average</div>
+            <div class="box" style="min-height:38px;">✓ Prerequisite courses met</div>
+            <div class="box" style="min-height:38px;">✓ Field-of-interest match</div>
+            <div class="box" style="min-height:38px;">⚠ Extracurriculars (added later)</div>
+          </div>
+
+          <div class="label" style="margin-top:24px;">Requirements & accepted averages</div>
+          <div class="box" style="min-height:120px;">Requirements table — prerequisite courses, cutoff average, supplementary apps</div>
+
+          <div class="label" style="margin-top:24px;">Community stats preview</div>
+          <div class="box" style="min-height:100px;">Recent admitted-student stats (grades → offer/reject) · link to Community</div>
+        </div>
+
+        <!-- Right: sticky summary -->
+        <aside>
+          <div class="label">Your odds (sidebar)</div>
+          <div class="box" style="flex-direction:column;min-height:200px;">
+            Odds meter — "Likely / Reach / Safety"
+            <small>based on your profile + community data</small>
+          </div>
+          <div class="box" style="margin-top:12px;min-height:60px;">Quick facts — tuition · location · deadline</div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="box" style="min-height:40px;">Footer — links, sources, socials</div>
+      <div class="box" style="min-height:40px;">Newsletter / contact</div>
+    </div>
+  </footer>
+</body>
+</html>

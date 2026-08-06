@@ -1,0 +1,92 @@
+/* ================================================================
+   WIREFRAME STYLESHEET
+   Low-fidelity, grey-box layout only. NO real colors/branding yet.
+   Purpose: agree on WHERE things go before we design HOW they look.
+   ================================================================ */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: -apple-system, "Segoe UI", Roboto, sans-serif;
+  color: #333;
+  background: #fafafa;
+  line-height: 1.5;
+}
+
+/* --- Wireframe helpers: everything is a labeled grey box --- */
+.box {
+  background: #ececec;
+  border: 2px dashed #b5b5b5;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #777;
+  font-size: 0.85rem;
+  padding: 1rem;
+  min-height: 60px;
+}
+.box small { display: block; color: #999; font-weight: normal; margin-top: 4px; }
+.label { font-weight: 600; color: #555; font-size: 0.7rem; letter-spacing: 0.08em;
+         text-transform: uppercase; margin-bottom: 6px; }
+
+.container { max-width: 1100px; margin: 0 auto; padding: 0 24px; }
+.section { padding: 40px 0; border-bottom: 1px solid #eee; }
+.section h2 { font-size: 1.1rem; color: #444; margin-bottom: 16px; }
+
+/* --- Top navigation (shared on every page) --- */
+.navbar {
+  position: sticky; top: 0; z-index: 10;
+  background: #fff; border-bottom: 2px solid #ddd;
+}
+.navbar .container {
+  display: flex; align-items: center; justify-content: space-between;
+  height: 64px;
+}
+.navbar .logo {
+  font-weight: 700; color: #555;
+  border: 2px dashed #b5b5b5; padding: 6px 14px; border-radius: 6px; background: #ececec;
+}
+.navbar ul { list-style: none; display: flex; gap: 8px; align-items: center; }
+.navbar a {
+  text-decoration: none; color: #666; padding: 8px 12px; border-radius: 6px;
+  font-size: 0.9rem;
+}
+.navbar a:hover { background: #eee; }
+.navbar a.active { background: #ddd; color: #222; font-weight: 600; }
+.navbar .cta { border: 2px dashed #999; background: #e0e0e0; }
+
+/* --- Hero --- */
+.hero { padding: 72px 0; text-align: center; background: #f2f2f2; }
+.hero h1 { font-size: 2rem; color: #555; }
+.hero p { color: #888; margin: 12px 0 24px; }
+
+/* --- Grid layouts --- */
+.grid { display: grid; gap: 16px; }
+.grid-2 { grid-template-columns: 1fr 1fr; }
+.grid-3 { grid-template-columns: repeat(3, 1fr); }
+.grid-4 { grid-template-columns: repeat(4, 1fr); }
+.sidebar-layout { display: grid; grid-template-columns: 260px 1fr; gap: 24px; }
+
+/* --- Cards --- */
+.card { border: 2px dashed #b5b5b5; border-radius: 8px; background: #fff; padding: 16px; }
+.card .thumb { background: #ececec; border-radius: 6px; height: 110px; margin-bottom: 12px; }
+.card h3 { font-size: 0.95rem; color: #555; margin-bottom: 6px; }
+.card p { font-size: 0.8rem; color: #999; }
+
+/* --- Footer --- */
+.footer { background: #efefef; padding: 32px 0; color: #888; font-size: 0.85rem; }
+.footer .container { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+
+/* --- Little annotation banner so viewers know it's a wireframe --- */
+.wf-banner {
+  background: #fff8e1; border-bottom: 1px solid #f0e0a0; color: #8a6d00;
+  text-align: center; font-size: 0.8rem; padding: 6px; }
+
+@media (max-width: 800px) {
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+  .sidebar-layout { grid-template-columns: 1fr; }
+  .navbar ul { gap: 2px; }
+  .navbar a { padding: 6px 8px; font-size: 0.8rem; }
+}

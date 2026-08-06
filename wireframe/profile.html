@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wireframe · My Profile</title>
+  <link rel="stylesheet" href="wireframe.css">
+</head>
+<body>
+  <div class="wf-banner">WIREFRAME — My Profile: survey to build the student's parameters, then matches & odds.</div>
+
+  <nav class="navbar">
+    <div class="container">
+      <div class="logo">LOGO</div>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="explore.html">Explore</a></li>
+        <li><a href="program.html">Program</a></li>
+        <li><a href="community.html">Community</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="profile.html" class="cta active">My Profile</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Account / save affordance -->
+  <section class="section">
+    <div class="container">
+      <div class="label">Account</div>
+      <div class="box" style="min-height:44px;">Sign in / Save profile — progress is stored to an account</div>
+    </div>
+  </section>
+
+  <!-- Two column: survey + results -->
+  <section class="section">
+    <div class="container">
+      <div class="sidebar-layout" style="grid-template-columns: 1fr 320px;">
+        <!-- Survey -->
+        <div>
+          <div class="label">Profile survey</div>
+          <div class="box" style="flex-direction:column;align-items:stretch;gap:10px;">
+            <div class="box" style="min-height:48px;">Grades — course averages input</div>
+            <div class="box" style="min-height:48px;">Fields of interest — multi-select</div>
+            <div class="box" style="min-height:48px;">Tuition budget — range slider</div>
+            <div class="box" style="min-height:48px;">Lifestyle — city size, campus type, distance</div>
+            <div class="box" style="min-height:48px;">Extracurriculars (optional / later)</div>
+            <div class="box" style="min-height:44px;">Save & see matches</div>
+          </div>
+        </div>
+
+        <!-- Results / odds -->
+        <aside>
+          <div class="label">Your odds & matches</div>
+          <div class="box" style="flex-direction:column;min-height:160px;">
+            Odds summary
+            <small>your profile vs. accepted averages</small>
+          </div>
+          <div class="label" style="margin-top:20px;">Recommended programs</div>
+          <div class="box" style="min-height:60px;">Match card</div>
+          <div class="box" style="margin-top:10px;min-height:60px;">Match card</div>
+          <div class="box" style="margin-top:10px;min-height:60px;">Match card</div>
+        </aside>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="box" style="min-height:40px;">Footer — links, sources, socials</div>
+      <div class="box" style="min-height:40px;">Newsletter / contact</div>
+    </div>
+  </footer>
+</body>
+</html>
