@@ -131,6 +131,20 @@ function Tile({
   const [failed, setFailed] = useState(false)
   const hasImg = !!item.img && !failed
 
+  // Logo variant: wordmarks vary from near-square (crest + stacked text) to
+  // very wide. Sizing them all to one height makes the square ones look tiny,
+  // so equalise optical AREA instead — wide marks get shorter, square marks
+  // taller — clamped so the row still reads as a line.
+  const [fittedHeight, setFittedHeight] = useState(logoHeight)
+  const fitLogo = (img: HTMLImageElement) => {
+    if (!img.naturalWidth || !img.naturalHeight) return
+    const ratio = img.naturalWidth / img.naturalHeight
+    const ideal = Math.sqrt((logoHeight * logoHeight * 3) / ratio)
+    setFittedHeight(
+      Math.round(Math.min(logoHeight * 1.35, Math.max(logoHeight * 0.85, ideal))),
+    )
+  }
+
   const inner =
     variant === 'logo' ? (
       // Bare wordmark — no box, no caption. object-contain keeps each logo's
@@ -142,8 +156,9 @@ function Tile({
             alt={item.name}
             loading="lazy"
             onError={() => setFailed(true)}
-            className="logo-mark w-auto max-w-[190px] object-contain opacity-80 transition-opacity duration-300 hover:opacity-100"
-            style={{ height: logoHeight }}
+            onLoad={(e) => fitLogo(e.currentTarget)}
+            className="logo-mark w-auto max-w-[180px] object-contain opacity-80 transition-opacity duration-300 hover:opacity-100"
+            style={{ height: fittedHeight }}
           />
         ) : (
           // Readable text stand-in until the logo file is added.
