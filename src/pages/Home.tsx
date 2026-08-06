@@ -6,7 +6,33 @@ import Parallax from '../components/Parallax'
 import CountUp from '../components/CountUp'
 import Carousel from '../components/Carousel'
 import Roadmap from '../components/Roadmap'
+import Button from '../components/ui/Button'
+import Tag from '../components/ui/Tag'
+import Eyebrow from '../components/ui/Eyebrow'
 import { CAMPUS_ITEMS, POPULAR_ITEMS } from '../data/universities'
+
+// Placeholder voices until real community stats land. Swap `initials` for
+// student avatars once we have them.
+const TESTIMONIALS = [
+  {
+    quote: 'I thought my average locked me out of everything. Turned out three programs I loved were well within reach.',
+    name: 'Priya',
+    detail: 'Grade 12 · Mississauga',
+    initials: 'PR',
+  },
+  {
+    quote: 'The forums all said 95+. Seeing what people actually got in with took so much pressure off.',
+    name: 'Daniel',
+    detail: 'Grade 12 · Ottawa',
+    initials: 'DA',
+  },
+  {
+    quote: 'I finally had a shortlist I could explain to my parents, with real numbers behind it.',
+    name: 'Amara',
+    detail: 'First year · Hamilton',
+    initials: 'AM',
+  },
+]
 
 const STATS = [
   { end: 120, suffix: '+', label: 'Programs tracked' },
@@ -104,18 +130,10 @@ export default function Home() {
             transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
             className="mt-9 flex flex-wrap items-center gap-3"
           >
-            <Link
-              to="/profile"
-              className="rounded-full bg-brand-500 px-6 py-3 text-sm font-600 text-white shadow-sm transition-colors hover:bg-brand-600"
-            >
-              Build my profile
-            </Link>
-            <Link
-              to="/explore"
-              className="rounded-full border border-line bg-paper px-6 py-3 text-sm font-600 text-ink transition-colors hover:border-brand-300 hover:text-brand-600"
-            >
+            <Button to="/profile">Build my profile</Button>
+            <Button to="/explore" variant="secondary">
               Explore programs
-            </Link>
+            </Button>
           </motion.div>
 
           {/* Quick search — routes to Explore with the query */}
@@ -152,9 +170,7 @@ export default function Home() {
           `img` on each item in src/data/universities.ts to use real photos. */}
       <section className="py-10">
         <Reveal className="mx-auto mb-6 max-w-6xl px-6">
-          <p className="text-sm font-500 uppercase tracking-wider text-brand-500">
-            Universities on the platform
-          </p>
+          <Eyebrow>Universities on the platform</Eyebrow>
         </Reveal>
         <Carousel
           items={CAMPUS_ITEMS}
@@ -195,13 +211,7 @@ export default function Home() {
                   className="group block h-full rounded-2xl border border-line bg-paper p-5 transition-all hover:-translate-y-1 hover:shadow-[0_12px_36px_rgba(20,24,31,0.08)]"
                 >
                   <div className="mb-4 h-24 rounded-xl bg-gradient-to-br from-brand-100 to-brand-50" />
-                  <span
-                    className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-600 ${
-                      f.tag === 'Reach' ? 'bg-accent/15 text-accent' : 'bg-success/15 text-success'
-                    }`}
-                  >
-                    {f.tag}
-                  </span>
+                  <Tag tone={f.tag === 'Reach' ? 'reach' : 'likely'}>{f.tag}</Tag>
                   <h3 className="mt-3 font-600 text-ink group-hover:text-brand-600">{f.program}</h3>
                   <p className="text-sm text-slate">{f.school}</p>
                   <p className="mt-3 text-xs text-slate">Accepted avg · {f.avg}</p>
@@ -213,9 +223,7 @@ export default function Home() {
 
         {/* Rotating carousel of popular programs — placeholder images for now. */}
         <Reveal className="mx-auto max-w-6xl px-6 pb-4">
-          <p className="text-sm font-500 uppercase tracking-wider text-brand-500">
-            Trending programs
-          </p>
+          <Eyebrow>Trending programs</Eyebrow>
         </Reveal>
         <div className="pb-16">
           <Carousel
@@ -249,8 +257,46 @@ export default function Home() {
         </div>
       </section>
 
+      {/* ================= SOCIAL PROOF ================= */}
+      {/* Placeholder voices — replaced by real community stats later.
+          Faces/avatars go in the circle once we have them. */}
+      <section className="bg-cloud">
+        <div className="mx-auto max-w-6xl px-6 py-20">
+          <Reveal>
+            <Eyebrow>From students like you</Eyebrow>
+            <h2 className="mt-2 max-w-2xl font-display text-3xl font-600 text-ink">
+              You’re not behind. You just need better information.
+            </h2>
+          </Reveal>
+
+          <div className="mt-12 grid gap-6 md:grid-cols-3">
+            {TESTIMONIALS.map((t, i) => (
+              <Reveal key={t.name} delay={i * 0.1}>
+                <figure className="flex h-full flex-col rounded-lg border border-line bg-paper p-6">
+                  <blockquote className="flex-1 text-[15px] leading-relaxed text-ink">
+                    “{t.quote}”
+                  </blockquote>
+                  <figcaption className="mt-5 flex items-center gap-3 border-t border-line pt-4">
+                    <span
+                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-600 text-brand-600"
+                      aria-hidden="true"
+                    >
+                      {t.initials}
+                    </span>
+                    <span>
+                      <span className="block text-sm font-600 text-ink">{t.name}</span>
+                      <span className="block text-xs text-slate">{t.detail}</span>
+                    </span>
+                  </figcaption>
+                </figure>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ================= CTA ================= */}
-      <section className="mx-auto max-w-6xl px-6 pb-8">
+      <section className="mx-auto max-w-6xl px-6 pb-8 pt-20">
         <Reveal>
           <div className="overflow-hidden rounded-3xl bg-brand-700 px-8 py-16 text-center sm:px-16">
             <h2 className="mx-auto max-w-2xl font-display text-3xl font-600 text-white sm:text-4xl">
@@ -259,12 +305,9 @@ export default function Home() {
             <p className="mx-auto mt-4 max-w-lg text-white/80">
               Build a profile in a few minutes and get a shortlist that fits you.
             </p>
-            <Link
-              to="/profile"
-              className="mt-8 inline-block rounded-full bg-white px-7 py-3 text-sm font-600 text-brand-700 transition-transform hover:scale-[1.03]"
-            >
+            <Button to="/profile" variant="inverse" className="mt-8 px-7 py-3">
               Get started — it’s free
-            </Link>
+            </Button>
           </div>
         </Reveal>
       </section>
