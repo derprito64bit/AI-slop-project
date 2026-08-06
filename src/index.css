@@ -118,6 +118,16 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
+/* University wordmarks. Most are dark-on-transparent, so in dark mode they'd
+   disappear against the near-black background — render them white instead. */
+:root[data-theme="dark"] .logo-mark {
+  filter: brightness(0) invert(1);
+  opacity: 0.72;
+}
+:root[data-theme="dark"] .logo-mark:hover {
+  opacity: 1;
+}
+
 /* Visible keyboard focus everywhere. Mouse clicks don't trigger it
    (:focus-visible), so this only shows for keyboard/AT users. */
 :focus-visible {

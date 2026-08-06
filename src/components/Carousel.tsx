@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { CarouselItem } from '../data/universities'
 
@@ -29,6 +30,14 @@ type CarouselProps = {
   showCaptions?: boolean
   /** where in the loop to begin, 0–1 (0.5 = start halfway through, already flowing) */
   startOffset?: number
+  /**
+   * 'photo' = boxed image tiles with captions (campus shots, program art).
+   * 'logo'  = bare wordmarks on the page background, no box or caption.
+   *           Sized by height so each logo keeps its natural proportions.
+   */
+  variant?: 'photo' | 'logo'
+  /** logo variant only: rendered height in px */
+  logoHeight?: number
   className?: string
 }
 
@@ -44,6 +53,8 @@ export default function Carousel({
   fade = true,
   showCaptions = true,
   startOffset = 0,
+  variant = 'photo',
+  logoHeight = 44,
   className = '',
 }: CarouselProps) {
   if (!items.length) return null
@@ -87,6 +98,8 @@ export default function Carousel({
             rounded={rounded}
             showCaption={showCaptions}
             ariaHidden={i >= items.length}
+            variant={variant}
+            logoHeight={logoHeight}
           />
         ))}
       </ul>
@@ -101,6 +114,8 @@ function Tile({
   rounded,
   showCaption,
   ariaHidden,
+  variant,
+  logoHeight,
 }: {
   item: CarouselItem
   width: number
@@ -108,36 +123,63 @@ function Tile({
   rounded: string
   showCaption: boolean
   ariaHidden: boolean
+  variant: 'photo' | 'logo'
+  logoHeight: number
 }) {
-  const inner = (
-    <div
-      className={`group relative shrink-0 overflow-hidden border border-line ${rounded} bg-cloud transition-transform duration-300 hover:-translate-y-1`}
-      style={{ width, aspectRatio: aspect }}
-    >
-      {item.img ? (
-        <img
-          src={item.img}
-          alt={item.name}
-          loading="lazy"
-          className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-      ) : (
-        // Labeled placeholder tile (until real images are added).
-        <div className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${item.gradient ?? 'from-brand-100 to-brand-50'}`}>
-          <span className="rounded-md bg-white/70 px-2 py-1 text-[10px] font-600 uppercase tracking-wider text-slate">
-            image
-          </span>
-        </div>
-      )}
+  // If an image 404s (e.g. the file hasn't been added yet), fall back to the
+  // placeholder instead of showing a broken-image icon.
+  const [failed, setFailed] = useState(false)
+  const hasImg = !!item.img && !failed
 
-      {showCaption && (
-        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 pt-8">
-          <p className="text-sm font-600 leading-tight text-white">{item.name}</p>
-          {item.caption && <p className="text-xs text-white/80">{item.caption}</p>}
-        </div>
-      )}
-    </div>
-  )
+  const inner =
+    variant === 'logo' ? (
+      // Bare wordmark — no box, no caption. object-contain keeps each logo's
+      // own proportions; height is fixed so the row reads evenly.
+      <div className="flex shrink-0 items-center px-7" style={{ height: logoHeight * 1.9 }}>
+        {hasImg ? (
+          <img
+            src={item.img}
+            alt={item.name}
+            loading="lazy"
+            onError={() => setFailed(true)}
+            className="logo-mark w-auto max-w-[190px] object-contain opacity-80 transition-opacity duration-300 hover:opacity-100"
+            style={{ height: logoHeight }}
+          />
+        ) : (
+          // Readable text stand-in until the logo file is added.
+          <span className="whitespace-nowrap text-sm font-600 text-slate">{item.name}</span>
+        )}
+      </div>
+    ) : (
+      <div
+        className={`group relative shrink-0 overflow-hidden border border-line ${rounded} bg-cloud transition-transform duration-300 hover:-translate-y-1`}
+        style={{ width, aspectRatio: aspect }}
+      >
+        {hasImg ? (
+          <img
+            src={item.img}
+            alt={item.name}
+            loading="lazy"
+            onError={() => setFailed(true)}
+            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+          />
+        ) : (
+          // Labeled placeholder tile (until real images are added).
+          <div className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${item.gradient ?? 'from-brand-100 to-brand-50'}`}>
+            <span className="rounded-md bg-white/70 px-2 py-1 text-[10px] font-600 uppercase tracking-wider text-slate">
+              image
+            </span>
+          </div>
+        )}
+
+        {showCaption && (
+          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 pt-8">
+            <p className="text-sm font-600 leading-tight text-white">{item.name}</p>
+            {item.caption && <p className="text-xs text-white/80">{item.caption}</p>}
+          </div>
+        )}
+      </div>
+    )
 
   return (
     <li aria-hidden={ariaHidden}>

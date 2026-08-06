@@ -174,11 +174,11 @@ export default function Home() {
         </Reveal>
         <Carousel
           items={CAMPUS_ITEMS}
+          variant="logo"
+          logoHeight={40}
           speed={45}
           direction="left"
-          tileWidth={320}
-          aspect="16 / 10"
-          gap={20}
+          gap={0}
         />
       </section>
 
