@@ -1,0 +1,31 @@
+{
+  "_readme": [
+    "Human decisions about messy source data. Edited by hand, read by scripts/build-data.mjs.",
+    "Everything here persists across rebuilds, so you never review the same row twice.",
+    "See the 'did you mean' suggestions in data/qa-report.md for ready-to-paste entries."
+  ],
+
+  "_universityAliases": "Spelling (lowercased) -> canonical university id. Adds to scripts/universities-map.mjs without editing code.",
+  "universityAliases": {
+    "ottawa university": "ottawa",
+    "university of guelph - humber": "guelph-humber"
+  },
+
+  "_ignoreUniversities": "Known junk. Silenced in the QA report so real problems aren't buried.",
+  "ignoreUniversities": [
+    ".",
+    "e",
+    "n/a",
+    "none",
+    "33",
+    "33.0",
+    "skibidi toilet univeristyde",
+    "seneca gender studies"
+  ],
+
+  "_programMerges": "Duplicate program ids judged to be the same program: '<from id>': '<into id>'. Check the 'Possible duplicate programs' section of the QA report first — co-op vs non-co-op are genuinely different.",
+  "programMerges": {},
+
+  "_programIgnore": "Program ids to drop entirely (spam, test rows).",
+  "programIgnore": []
+}

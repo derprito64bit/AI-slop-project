@@ -16,9 +16,12 @@
   color-scheme: light;
   --p-ink: #14181f;         /* near-black text */
   --p-slate: #566072;       /* muted text */
-  --p-paper: #fbfbf9;       /* warm off-white background */
-  --p-cloud: #f1f2ee;       /* subtle section fill */
-  --p-line: #e3e4de;        /* hairlines / borders */
+  /* Warm, paper-like neutrals rather than clinical white — the flat-white
+     version read cold for a site aimed at stressed teenagers. */
+  --p-paper: #fdfcf8;       /* page background */
+  --p-surface: #f7f5ee;     /* mid band, for alternating sections */
+  --p-cloud: #f0eee4;       /* deepest band */
+  --p-line: #e2dfd3;        /* hairlines / borders */
 
   --p-brand-50:  #eef2ff;
   --p-brand-100: #dde5ff;
@@ -37,7 +40,8 @@
   --p-ink: #eceef0;         /* light text */
   --p-slate: #99a3b2;       /* muted text */
   --p-paper: #0f1216;       /* near-black background */
-  --p-cloud: #171b22;       /* subtle section fill */
+  --p-surface: #141920;     /* mid band */
+  --p-cloud: #171b22;       /* deepest band */
   --p-line: #2a2f38;        /* hairlines / borders */
 
   --p-brand-50:  #141a28;   /* dark wash surface (replaces light tint) */
@@ -55,6 +59,7 @@
   --color-ink: var(--p-ink);
   --color-slate: var(--p-slate);
   --color-paper: var(--p-paper);
+  --color-surface: var(--p-surface);
   --color-cloud: var(--p-cloud);
   --color-line: var(--p-line);
 
@@ -116,6 +121,64 @@ body {
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ============================================================
+   Monogram tiles — the fallback mark for a university with no
+   square logo yet. Built from the theme tokens via color-mix, so
+   they adapt to light/dark automatically instead of needing a
+   second hard-coded palette.
+   ============================================================ */
+.mono-0 { background: color-mix(in oklab, var(--color-brand-500) 15%, transparent); color: var(--color-brand-600); }
+.mono-1 { background: color-mix(in oklab, var(--color-accent)   18%, transparent); color: var(--color-accent); }
+.mono-2 { background: color-mix(in oklab, var(--color-success)  16%, transparent); color: var(--color-success); }
+.mono-3 { background: color-mix(in oklab, var(--color-slate)    16%, transparent); color: var(--color-slate); }
+
+/* ============================================================
+   Paper textures. Pure CSS gradients — no image files, and they
+   inherit --color-line so they follow the theme. Decorative only:
+   these sit behind content, never under body text.
+   ============================================================ */
+.bg-grid,
+.bg-ruled,
+.bg-dots {
+  --pattern-ink: color-mix(in oklab, var(--color-line) 85%, transparent);
+}
+
+/* graph paper */
+.bg-grid {
+  background-image:
+    repeating-linear-gradient(to right, var(--pattern-ink) 0 1px, transparent 1px 100%),
+    repeating-linear-gradient(to bottom, var(--pattern-ink) 0 1px, transparent 1px 100%);
+  background-size: 28px 28px;
+}
+
+/* notebook rules */
+.bg-ruled {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 31px,
+    var(--pattern-ink) 31px 32px
+  );
+}
+
+/* dot grid */
+.bg-dots {
+  background-image: radial-gradient(var(--pattern-ink) 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
+}
+
+/* Texture should fade out rather than stop at a hard edge. */
+.pattern-fade {
+  mask-image: radial-gradient(ellipse 100% 80% at 50% 40%, black 35%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 100% 80% at 50% 40%, black 35%, transparent 100%);
+}
+
+/* Dark mode: the same lines read as noise at full strength. */
+:root[data-theme='dark'] .bg-grid,
+:root[data-theme='dark'] .bg-ruled,
+:root[data-theme='dark'] .bg-dots {
+  --pattern-ink: color-mix(in oklab, var(--color-line) 55%, transparent);
 }
 
 /* University wordmarks. Most are dark-on-transparent, so in dark mode they'd

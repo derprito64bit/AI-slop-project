@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import Eyebrow from '../components/ui/Eyebrow'
 import Tag from '../components/ui/Tag'
+import UniversityMark from '../components/UniversityMark'
 import { loadCatalogue } from '../lib/dataSource'
 import { queryPrograms, difficultyBand, DIFFICULTY_LABELS } from '../lib/search'
 import type { Program, University } from '../data/types'
@@ -23,7 +24,10 @@ export default function ExplorePreview() {
   const uniName = new Map((data?.universities ?? []).map((u) => [u.id, u.name]))
 
   return (
-    <section className="mx-auto max-w-4xl px-6 py-20">
+    <div className="relative">
+      {/* graph-paper texture, decorative only */}
+      <div className="bg-grid pattern-fade pointer-events-none absolute inset-0 -z-10" aria-hidden="true" />
+      <section className="mx-auto max-w-6xl px-6 py-20">
       <Eyebrow>Explore</Eyebrow>
       <h1 className="mt-2 font-display text-4xl font-600 text-ink">Find your programs.</h1>
 
@@ -47,36 +51,46 @@ export default function ExplorePreview() {
             className="mt-8 w-full rounded-full border border-line bg-paper px-5 py-3 text-sm text-ink outline-none placeholder:text-slate focus:border-brand-300"
           />
 
-          <ul className="mt-8 space-y-3">
+          <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {results.map((p) => {
               const band = difficultyBand(p)
+              const school = uniName.get(p.universityId) ?? p.universityId
               return (
-                <li
-                  key={p.id}
-                  className="flex items-center justify-between gap-4 rounded-lg border border-line bg-paper p-4"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate font-600 text-ink">{p.name}</p>
-                    <p className="text-sm text-slate">{uniName.get(p.universityId)}</p>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    {p.accepted && (
-                      <p className="font-display text-xl font-600 text-brand-600">
-                        {p.accepted.median}%
-                      </p>
-                    )}
-                    <p className="text-xs text-slate">median · {p.sampleSize} reports</p>
-                    {band && (
-                      <Tag tone={band === 'highly-competitive' ? 'reach' : band === 'competitive' ? 'safety' : 'likely'} className="mt-1">
-                        {DIFFICULTY_LABELS[band]}
-                      </Tag>
-                    )}
-                  </div>
+                <li key={p.id} className="flex">
+                  <article className="flex w-full flex-col rounded-lg border border-line bg-paper p-5 transition-shadow hover:shadow-[0_10px_30px_rgba(20,24,31,0.07)]">
+                    <div className="flex items-start gap-3">
+                      <UniversityMark id={p.universityId} name={school} size={40} />
+                      <div className="min-w-0 flex-1">
+                        <h2 className="font-600 leading-snug text-ink">{p.name}</h2>
+                        <p className="mt-0.5 text-sm text-slate">{school}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 flex items-end justify-between gap-3 border-t border-line pt-4">
+                      {p.accepted ? (
+                        <div>
+                          <p className="font-display text-2xl font-600 leading-none text-brand-600">
+                            {p.accepted.median}%
+                          </p>
+                          <p className="mt-1 text-xs text-slate">
+                            median of {p.sampleSize} offers
+                          </p>
+                        </div>
+                      ) : (
+                        <p className="text-xs text-slate">Not enough data yet</p>
+                      )}
+                      {band && (
+                        <Tag tone={band === 'highly-competitive' ? 'reach' : band === 'competitive' ? 'safety' : 'likely'}>
+                          {DIFFICULTY_LABELS[band]}
+                        </Tag>
+                      )}
+                    </div>
+                  </article>
                 </li>
               )
             })}
             {!results.length && (
-              <li className="rounded-lg border border-line bg-paper p-6 text-center text-slate">
+              <li className="rounded-lg border border-line bg-paper p-6 text-center text-slate sm:col-span-2 lg:col-span-3">
                 No programs with enough reported data match that search yet.
               </li>
             )}
@@ -88,6 +102,7 @@ export default function ExplorePreview() {
           </p>
         </>
       )}
-    </section>
+      </section>
+    </div>
   )
 }

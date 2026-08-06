@@ -74,8 +74,9 @@ export default function Home() {
     <>
       {/* ================= HERO ================= */}
       <section className="relative overflow-hidden">
-        {/* soft background wash */}
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-brand-50 to-paper" />
+        {/* soft background wash + graph-paper texture (decorative) */}
+        <div className="pointer-events-none absolute inset-0 -z-20 bg-gradient-to-b from-brand-50 to-paper" />
+        <div className="bg-grid pattern-fade pointer-events-none absolute inset-0 -z-10" aria-hidden="true" />
         {/* parallax accent blob — drifts as you scroll */}
         <Parallax distance={70} className="pointer-events-none absolute -right-32 -top-32 -z-10">
           <div className="h-96 w-96 rounded-full bg-brand-100 opacity-60 blur-3xl" />
@@ -189,8 +190,10 @@ export default function Home() {
       <Roadmap steps={STEPS} pinned />
 
       {/* ================= FEATURED PROGRAMS ================= */}
-      <section className="bg-cloud">
-        <div className="mx-auto max-w-6xl px-6 py-20">
+      <section className="relative bg-surface">
+        {/* dot grid (decorative) */}
+        <div className="bg-dots pattern-fade pointer-events-none absolute inset-0" aria-hidden="true" />
+        <div className="relative mx-auto max-w-6xl px-6 py-20">
           <Reveal>
             <div className="flex items-end justify-between gap-4">
               <div>
@@ -347,8 +350,10 @@ function StatsBand() {
   const opacity = useTransform(scrollYProgress, [0, 0.4], [0.2, 1])
 
   return (
-    <section ref={ref} className="border-y border-line bg-cloud">
-      <div className="mx-auto max-w-6xl px-6 py-16 text-center">
+    <section ref={ref} className="relative border-y border-line bg-cloud">
+      {/* notebook rules behind the numbers (decorative) */}
+      <div className="bg-ruled pattern-fade pointer-events-none absolute inset-0" aria-hidden="true" />
+      <div className="relative mx-auto max-w-6xl px-6 py-16 text-center">
         <Reveal>
           <p className="text-sm font-500 uppercase tracking-wider text-brand-500">
             What we provide to you

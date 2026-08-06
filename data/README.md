@@ -22,11 +22,32 @@ Google Form  →  Google Sheet  →  [you review the rows]  →  export .xlsx
    npm run data:build
    ```
 
-4. **Read `data/qa-report.md`.** It lists everything the script could not confidently
-   interpret — unknown university spellings, out-of-range averages, likely duplicate
-   program names. Fix those in the source sheet.
-5. Re-run the build until the report is clean enough, then commit both `data/raw/`
-   and `src/data/generated/`.
+4. **Read `data/qa-report.md`.** It opens with **"New since last build"** — usually the only
+   part you need. Everything already reviewed in an earlier run stays further down.
+5. Record your decisions in **`data/overrides.json`** (see below), not in the source sheet,
+   so they survive the next export.
+6. Re-run until the new-work section is empty, then commit `data/raw/`,
+   `src/data/generated/`, `data/overrides.json` and `data/.build-snapshot.json`.
+
+Use `npm run data:check` to run the whole pipeline and refresh the report **without**
+writing the dataset — handy while iterating on overrides.
+
+## `data/overrides.json` — where your decisions live
+
+This is the point of the tooling: a spelling you resolve once never comes back.
+
+| Key | Purpose |
+|---|---|
+| `universityAliases` | `"ottawa university": "ottawa"` — map a spelling to a canonical id |
+| `ignoreUniversities` | Known junk (`"."`, `"none"`). Silenced so real problems stand out |
+| `programMerges` | `"<from program id>": "<into id>"` for duplicates that are the same program |
+| `programIgnore` | Program ids to drop entirely |
+
+The QA report suggests likely matches for each unknown spelling and prints a **paste-ready
+JSON block** for the confident ones. Those suggestions are fuzzy — **check each line before
+accepting it.** They are never applied automatically, deliberately: mislabelling a student's
+record as the wrong school is worse than leaving it unmapped. The matcher is tuned to stay
+quiet rather than guess (it will not, for instance, map "New York University" onto York).
 
 The generated JSON is committed on purpose: the site builds without needing the
 spreadsheets or this script to run in CI.

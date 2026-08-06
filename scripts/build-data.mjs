@@ -12,7 +12,7 @@
 
 import AdmZip from 'adm-zip'
 import { XMLParser } from 'fast-xml-parser'
-import { writeFileSync, mkdirSync } from 'node:fs'
+import { writeFileSync, mkdirSync, readFileSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -25,8 +25,10 @@ import {
   programSlug,
   percentile,
   inferField,
+  aliasKey,
 } from './normalize.mjs'
-import { BY_ID } from './universities-map.mjs'
+import { BY_ID, UNIVERSITIES } from './universities-map.mjs'
+import { bestMatches } from './similarity.mjs'
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..')
 const RAW = join(ROOT, 'data', 'raw')
@@ -34,6 +36,34 @@ const OUT = join(ROOT, 'src', 'data', 'generated')
 
 /** Programs below this many offer-with-average records get flagged, not dropped. */
 const MIN_SAMPLE = 5
+
+/** `--check` runs the whole pipeline but writes only the QA report. */
+const DRY_RUN = process.argv.includes('--check')
+
+// ------------------------------------------------------------------ overrides
+// Human decisions that must survive rebuilds. Keys are normalized the same way
+// spreadsheet values are, so "33.0" in the file matches "33.0" in a sheet.
+
+const readJSON = (path, fallback) => {
+  if (!existsSync(path)) return fallback
+  try {
+    return JSON.parse(readFileSync(path, 'utf8'))
+  } catch (err) {
+    console.warn(`WARNING: could not parse ${path} — ignoring it. ${err.message}`)
+    return fallback
+  }
+}
+
+const overrides = readJSON(join(ROOT, 'data', 'overrides.json'), {})
+const extraAliases = Object.fromEntries(
+  Object.entries(overrides.universityAliases ?? {}).map(([k, v]) => [aliasKey(k), v]),
+)
+const ignoredUnis = new Set((overrides.ignoreUniversities ?? []).map(aliasKey))
+const programMerges = overrides.programMerges ?? {}
+const programIgnore = new Set(overrides.programIgnore ?? [])
+
+const SNAPSHOT_PATH = join(ROOT, 'data', '.build-snapshot.json')
+const prevSnapshot = readJSON(SNAPSHOT_PATH, null)
 
 // ---------------------------------------------------------------- xlsx reader
 
@@ -162,9 +192,12 @@ for (const src of SOURCES) {
     }
 
     // --- university
-    const universityId = canonicalUniversityId(rawUni)
+    const universityId = canonicalUniversityId(rawUni, extraAliases)
     if (!universityId) {
-      if (rawUni) qa.unmappedUniversities.set(rawUni, (qa.unmappedUniversities.get(rawUni) ?? 0) + 1)
+      // Known junk is silenced so genuinely new spellings stand out.
+      if (!ignoredUnis.has(aliasKey(rawUni))) {
+        qa.unmappedUniversities.set(rawUni, (qa.unmappedUniversities.get(rawUni) ?? 0) + 1)
+      }
       qa.droppedNoUniversity++
       continue
     }
@@ -225,8 +258,19 @@ for (const src of SOURCES) {
 // ------------------------------------------------------------------ aggregate
 
 const groups = new Map()
+let mergedCount = 0
+let ignoredPrograms = 0
+
 for (const r of records) {
-  const key = `${r.universityId}::${r.slug}`
+  const rawKey = `${r.universityId}::${r.slug}`
+  if (programIgnore.has(rawKey)) {
+    ignoredPrograms++
+    continue
+  }
+  // Duplicate pairs a human judged to be the same program.
+  const key = programMerges[rawKey] ?? rawKey
+  if (key !== rawKey) mergedCount++
+
   let g = groups.get(key)
   if (!g) {
     g = {
@@ -298,21 +342,24 @@ const universities = [...usedUniIds]
 
 // Anonymous individual records, for the community feed / program detail.
 // No usernames, no timestamps of submission — only the outcome itself.
-const stats = records.map((r) => ({
-  p: `${r.universityId}::${r.slug}`,
-  u: r.universityId,
-  d: r.decision,
-  a: r.average,
-  c: r.cycle,
-}))
+// Must apply the same merge/ignore overrides as the aggregation above,
+// otherwise a merged program leaves its stats pointing at a program id that
+// no longer exists.
+const stats = records
+  .map((r) => {
+    const rawKey = `${r.universityId}::${r.slug}`
+    return { rawKey, p: programMerges[rawKey] ?? rawKey, u: r.universityId, d: r.decision, a: r.average, c: r.cycle }
+  })
+  .filter((s) => !programIgnore.has(s.rawKey))
+  .map(({ rawKey: _drop, ...s }) => s)
 
 // --------------------------------------------------------------------- output
 
 mkdirSync(OUT, { recursive: true })
 const write = (name, data) => {
-  const path = join(OUT, name)
-  writeFileSync(path, JSON.stringify(data), 'utf8')
-  return { name, kb: Math.round(JSON.stringify(data).length / 1024) }
+  const json = JSON.stringify(data)
+  if (!DRY_RUN) writeFileSync(join(OUT, name), json, 'utf8')
+  return { name, kb: Math.round(json.length / 1024) }
 }
 
 const written = [
@@ -325,6 +372,43 @@ const written = [
 
 const withData = programs.filter((p) => !p.insufficientData)
 const unmapped = [...qa.unmappedUniversities.entries()].sort((a, b) => b[1] - a[1])
+
+// --- "did you mean" suggestions for each unrecognised spelling.
+// Candidates are every canonical name plus its known aliases.
+const candidates = UNIVERSITIES.map((u) => ({ id: u.id, values: [u.name, ...u.aliases] }))
+const SUGGEST_CONFIDENT = 0.6
+const suggestions = unmapped.map(([raw, count]) => ({
+  raw,
+  count,
+  matches: bestMatches(raw, candidates, 2),
+}))
+const confident = suggestions.filter((s) => (s.matches[0]?.score ?? 0) >= SUGGEST_CONFIDENT)
+
+// Paste-ready block so accepting the confident guesses is copy-paste, not typing.
+const aliasSnippet = confident.length
+  ? JSON.stringify(
+      Object.fromEntries(confident.map((s) => [s.raw.toLowerCase(), s.matches[0].id])),
+      null,
+      2,
+    )
+  : null
+
+// --- diff against the previous build, so review work is only ever the new stuff.
+const snapshot = {
+  unmapped: unmapped.map(([raw]) => raw),
+  programIds: programs.map((p) => p.id),
+  perFile: Object.fromEntries(qa.perFile.map((f) => [f.file, f.rows])),
+  records: records.length,
+}
+const prevUnmapped = new Set(prevSnapshot?.unmapped ?? [])
+const prevProgramIds = new Set(prevSnapshot?.programIds ?? [])
+const newUnmapped = prevSnapshot ? unmapped.filter(([raw]) => !prevUnmapped.has(raw)) : []
+const newPrograms = prevSnapshot ? programs.filter((p) => !prevProgramIds.has(p.id)) : []
+const rowDeltas = prevSnapshot
+  ? qa.perFile
+      .map((f) => ({ file: f.file, delta: f.rows - (prevSnapshot.perFile?.[f.file] ?? 0) }))
+      .filter((d) => d.delta !== 0)
+  : []
 const nearMiss = programs
   .filter((p) => p.insufficientData && p.sampleSize >= 3)
   .sort((a, b) => b.sampleSize - a.sampleSize)
@@ -355,8 +439,36 @@ dupes.sort((x, y) => y.a.totalReports + y.b.totalReports - (x.a.totalReports + x
 
 const report = `# Data QA report
 
-Generated by \`npm run data:build\`. Everything here needs a human decision —
-fix it in the source spreadsheet, then re-run the build.
+Generated by \`npm run data:build\`. Everything here needs a human decision.
+Record decisions in \`data/overrides.json\` so they persist and you never review
+the same row twice.
+
+## New since last build
+
+${
+  !prevSnapshot
+    ? '_No previous build to compare against — everything below is new._'
+    : newUnmapped.length === 0 && newPrograms.length === 0 && rowDeltas.length === 0
+      ? '**Nothing new.** Everything outstanding was already reviewed in an earlier run.'
+      : [
+          rowDeltas.length
+            ? `**Row changes**\n\n${rowDeltas.map((d) => `- ${d.file}: ${d.delta > 0 ? '+' : ''}${d.delta} rows`).join('\n')}`
+            : '',
+          newUnmapped.length
+            ? `**New unrecognised universities (${newUnmapped.length})**\n\n${newUnmapped
+                .map(([raw, c]) => `- \`${raw}\` — ${c} row(s)`)
+                .join('\n')}`
+            : '',
+          newPrograms.length
+            ? `**New programs (${newPrograms.length})** — top by volume\n\n${newPrograms
+                .slice(0, 15)
+                .map((p) => `- ${p.universityId} — ${p.name} (${p.totalReports})`)
+                .join('\n')}`
+            : '',
+        ]
+          .filter(Boolean)
+          .join('\n\n')
+}
 
 ## Intake
 
@@ -380,9 +492,27 @@ ${qa.perFile.map((f) => `| ${f.file} | ${f.rows} | ${f.kept} |`).join('\n')}
 
 ## Unrecognised university spellings (${unmapped.length})
 
-Add a real school to \`scripts/universities-map.mjs\`; ignore genuine junk.
+Resolve each one by adding it to \`universityAliases\` in \`data/overrides.json\`,
+or to \`ignoreUniversities\` if it's junk. Suggestions below are fuzzy matches —
+**check before accepting**, they are never applied automatically.
 
-${unmapped.length ? unmapped.map(([n, c]) => `- \`${n}\` — ${c} row(s)`).join('\n') : '_None._'}
+${
+  unmapped.length
+    ? `| Spelling | Rows | Did you mean | Confidence |\n|---|---:|---|---:|\n${suggestions
+        .map((s) => {
+          const m = s.matches[0]
+          const alt = m && m.score >= SUGGEST_CONFIDENT ? `\`${m.id}\`` : m ? `${m.id}?` : '—'
+          return `| \`${s.raw}\` | ${s.count} | ${alt} | ${m ? m.score : '—'} |`
+        })
+        .join('\n')}`
+    : '_None._'
+}
+
+${
+  aliasSnippet
+    ? `### Paste-ready aliases (confidence ≥ ${SUGGEST_CONFIDENT})\n\nMerge into \`universityAliases\` in \`data/overrides.json\` after checking each line:\n\n\`\`\`json\n${aliasSnippet}\n\`\`\``
+    : ''
+}
 
 ## Rejected averages (${qa.badAverages.length})
 
@@ -429,12 +559,30 @@ ${
 
 writeFileSync(join(ROOT, 'data', 'qa-report.md'), report, 'utf8')
 
+// The snapshot is what makes the next run's report show only new work.
+if (!DRY_RUN) writeFileSync(SNAPSHOT_PATH, JSON.stringify(snapshot, null, 2), 'utf8')
+
 // --------------------------------------------------------------------- stdout
 
 console.log(`\nRecords kept       ${records.length}`)
 console.log(`Programs           ${programs.length}  (${withData.length} with sample >= ${MIN_SAMPLE})`)
 console.log(`Universities       ${universities.length}`)
-console.log(`Unmapped unis      ${unmapped.length}`)
+console.log(`Unmapped unis      ${unmapped.length}${confident.length ? `  (${confident.length} with a confident suggestion)` : ''}`)
 console.log(`Rejected averages  ${qa.badAverages.length}`)
-console.log(`\nWrote: ${written.map((w) => `${w.name} (${w.kb}kB)`).join(', ')}`)
+if (mergedCount) console.log(`Merged records     ${mergedCount} (via overrides)`)
+if (ignoredPrograms) console.log(`Ignored records    ${ignoredPrograms} (via overrides)`)
+
+if (prevSnapshot) {
+  const newWork = newUnmapped.length + rowDeltas.length
+  console.log(
+    `\nSince last build   ${newWork === 0 ? 'nothing new to review' : `${newUnmapped.length} new unmapped, ${newPrograms.length} new programs`}`,
+  )
+}
+
+if (DRY_RUN) {
+  console.log(`\n[--check] dataset NOT written. Report only.`)
+  console.log(`Would write: ${written.map((w) => `${w.name} (${w.kb}kB)`).join(', ')}`)
+} else {
+  console.log(`\nWrote: ${written.map((w) => `${w.name} (${w.kb}kB)`).join(', ')}`)
+}
 console.log(`Wrote: data/qa-report.md\n`)

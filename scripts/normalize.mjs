@@ -61,16 +61,29 @@ export function excelSerialToISO(raw) {
   return d.toISOString().slice(0, 10)
 }
 
-/** Canonical university id, or null when the spelling isn't recognised. */
-export function canonicalUniversityId(raw) {
-  if (!raw) return null
-  const key = String(raw)
+/**
+ * Normalized lookup key for a university spelling. Exported so that
+ * hand-written aliases in data/overrides.json get keyed exactly the same way
+ * as the values coming out of the spreadsheets.
+ */
+export function aliasKey(raw) {
+  return String(raw ?? '')
     .toLowerCase()
     .replace(/[‘’']/g, '') // curly + straight apostrophes
     .replace(/[.,!]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
+}
+
+/**
+ * Canonical university id, or null when the spelling isn't recognised.
+ * @param extraAliases optional key->id map layered over the built-in aliases
+ *        (this is how data/overrides.json resolves spellings without a code change)
+ */
+export function canonicalUniversityId(raw, extraAliases = null) {
+  const key = aliasKey(raw)
   if (!key) return null
+  if (extraAliases && key in extraAliases) return extraAliases[key]
   return ALIAS_TO_ID[key] ?? null
 }
 
