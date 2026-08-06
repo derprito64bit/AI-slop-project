@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wireframe · Explore</title>
+  <link rel="stylesheet" href="wireframe.css">
+</head>
+<body>
+  <div class="wf-banner">WIREFRAME — Explore / Search: the filterable database of universities & programs.</div>
+
+  <nav class="navbar">
+    <div class="container">
+      <div class="logo">LOGO</div>
+      <ul>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="explore.html" class="active">Explore</a></li>
+        <li><a href="program.html">Program</a></li>
+        <li><a href="community.html">Community</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="profile.html" class="cta">My Profile</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Search + sort bar -->
+  <section class="section">
+    <div class="container">
+      <div class="label">Search bar + sort</div>
+      <div class="grid" style="grid-template-columns: 1fr 180px;">
+        <div class="box">Search input — "Search programs, schools, fields…"</div>
+        <div class="box">Sort ▾<small>avg · difficulty · A–Z</small></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Sidebar filters + results -->
+  <section class="section">
+    <div class="container">
+      <div class="sidebar-layout">
+        <!-- Filters -->
+        <aside>
+          <div class="label">Filter panel</div>
+          <div class="box" style="flex-direction:column;align-items:stretch;gap:10px;min-height:340px;">
+            <div class="box" style="min-height:44px;">Location ▾</div>
+            <div class="box" style="min-height:44px;">Career field ▾</div>
+            <div class="box" style="min-height:44px;">Admission difficulty ▾</div>
+            <div class="box" style="min-height:44px;">Tuition range ▾</div>
+            <div class="box" style="min-height:44px;">Apply filters</div>
+          </div>
+        </aside>
+
+        <!-- Results grid -->
+        <div>
+          <div class="label">Results — program / university cards</div>
+          <div class="grid grid-3">
+            <div class="card"><div class="thumb"></div><h3>Program</h3><p>avg · location · difficulty</p></div>
+            <div class="card"><div class="thumb"></div><h3>Program</h3><p>avg · location · difficulty</p></div>
+            <div class="card"><div class="thumb"></div><h3>Program</h3><p>avg · location · difficulty</p></div>
+            <div class="card"><div class="thumb"></div><h3>Program</h3><p>avg · location · difficulty</p></div>
+            <div class="card"><div class="thumb"></div><h3>Program</h3><p>avg · location · difficulty</p></div>
+            <div class="card"><div class="thumb"></div><h3>Program</h3><p>avg · location · difficulty</p></div>
+          </div>
+          <div class="box" style="margin-top:16px;min-height:44px;">Pagination / load more</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="box" style="min-height:40px;">Footer — links, sources, socials</div>
+      <div class="box" style="min-height:40px;">Newsletter / contact</div>
+    </div>
+  </footer>
+</body>
+</html>
