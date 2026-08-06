@@ -74,9 +74,11 @@ function RevealAt({
 function PinnedRoadmap({ steps }: { steps: RoadmapStep[] }) {
   const ref = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] })
-  // Complete the draw by ~0.7 so the line reaches the end and stays full even
-  // if scroll progress tops out a hair under 1 (Lenis/rounding).
-  const pathLength = useTransform(scrollYProgress, [0.06, 0.7], [0, 1])
+  // Draw the line via a growing clip rectangle (in viewBox units, width 1000).
+  // This reliably fills to the very end — unlike motion's pathLength, which
+  // mis-measured with non-scaling-stroke + stretched preserveAspectRatio.
+  // Completes by ~0.55 and clamps at full, so it's solidly drawn while pinned.
+  const revealW = useTransform(scrollYProgress, [0.05, 0.55], [0, 1000])
   const xs = steps.map((_, i) => ((i + 0.5) / steps.length) * 100)
   // Each step reveals in its own slice — all finished by ~0.55 and then held
   // (useTransform clamps at 1), so nothing is mid-fade at the end of the pin.
@@ -100,15 +102,22 @@ function PinnedRoadmap({ steps }: { steps: RoadmapStep[] }) {
           {/* Winding path + markers */}
           <div className="relative mt-16 hidden h-40 sm:block">
             <svg viewBox="0 0 1000 120" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
+              <defs>
+                <clipPath id="roadmap-reveal">
+                  <motion.rect x={0} y={0} height={120} width={revealW} />
+                </clipPath>
+              </defs>
+              {/* faint full track */}
               <path d={PATH_D} fill="none" stroke="var(--color-line)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-              <motion.path
+              {/* blue line, revealed left-to-right by the growing clip */}
+              <path
                 d={PATH_D}
                 fill="none"
                 stroke="var(--color-brand-500)"
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 vectorEffect="non-scaling-stroke"
-                style={{ pathLength }}
+                clipPath="url(#roadmap-reveal)"
               />
             </svg>
             {xs.map((x, i) => {
