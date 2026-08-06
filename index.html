@@ -13,16 +13,17 @@
       rel="stylesheet"
     />
     <title>Admit — find where you actually get in</title>
-    <!-- Set theme before first paint to avoid a flash of the wrong theme -->
+    <!-- Set theme before first paint to avoid a flash. Defaults to light;
+         only uses a stored choice if the user has toggled before. -->
     <script>
       (function () {
         try {
           var t = localStorage.getItem('theme');
-          if (t !== 'light' && t !== 'dark') {
-            t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-          }
+          if (t !== 'light' && t !== 'dark') t = 'light';
           document.documentElement.dataset.theme = t;
-        } catch (e) {}
+        } catch (e) {
+          document.documentElement.dataset.theme = 'light';
+        }
       })();
     </script>
   </head>

@@ -10,9 +10,9 @@ function getInitial(): Theme {
   return 'light'
 }
 
-// Sun/moon theme toggle. Initial theme is set pre-paint by the inline script
-// in index.html (localStorage override, else system preference); this keeps
-// React in sync and persists the user's choice.
+// Sun/moon theme toggle. The site defaults to light (set pre-paint by the
+// inline script in index.html); this keeps React in sync and persists the
+// user's choice once they toggle.
 export default function ThemeToggle({ className = '' }: { className?: string }) {
   const [theme, setTheme] = useState<Theme>(getInitial)
 
@@ -25,23 +25,6 @@ export default function ThemeToggle({ className = '' }: { className?: string }) 
       /* ignore */
     }
   }, [theme])
-
-  // If the user hasn't explicitly chosen, follow live system changes.
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)')
-    const onChange = (e: MediaQueryListEvent) => {
-      const stored = (() => {
-        try {
-          return localStorage.getItem('theme')
-        } catch {
-          return null
-        }
-      })()
-      if (stored !== 'light' && stored !== 'dark') setTheme(e.matches ? 'dark' : 'light')
-    }
-    mq.addEventListener('change', onChange)
-    return () => mq.removeEventListener('change', onChange)
-  }, [])
 
   const isDark = theme === 'dark'
 

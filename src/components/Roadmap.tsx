@@ -74,11 +74,14 @@ function RevealAt({
 function PinnedRoadmap({ steps }: { steps: RoadmapStep[] }) {
   const ref = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end end'] })
-  const pathLength = useTransform(scrollYProgress, [0.1, 0.85], [0, 1])
+  // Complete the draw by ~0.7 so the line reaches the end and stays full even
+  // if scroll progress tops out a hair under 1 (Lenis/rounding).
+  const pathLength = useTransform(scrollYProgress, [0.06, 0.7], [0, 1])
   const xs = steps.map((_, i) => ((i + 0.5) / steps.length) * 100)
-  // Each step reveals in its own slice of the pinned scroll.
+  // Each step reveals in its own slice — all finished by ~0.55 and then held
+  // (useTransform clamps at 1), so nothing is mid-fade at the end of the pin.
   const win = (i: number) => {
-    const start = 0.18 + i * (0.62 / steps.length)
+    const start = 0.14 + i * (0.4 / steps.length)
     return { start, end: start + 0.14 }
   }
 
