@@ -417,6 +417,110 @@ export const PROGRAM_INFO: Record<string, ProgramInfo> = {
 
   // --- Western ---
 
+  'tmu::nursing-at-tmu': {
+    programId: 'tmu::nursing-at-tmu',
+    requiredCourses: [
+      'Grade 12 U English/anglais (ENG4U/EAE4U preferred)',
+      'Grade 12 U Chemistry (SCH4U)',
+      'Grade 12 U Biology (SBI4U)',
+      'Grade 11 U/M or Grade 12 U Mathematics (one of MCF3M, MCR3U, MCV4U, MDM4U, MHF4U)',
+    ],
+    minCourseGrade: 'Minimum 70% in each required course',
+    statedAverage: 'An overall average of 70% is required for consideration',
+    supplementary: 'CASPER is explicitly not required for this program',
+    sources: [
+      {
+        label: 'Nursing — Collaborative Program (BScN), Toronto Metropolitan University',
+        url: 'https://www.torontomu.ca/programs/undergraduate/nursing-collaborative/',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
+  // --- Guelph. All four come from one Ontario requirements page, which also
+  // states estimated admission ranges. The page is explicit that exact
+  // cut-offs depend on applications received and space available. ---
+
+  'guelph::bio-medical-science': {
+    programId: 'guelph::bio-medical-science',
+    requiredCourses: [
+      'English (ENG4U)',
+      'Advanced Functions (MHF4U)',
+      'Two of: Biology (SBI4U), Chemistry (SCH4U), Physics (SPH4U)',
+      'Two additional 4U or 4M courses',
+    ],
+    statedAverage: 'Estimated admission range 85–91%',
+    notes: [
+      'Guelph states exact cut-offs are determined by the quantity and quality of applications received and the space available.',
+    ],
+    sources: [
+      {
+        label: 'Ontario admission requirements — University of Guelph',
+        url: 'https://www.uoguelph.ca/admission/undergraduate/requirements/ontario',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
+  'guelph::animal-biology': {
+    programId: 'guelph::animal-biology',
+    requiredCourses: [
+      'English (ENG4U)',
+      'Advanced Functions (MHF4U)',
+      'Two of: Biology (SBI4U), Chemistry (SCH4U), Physics (SPH4U)',
+      'Two additional 4U or 4M courses',
+    ],
+    statedAverage: 'Estimated admission range 85–91%',
+    sources: [
+      {
+        label: 'Ontario admission requirements — University of Guelph',
+        url: 'https://www.uoguelph.ca/admission/undergraduate/requirements/ontario',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
+  'guelph::science-biological-science': {
+    programId: 'guelph::science-biological-science',
+    requiredCourses: [
+      'English (ENG4U)',
+      'Advanced Functions (MHF4U)',
+      'Two of: Biology (SBI4U), Chemistry (SCH4U), Physics (SPH4U)',
+      'Two additional 4U or 4M courses',
+    ],
+    statedAverage: 'Estimated admission range 80–85%',
+    sources: [
+      {
+        label: 'Ontario admission requirements — University of Guelph',
+        url: 'https://www.uoguelph.ca/admission/undergraduate/requirements/ontario',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
+  // Guelph publishes one Bachelor of Engineering requirement set covering its
+  // engineering streams, including this co-op entry.
+  'guelph::mechanical-engineering-co-op': {
+    programId: 'guelph::mechanical-engineering-co-op',
+    requiredCourses: [
+      'English (ENG4U)',
+      'Advanced Functions (MHF4U)',
+      'Calculus and Vectors (MCV4U)',
+      'Chemistry (SCH4U)',
+      'Physics (SPH4U)',
+      'One additional 4U or 4M course',
+    ],
+    statedAverage: 'Estimated admission range 84–89%',
+    coop: 'Students are admitted directly to the co-op program',
+    sources: [
+      {
+        label: 'Ontario admission requirements — University of Guelph',
+        url: 'https://www.uoguelph.ca/admission/undergraduate/requirements/ontario',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
   'western::ivey-aeo': {
     programId: 'western::ivey-aeo',
     requiredCourses: [

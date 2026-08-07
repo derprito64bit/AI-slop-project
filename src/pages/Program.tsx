@@ -316,6 +316,16 @@ function RequirementsTab({ program, info }: { program: ProgramType; info: Progra
         <Fact label="Length" value={info.lengthYears} />
       </dl>
 
+      {/* Caveats the university itself attaches to these numbers belong beside
+          them, not only on the General tab. */}
+      {info.notes?.length ? (
+        <ul className="mt-6 space-y-2">
+          {info.notes.map((n) => (
+            <li key={n} className="text-sm leading-relaxed text-slate">— {n}</li>
+          ))}
+        </ul>
+      ) : null}
+
       <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate">
         These are the university’s own stated requirements — separate from the community-reported
         averages under Analytics. Requirements change year to year, so confirm against the
