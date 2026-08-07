@@ -5,6 +5,8 @@ import {
   sortPrograms,
   queryPrograms,
   difficultyBand,
+  findProgram,
+  similarPrograms,
 } from './search'
 import type { Program, University } from '../data/types'
 
@@ -127,6 +129,38 @@ describe('sortPrograms', () => {
     const before = programs.map((p) => p.id)
     sortPrograms(programs, 'average-desc')
     expect(programs.map((p) => p.id)).toEqual(before)
+  })
+})
+
+describe('findProgram', () => {
+  it('finds a program from its URL parts', () => {
+    expect(findProgram(programs, 'waterloo', 'computer-science')?.name).toBe('Computer Science')
+  })
+
+  it('requires both parts to match, so slugs are not shared across schools', () => {
+    expect(findProgram(programs, 'mcmaster', 'computer-science')).toBeNull()
+  })
+
+  it('returns null for unknown ids instead of throwing', () => {
+    expect(findProgram(programs, 'nowhere', 'nothing')).toBeNull()
+  })
+})
+
+describe('similarPrograms', () => {
+  it('returns other programs in the same field', () => {
+    const cs = programs[0]
+    const alsoCs = mk({ id: 'mcmaster::cs', universityId: 'mcmaster', name: 'Computing', field: 'computer-science', totalReports: 8 })
+    const out = similarPrograms([...programs, alsoCs], cs)
+    expect(out.map((p) => p.id)).toEqual(['mcmaster::cs'])
+  })
+
+  it('never includes the program itself', () => {
+    expect(similarPrograms(programs, programs[0]).some((p) => p.id === programs[0].id)).toBe(false)
+  })
+
+  it('excludes programs without enough data to show a median', () => {
+    const thin = mk({ id: 'x::y', universityId: 'ubc', name: 'Thin CS', field: 'computer-science', insufficientData: true })
+    expect(similarPrograms([...programs, thin], programs[0]).some((p) => p.id === 'x::y')).toBe(false)
   })
 })
 
