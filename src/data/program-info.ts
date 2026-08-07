@@ -196,7 +196,179 @@ export const PROGRAM_INFO: Record<string, ProgramInfo> = {
     verified: '2026-08-07',
   },
 
+  'toronto::rotman-commerce': {
+    programId: 'toronto::rotman-commerce',
+    requiredCourses: [
+      'English 4U (ENG4U)',
+      'Calculus & Vectors 4U (MCV4U)',
+      'Six Grade 12 U/M subjects in total',
+    ],
+    statedAverage:
+      'An overall average of all Grade 11 and 12 courses in the mid-high 80s or above is recommended',
+    supplementary: 'Rotman Commerce Supplemental Application required',
+    sources: [
+      {
+        label: 'Ontario High School Applicants — Rotman Commerce',
+        url: 'https://rotmancommerce.utoronto.ca/future-students/ontario-applicants/',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
+  // Laurier publishes a consistent per-program page with explicit minimums.
+  'laurier::business-administration-bba': {
+    programId: 'laurier::business-administration-bba',
+    requiredCourses: [
+      'Advanced Functions at 70%',
+      'English at 70%',
+      'One of Calculus and Vectors or Data Management at 60%',
+    ],
+    statedAverage: 'Admission average: high 80s',
+    lengthYears: '4 years',
+    coop: 'Co-op available — apply in first year; three four-month work terms (12 months total) between second and fourth year',
+    sources: [
+      {
+        label: 'Business Administration (BBA) — Wilfrid Laurier University',
+        url: 'https://www.wlu.ca/programs/business-and-economics/undergraduate/business-administration-bba/index.html',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
+  'laurier::health-science': {
+    programId: 'laurier::health-science',
+    requiredCourses: [
+      'English at 60%',
+      'Advanced Functions at 60%',
+      'Biology at 60%',
+      'Chemistry at 60%',
+    ],
+    statedAverage: 'Average admission range: low 80s',
+    lengthYears: '4 years',
+    sources: [
+      {
+        label: 'Health Sciences (BSc) — Wilfrid Laurier University',
+        url: 'https://www.wlu.ca/programs/science/undergraduate/health-sciences-bsc/index.html',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
+  'york::schulich-bba': {
+    programId: 'york::schulich-bba',
+    requiredCourses: ['ENG4U', 'MHF4U', 'MCV4U or MDM4U'],
+    minCourseGrade: 'Minimum 70% in ENG4U and MHF4U',
+    statedAverage:
+      'Aim for a Grade 12 GPA in the high 80s to low 90s; the minimum cutoff in past years has ranged between 91% and 92%',
+    supplementary: 'Schulich Supplementary Application required, alongside the OUAC application',
+    notes: ['Required courses must form part of the applicant’s top six Grade 12 courses.'],
+    sources: [
+      {
+        label: 'BBA Admission Requirements — Schulich School of Business',
+        url: 'https://schulich.yorku.ca/admissions/admissions-requirements/bba/',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
+  'queens::life-science-and-biochemistry': {
+    programId: 'queens::life-science-and-biochemistry',
+    requiredCourses: ['English 4U', 'Calculus and Vectors 4U', 'Biology 4U', 'Chemistry 4U'],
+    notes: ['Two additional courses may be 4U or 4M.'],
+    sources: [
+      {
+        label: "Ontario admission requirements — Queen's University",
+        url: 'https://www.queensu.ca/admission/applying/admission-requirements/ontario',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
+  'queens::computing': {
+    programId: 'queens::computing',
+    requiredCourses: ['English 4U', 'Advanced Functions 4U', 'Calculus and Vectors 4U'],
+    notes: ['Three additional courses may be 4U or 4M.'],
+    sources: [
+      {
+        label: "Ontario admission requirements — Queen's University",
+        url: 'https://www.queensu.ca/admission/applying/admission-requirements/ontario',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
+  'queens::nursing': {
+    programId: 'queens::nursing',
+    requiredCourses: [
+      'English 4U (minimum 75%)',
+      'Biology 4U',
+      'Chemistry 4U',
+      'Any 4U Mathematics course',
+    ],
+    minCourseGrade: 'Minimum 75% in English 4U',
+    supplementary: 'Mandatory supplementary application',
+    notes: ['Two additional courses may be 4U or 4M.'],
+    sources: [
+      {
+        label: "Ontario admission requirements — Queen's University",
+        url: 'https://www.queensu.ca/admission/applying/admission-requirements/ontario',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
+  'queens::science': {
+    programId: 'queens::science',
+    requiredCourses: [
+      'English 4U',
+      'Calculus and Vectors 4U',
+      'Two of: Biology 4U, Chemistry 4U, or Physics 4U',
+    ],
+    notes: ['Two additional courses may be 4U or 4M.'],
+    sources: [
+      {
+        label: "Ontario admission requirements — Queen's University",
+        url: 'https://www.queensu.ca/admission/applying/admission-requirements/ontario',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
+  'queens::art': {
+    programId: 'queens::art',
+    requiredCourses: ['English 4U'],
+    notes: ['Five additional courses may be either 4U or 4M.'],
+    sources: [
+      {
+        label: "Ontario admission requirements — Queen's University",
+        url: 'https://www.queensu.ca/admission/applying/admission-requirements/ontario',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
   // --- Western ---
+
+  'western::health-science': {
+    programId: 'western::health-science',
+    requiredCourses: [
+      'Grade 12U English (ENG4U)',
+      'Grade 12U Biology (SBI4U)',
+      'One of: Advanced Functions, Calculus and Vectors, or Math of Data Management',
+    ],
+    minCourseGrade: 'Minimum 80% average across six Grade 12 U/M courses',
+    notes: [
+      'Six Grade 12 U or M-level credits required in total.',
+      'Admission is competitive; the page states that achieving the minimum average does not guarantee admission.',
+    ],
+    sources: [
+      {
+        label: 'Admissions — School of Health Studies, Western University',
+        url: 'https://www.uwo.ca/fhs/shs/undergraduate/admissions.html',
+      },
+    ],
+    verified: '2026-08-07',
+  },
 
   'western::medical-science': {
     programId: 'western::medical-science',
