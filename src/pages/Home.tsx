@@ -74,8 +74,9 @@ export default function Home() {
     <>
       {/* ================= HERO ================= */}
       <section className="relative overflow-hidden">
-        {/* soft background wash */}
-        <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-b from-brand-50 to-paper" />
+        {/* soft background wash + graph-paper texture (decorative) */}
+        <div className="pointer-events-none absolute inset-0 -z-20 bg-gradient-to-b from-brand-50 to-paper" />
+        <div className="bg-grid pattern-fade pointer-events-none absolute inset-0 -z-10" aria-hidden="true" />
         {/* parallax accent blob — drifts as you scroll */}
         <Parallax distance={70} className="pointer-events-none absolute -right-32 -top-32 -z-10">
           <div className="h-96 w-96 rounded-full bg-brand-100 opacity-60 blur-3xl" />
@@ -83,19 +84,23 @@ export default function Home() {
 
         {/* Floating editorial photos — desktop only. Squared frames, slight tilt.
             Swap the placeholders for real campus/student photos later. */}
-        <div className="pointer-events-none absolute inset-y-0 right-0 z-0 hidden w-1/2 lg:block" aria-hidden="true">
-          <Parallax distance={38} className="absolute right-16 top-20 w-56 rotate-3">
-            <PhotoFrame label="Campus life" gradient="from-brand-100 to-brand-50" ratio="4 / 5" />
-          </Parallax>
-          <Parallax distance={80} className="absolute right-52 top-52 w-44 -rotate-3">
-            <PhotoFrame label="Students" gradient="from-cloud to-brand-100" ratio="1 / 1" />
-          </Parallax>
-          <Parallax distance={56} className="absolute right-6 top-80 w-40 rotate-6">
-            <PhotoFrame label="On campus" gradient="from-brand-50 to-cloud" ratio="4 / 3" />
-          </Parallax>
+        {/* Anchored to the page container, not the viewport edge — otherwise on a
+            wide monitor these drift hundreds of px away from the headline. */}
+        <div className="pointer-events-none absolute inset-0 z-0 hidden lg:block" aria-hidden="true">
+          <div className="container-page relative h-full">
+            <Parallax distance={38} className="absolute right-0 top-16 w-52 rotate-3 2xl:w-64 3xl:w-72">
+              <PhotoFrame label="Campus life" gradient="from-brand-100 to-brand-50" ratio="4 / 5" />
+            </Parallax>
+            <Parallax distance={80} className="absolute right-48 top-48 w-40 -rotate-3 2xl:right-56 2xl:w-48 3xl:right-64 3xl:w-56">
+              <PhotoFrame label="Students" gradient="from-cloud to-brand-100" ratio="1 / 1" />
+            </Parallax>
+            <Parallax distance={56} className="absolute right-6 top-80 w-36 rotate-6 2xl:w-44 3xl:w-52">
+              <PhotoFrame label="On campus" gradient="from-brand-50 to-cloud" ratio="4 / 3" />
+            </Parallax>
+          </div>
         </div>
 
-        <div className="relative z-10 mx-auto max-w-6xl px-6 pb-24 pt-20 sm:pt-28">
+        <div className="relative z-10 container-page pb-24 pt-20 sm:pt-28">
           <motion.p
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -109,7 +114,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-4 max-w-3xl font-display text-5xl font-600 leading-[1.05] tracking-tight text-ink sm:text-6xl"
+            className="mt-4 max-w-3xl font-display text-display-1 font-600 text-ink"
           >
             Find where you <span className="text-brand-500">actually</span> get in.
           </motion.h1>
@@ -118,7 +123,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-6 max-w-xl text-lg text-slate"
+            className="mt-6 max-w-xl text-lead text-slate"
           >
             Official sites give vague cutoffs. We use real admission data — personalized to
             your grades and interests — so you know your true odds.
@@ -169,7 +174,7 @@ export default function Home() {
       {/* Rotating band of university images. Placeholders for now — set
           `img` on each item in src/data/universities.ts to use real photos. */}
       <section className="py-10">
-        <Reveal className="mx-auto mb-6 max-w-6xl px-6">
+        <Reveal className="container-page mb-6">
           <Eyebrow>Universities on the platform</Eyebrow>
         </Reveal>
         <Carousel
@@ -189,12 +194,14 @@ export default function Home() {
       <Roadmap steps={STEPS} pinned />
 
       {/* ================= FEATURED PROGRAMS ================= */}
-      <section className="bg-cloud">
-        <div className="mx-auto max-w-6xl px-6 py-20">
+      <section className="relative bg-surface">
+        {/* dot grid (decorative) */}
+        <div className="bg-dots pattern-fade pointer-events-none absolute inset-0" aria-hidden="true" />
+        <div className="relative container-page py-20">
           <Reveal>
             <div className="flex items-end justify-between gap-4">
               <div>
-                <h2 className="font-display text-3xl font-600 text-ink">Popular right now</h2>
+                <h2 className="font-display text-display-2 font-600 text-ink">Popular right now</h2>
                 <p className="mt-2 text-slate">A peek at programs students are comparing.</p>
               </div>
               <Link to="/explore" className="hidden text-sm font-600 text-brand-600 hover:text-brand-700 sm:block">
@@ -222,7 +229,7 @@ export default function Home() {
         </div>
 
         {/* Rotating carousel of popular programs — placeholder images for now. */}
-        <Reveal className="mx-auto max-w-6xl px-6 pb-4">
+        <Reveal className="container-page pb-4">
           <Eyebrow>Trending programs</Eyebrow>
         </Reveal>
         <div className="pb-16">
@@ -239,9 +246,9 @@ export default function Home() {
       </section>
 
       {/* ================= VALUES ================= */}
-      <section className="mx-auto max-w-6xl px-6 py-20">
+      <section className="container-page py-20">
         <Reveal>
-          <h2 className="max-w-2xl font-display text-3xl font-600 text-ink">
+          <h2 className="max-w-2xl font-display text-display-2 font-600 text-ink">
             Built to be honest — the part other sites skip.
           </h2>
         </Reveal>
@@ -261,10 +268,10 @@ export default function Home() {
       {/* Placeholder voices — replaced by real community stats later.
           Faces/avatars go in the circle once we have them. */}
       <section className="bg-cloud">
-        <div className="mx-auto max-w-6xl px-6 py-20">
+        <div className="container-page py-20">
           <Reveal>
             <Eyebrow>From students like you</Eyebrow>
-            <h2 className="mt-2 max-w-2xl font-display text-3xl font-600 text-ink">
+            <h2 className="mt-2 max-w-2xl font-display text-display-2 font-600 text-ink">
               You’re not behind. You just need better information.
             </h2>
           </Reveal>
@@ -296,10 +303,10 @@ export default function Home() {
       </section>
 
       {/* ================= CTA ================= */}
-      <section className="mx-auto max-w-6xl px-6 pb-8 pt-20">
+      <section className="container-page pb-8 pt-20">
         <Reveal>
           <div className="overflow-hidden rounded-3xl bg-brand-700 px-8 py-16 text-center sm:px-16">
-            <h2 className="mx-auto max-w-2xl font-display text-3xl font-600 text-white sm:text-4xl">
+            <h2 className="mx-auto max-w-2xl font-display text-display-2 font-600 text-white">
               Stop guessing. See your real odds.
             </h2>
             <p className="mx-auto mt-4 max-w-lg text-white/80">
@@ -347,13 +354,15 @@ function StatsBand() {
   const opacity = useTransform(scrollYProgress, [0, 0.4], [0.2, 1])
 
   return (
-    <section ref={ref} className="border-y border-line bg-cloud">
-      <div className="mx-auto max-w-6xl px-6 py-16 text-center">
+    <section ref={ref} className="relative border-y border-line bg-cloud">
+      {/* notebook rules behind the numbers (decorative) */}
+      <div className="bg-ruled pattern-fade pointer-events-none absolute inset-0" aria-hidden="true" />
+      <div className="relative container-page py-16 text-center">
         <Reveal>
           <p className="text-sm font-500 uppercase tracking-wider text-brand-500">
             What we provide to you
           </p>
-          <h2 className="mt-2 font-display text-2xl font-600 text-ink sm:text-3xl">
+          <h2 className="mt-2 font-display text-display-3 font-600 text-ink">
             Everything you need, in one place.
           </h2>
         </Reveal>
@@ -364,7 +373,7 @@ function StatsBand() {
         >
           {STATS.map((s) => (
             <div key={s.label} className="text-center">
-              <div className="font-display text-5xl font-600 text-brand-600 sm:text-6xl">
+              <div className="font-display text-display-1 font-600 text-brand-600">
                 <CountUp end={s.end} suffix={s.suffix} />
               </div>
               <p className="mt-2 text-sm text-slate">{s.label}</p>

@@ -21,7 +21,7 @@ export default function Navbar() {
         scrolled ? 'bg-paper/90 backdrop-blur border-b border-line' : 'bg-transparent border-b border-transparent'
       }`}
     >
-      <nav className="mx-auto flex h-16 max-w-6xl items-center justify-between px-6">
+      <nav className="container-page flex h-16 items-center justify-between px-6">
         <Link to="/" className="font-display text-xl font-600 tracking-tight text-ink">
           {BRAND}<span className="text-brand-500">.</span>
         </Link>

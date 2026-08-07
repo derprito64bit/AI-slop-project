@@ -3,6 +3,7 @@ import Layout from './components/Layout'
 import SmoothScroll from './components/SmoothScroll'
 import Home from './pages/Home'
 import Placeholder from './pages/Placeholder'
+import ExplorePreview from './pages/ExplorePreview'
 
 // Section pages beyond Home are placeholders for now — each is being
 // built on its own branch (feature/explore, feature/program, ...).
@@ -13,10 +14,7 @@ export default function App() {
       <Layout>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route
-            path="/explore"
-            element={<Placeholder title="Explore programs" blurb="Search and filter every program by location, field, difficulty, and tuition." />}
-          />
+          <Route path="/explore" element={<ExplorePreview />} />
           <Route
             path="/program"
             element={<Placeholder title="Program detail" blurb="The full breakdown for a program — requirements, accepted averages, and how you align." />}
