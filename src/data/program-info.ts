@@ -90,6 +90,74 @@ export const PROGRAM_INFO: Record<string, ProgramInfo> = {
     verified: '2026-08-07',
   },
 
+  // Waterloo's engineering streams share the same five prerequisites at 70%,
+  // but each program page states its own admission range and co-op status, so
+  // each is recorded from its own page rather than inherited from the faculty.
+  'waterloo::mechanical-engineering': {
+    programId: 'waterloo::mechanical-engineering',
+    requiredCourses: [
+      'Advanced Functions',
+      'Calculus and Vectors',
+      'Chemistry',
+      'Physics',
+      'English (ENG4U)',
+    ],
+    minCourseGrade: 'Minimum final grade of 70% in each required course',
+    statedAverage: 'Individual selection from the high 80s to low 90s',
+    coop: 'Co-op only — a regular study option is not available',
+    supplementary: 'Admission Information Form (AIF) required',
+    sources: [
+      {
+        label: 'Mechanical Engineering — University of Waterloo',
+        url: 'https://uwaterloo.ca/future-students/programs/mechanical-engineering',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::computer-engineering': {
+    programId: 'waterloo::computer-engineering',
+    requiredCourses: [
+      'Advanced Functions',
+      'Calculus and Vectors',
+      'Chemistry',
+      'Physics',
+      'English (ENG4U)',
+    ],
+    minCourseGrade: 'Minimum final grade of 70% in each required course',
+    statedAverage: 'Individual selection from the high 80s to low 90s',
+    coop: 'Co-op only — not available as a regular program',
+    supplementary: 'Admission Information Form (AIF) required',
+    sources: [
+      {
+        label: 'Computer Engineering — University of Waterloo',
+        url: 'https://uwaterloo.ca/future-students/programs/computer-engineering',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::electrical-engineering': {
+    programId: 'waterloo::electrical-engineering',
+    requiredCourses: [
+      'Advanced Functions',
+      'Calculus and Vectors',
+      'Physics',
+      'Chemistry',
+      'English (ENG4U)',
+    ],
+    minCourseGrade: 'Minimum final grade of 70% in each required course',
+    statedAverage: 'Individual selection from the high 80s to low 90s',
+    coop: 'Co-op only — not available as a regular program',
+    sources: [
+      {
+        label: 'Electrical Engineering — University of Waterloo',
+        url: 'https://uwaterloo.ca/future-students/programs/electrical-engineering',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
   // Waterloo's CS page covers the program with and without co-op, so the same
   // requirements apply to both dataset entries.
   'waterloo::computer-science': {
@@ -348,6 +416,42 @@ export const PROGRAM_INFO: Record<string, ProgramInfo> = {
   },
 
   // --- Western ---
+
+  'western::ivey-aeo': {
+    programId: 'western::ivey-aeo',
+    requiredCourses: [
+      'English (Grade 12)',
+      'A mathematics course for university-bound students',
+    ],
+    statedAverage: 'A low 90% average in your best Grade 12 courses, including English',
+    notes: [
+      'AEO is conditional, pre-admission status to the HBA Program — students complete two years at Western (or Huron/King’s) first.',
+      'Ivey states a holistic 50/50 balance between academic performance and demonstrated leadership.',
+    ],
+    sources: [
+      {
+        label: 'Ivey AEO — Apply From High School, Ivey HBA',
+        url: 'https://www.ivey.uwo.ca/hba/admissions/secondary-school-students/',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
+  // Partial on purpose: McMaster's Business page states length and the
+  // internship stream but not prerequisites or an admission range, and the
+  // requirements link goes to an interactive tool with no static content.
+  'mcmaster::business-i': {
+    programId: 'mcmaster::business-i',
+    lengthYears: '4 years; 5 years for the BCom with Internship stream',
+    coop: 'BCom with Internship — a 5-year degree with a mandatory internship',
+    sources: [
+      {
+        label: 'Business — McMaster Future Students',
+        url: 'https://future.mcmaster.ca/programs/business/',
+      },
+    ],
+    verified: '2026-08-07',
+  },
 
   'western::health-science': {
     programId: 'western::health-science',
