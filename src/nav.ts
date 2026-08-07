@@ -12,4 +12,4 @@ export const NAV_LINKS: NavLink[] = [
 ]
 
 // Working product name (placeholder — easy to change later).
-export const BRAND = 'Admit'
+export const BRAND = 'GOON'
