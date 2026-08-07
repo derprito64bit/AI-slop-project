@@ -1,9 +1,11 @@
 import { Routes, Route } from 'react-router-dom'
 import Layout from './components/Layout'
 import SmoothScroll from './components/SmoothScroll'
+import { Navigate } from 'react-router-dom'
 import Home from './pages/Home'
 import Placeholder from './pages/Placeholder'
 import ExplorePreview from './pages/ExplorePreview'
+import Program from './pages/Program'
 
 // Section pages beyond Home are placeholders for now — each is being
 // built on its own branch (feature/explore, feature/program, ...).
@@ -15,10 +17,11 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/explore" element={<ExplorePreview />} />
-          <Route
-            path="/program"
-            element={<Placeholder title="Program detail" blurb="The full breakdown for a program — requirements, accepted averages, and how you align." />}
-          />
+          {/* Program pages are reached by opening a card, not from the nav.
+              The id is `${universityId}::${slug}` — split across two segments
+              so the `::` never lands in a URL. */}
+          <Route path="/program/:universityId/:slug" element={<Program />} />
+          <Route path="/program" element={<Navigate to="/explore" replace />} />
           <Route
             path="/profile"
             element={<Placeholder title="My Profile" blurb="Build your profile and get matched programs with your real admission odds." />}

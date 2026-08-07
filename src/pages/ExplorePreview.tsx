@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
 import Eyebrow from '../components/ui/Eyebrow'
 import Tag from '../components/ui/Tag'
 import UniversityMark from '../components/UniversityMark'
@@ -73,7 +74,10 @@ export default function ExplorePreview() {
               const school = uniName.get(p.universityId) ?? p.universityId
               return (
                 <li key={p.id} className="flex">
-                  <article className="group flex w-full flex-col overflow-hidden rounded-xl border border-line bg-paper transition-shadow hover:shadow-[0_12px_34px_rgba(20,24,31,0.09)]">
+                  <Link
+                    to={`/program/${p.universityId}/${p.slug}`}
+                    className="group flex w-full flex-col overflow-hidden rounded-xl border border-line bg-paper transition-shadow hover:shadow-[0_12px_34px_rgba(20,24,31,0.09)]"
+                  >
                     {/* --- image band --- */}
                     <div className={`relative flex aspect-[16/9] items-center justify-center bg-gradient-to-br ${bannerFor(p.universityId)}`}>
                       <UniversityMark
@@ -93,7 +97,9 @@ export default function ExplorePreview() {
 
                     {/* --- text below --- */}
                     <div className="flex flex-1 flex-col p-5">
-                      <h2 className="font-600 leading-snug text-ink">{p.name}</h2>
+                      <h2 className="font-600 leading-snug text-ink group-hover:text-brand-600">
+                        {p.name}
+                      </h2>
                       <p className="mt-1 text-sm text-slate">{school}</p>
 
                       <div className="mt-auto pt-5">
@@ -111,7 +117,7 @@ export default function ExplorePreview() {
                         )}
                       </div>
                     </div>
-                  </article>
+                  </Link>
                 </li>
               )
             })}

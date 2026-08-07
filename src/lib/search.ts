@@ -128,6 +128,30 @@ export function sortPrograms(programs: Program[], sort: SortKey): Program[] {
   }
 }
 
+/**
+ * Find one program from its URL parts. Program ids are `${universityId}::${slug}`,
+ * but the `::` is ugly in a URL, so routes carry the two parts separately.
+ */
+export function findProgram(
+  programs: Program[],
+  universityId: string,
+  slug: string,
+): Program | null {
+  return programs.find((p) => p.universityId === universityId && p.slug === slug) ?? null
+}
+
+/** Other programs in the same field, best-reported first. Excludes the program itself. */
+export function similarPrograms(
+  programs: Program[],
+  program: Program,
+  limit = 6,
+): Program[] {
+  return programs
+    .filter((p) => p.id !== program.id && p.field === program.field && !p.insufficientData)
+    .sort((a, b) => b.totalReports - a.totalReports)
+    .slice(0, limit)
+}
+
 /** Search + filter + sort in one call — what the Explore page will use. */
 export function queryPrograms(
   programs: Program[],

@@ -5,7 +5,8 @@ export type NavLink = { label: string; to: string; cta?: boolean }
 export const NAV_LINKS: NavLink[] = [
   { label: 'Home', to: '/' },
   { label: 'Explore', to: '/explore' },
-  { label: 'Program', to: '/program' },
+  // No "Program" entry: a program page is reached by opening a card in
+  // Explore, so it isn't a standalone destination.
   { label: 'Community', to: '/community' },
   { label: 'About', to: '/about' },
   { label: 'My Profile', to: '/profile', cta: true },
