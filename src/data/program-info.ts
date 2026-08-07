@@ -21,6 +21,8 @@ export type ProgramInfo = {
   programId: string
   /** Ontario 4U/4M courses the official page lists as required */
   requiredCourses?: string[]
+  /** courses the page recommends but does not require */
+  recommendedCourses?: string[]
   /** minimum grade per required course, as stated */
   minCourseGrade?: string
   /** admission average as the university states it — never our own estimate */
@@ -87,6 +89,135 @@ export const PROGRAM_INFO: Record<string, ProgramInfo> = {
     ],
     verified: '2026-08-07',
   },
+
+  // Waterloo's CS page covers the program with and without co-op, so the same
+  // requirements apply to both dataset entries.
+  'waterloo::computer-science': {
+    programId: 'waterloo::computer-science',
+    requiredCourses: [
+      'Advanced Functions',
+      'Calculus and Vectors',
+      'Any Grade 12 U English',
+      'One other 4U course',
+    ],
+    statedAverage: 'Admission average in the low to mid-90s, through individual selection',
+    coop: 'Available as a co-op program',
+    supplementary: 'Admission Information Form (AIF) required',
+    sources: [
+      {
+        label: 'Computer Science — University of Waterloo',
+        url: 'https://uwaterloo.ca/future-students/programs/computer-science',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::computer-science-co-op': {
+    programId: 'waterloo::computer-science-co-op',
+    requiredCourses: [
+      'Advanced Functions',
+      'Calculus and Vectors',
+      'Any Grade 12 U English',
+      'One other 4U course',
+    ],
+    statedAverage: 'Admission average in the low to mid-90s, through individual selection',
+    coop: 'Available as a co-op program',
+    supplementary: 'Admission Information Form (AIF) required',
+    sources: [
+      {
+        label: 'Computer Science — University of Waterloo',
+        url: 'https://uwaterloo.ca/future-students/programs/computer-science',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
+  // --- Queen's. All three below come from one Ontario requirements page. ---
+
+  'queens::health-science': {
+    programId: 'queens::health-science',
+    requiredCourses: [
+      'English 4U (minimum 80%)',
+      'Biology 4U',
+      'Chemistry 4U',
+      'Advanced Functions 4U or Calculus and Vectors 4U',
+    ],
+    minCourseGrade: 'Minimum 80% in English 4U',
+    supplementary: 'Supplementary application mandatory',
+    notes: ['Two additional courses may be 4U or 4M.'],
+    sources: [
+      {
+        label: "Ontario admission requirements — Queen's University",
+        url: 'https://www.queensu.ca/admission/applying/admission-requirements/ontario',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
+  'queens::smith-engineering-common-first-year': {
+    programId: 'queens::smith-engineering-common-first-year',
+    requiredCourses: [
+      'English 4U',
+      'Calculus and Vectors 4U',
+      'Chemistry 4U',
+      'Physics 4U',
+      'Advanced Functions 4U',
+    ],
+    notes: [
+      'These requirements apply to all Smith Engineering programs listed, including Chemical, Civil, Computer, Mining, and Mechatronics and Robotics.',
+    ],
+    sources: [
+      {
+        label: "Ontario admission requirements — Queen's University",
+        url: 'https://www.queensu.ca/admission/applying/admission-requirements/ontario',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
+  'queens::smith-commerce': {
+    programId: 'queens::smith-commerce',
+    requiredCourses: [
+      'English 4U',
+      'Calculus and Vectors 4U',
+      'One additional 4U Mathematics course',
+    ],
+    minCourseGrade: 'Minimum 80% in all three prerequisite courses',
+    supplementary: 'Supplementary application mandatory',
+    notes: [
+      'Three additional courses may be 4U or 4M, with no more than two 4M courses from the same discipline.',
+    ],
+    sources: [
+      {
+        label: "Ontario admission requirements — Queen's University",
+        url: 'https://www.queensu.ca/admission/applying/admission-requirements/ontario',
+      },
+    ],
+    verified: '2026-08-07',
+  },
+
+  // --- Western ---
+
+  'western::medical-science': {
+    programId: 'western::medical-science',
+    requiredCourses: [
+      'English (ENG4U)',
+      'Biology (SBI4U)',
+      'Calculus and Vectors (MCV4U)',
+      'Chemistry (SCH4U)',
+    ],
+    recommendedCourses: ['Physics (SPH4U)'],
+    notes: [
+      'Applicants who do not enter the Medical Sciences program in Year One can still apply to the BMSc through other pathways.',
+    ],
+    sources: [
+      {
+        label: 'Applying from Ontario high schools — BMSc, Western University',
+        url: 'https://www.schulich.uwo.ca/bmsc/future-students/applying/from-ontario-high-schools.html',
+      },
+    ],
+    verified: '2026-08-07',
+  },
 }
 
 // ------------------------------------------------------------ universities
@@ -96,7 +227,40 @@ export const PROGRAM_INFO: Record<string, ProgramInfo> = {
  * adds campuses, contact routes and fees, which need their own sourcing.
  * Deliberately sparse — entries are added as each is verified.
  */
-export const UNIVERSITY_INFO: Record<string, UniversityInfo> = {}
+export const UNIVERSITY_INFO: Record<string, UniversityInfo> = {
+  queens: {
+    id: 'queens',
+    admissionsUrl: 'https://www.queensu.ca/admission/',
+    admissionsEmail: 'admission@queensu.ca',
+    admissionsPhone: '+1 613-533-6100',
+    campuses: ['Kingston (Gordon Hall, 74 Union Street)'],
+    sources: [
+      { label: "Undergraduate Admission — Queen's University", url: 'https://www.queensu.ca/admission/' },
+      { label: "Contact Queen's University", url: 'https://www.queensu.ca/contacts' },
+    ],
+    verified: '2026-08-07',
+  },
+
+  toronto: {
+    id: 'toronto',
+    campuses: ['St. George', 'Mississauga', 'Scarborough'],
+    admissionsUrl: 'https://future.utoronto.ca/',
+    sources: [
+      { label: 'Fees — University of Toronto Future Students', url: 'https://future.utoronto.ca/finances/fees/' },
+    ],
+    verified: '2026-08-07',
+  },
+
+  mcmaster: {
+    id: 'mcmaster',
+    admissionsUrl: 'https://future.mcmaster.ca/',
+    campuses: ['Hamilton (Student Services, Gilmour Hall 108)'],
+    sources: [
+      { label: 'Tuition & fees — McMaster Office of the Registrar', url: 'https://registrar.mcmaster.ca/tuition-fees/' },
+    ],
+    verified: '2026-08-07',
+  },
+}
 
 export const getProgramInfo = (id: string): ProgramInfo | null => PROGRAM_INFO[id] ?? null
 export const getUniversityInfo = (id: string): UniversityInfo | null => UNIVERSITY_INFO[id] ?? null

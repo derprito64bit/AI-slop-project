@@ -293,6 +293,22 @@ function RequirementsTab({ program, info }: { program: ProgramType; info: Progra
         ))}
       </ul>
 
+      {info.recommendedCourses?.length ? (
+        <>
+          <h3 className="mt-8 text-sm font-600 uppercase tracking-wider text-slate">
+            Recommended, not required
+          </h3>
+          <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+            {info.recommendedCourses.map((c) => (
+              <li key={c} className="flex items-center gap-2.5 rounded-lg border border-dashed border-line px-4 py-3">
+                <span className="text-slate" aria-hidden="true">+</span>
+                <span className="text-sm text-ink">{c}</span>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+
       <dl className="mt-6 grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2">
         <Fact label="Minimum grade" value={info.minCourseGrade} />
         <Fact label="Stated admission range" value={info.statedAverage} />
