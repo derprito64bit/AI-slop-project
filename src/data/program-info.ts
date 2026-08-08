@@ -417,6 +417,197 @@ export const PROGRAM_INFO: Record<string, ProgramInfo> = {
 
   // --- Western ---
 
+  'waterloo::software-engineering': {
+    programId: 'waterloo::software-engineering',
+    requiredCourses: ['Advanced Functions', 'Calculus and Vectors', 'Chemistry', 'Physics', 'English (ENG4U)'],
+    minCourseGrade: 'Minimum final grade of 70% in each required course',
+    statedAverage: 'Individual selection from the low to mid-90s',
+    coop: 'Co-op only — not available as a regular program',
+    supplementary: 'Admission Information Form (AIF) required',
+    sources: [{ label: 'Software Engineering — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/software-engineering' }],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::mechatronic-engineering': {
+    programId: 'waterloo::mechatronic-engineering',
+    requiredCourses: ['Advanced Functions', 'Calculus and Vectors', 'Chemistry', 'English (ENG4U)', 'Physics'],
+    minCourseGrade: 'Minimum final grade of 70% in each required course',
+    statedAverage: 'Individual selection from the high 80s to low 90s',
+    coop: 'Co-op only — not available as a regular program',
+    sources: [{ label: 'Mechatronics Engineering — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/mechatronics-engineering' }],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::biomedical-engineering': {
+    programId: 'waterloo::biomedical-engineering',
+    requiredCourses: ['Advanced Functions', 'Calculus and Vectors', 'Chemistry', 'Physics', 'English (ENG4U)'],
+    minCourseGrade: 'Minimum final grade of 70% in each required course',
+    statedAverage: 'Individual selection from the high 80s to low 90s',
+    coop: 'Co-op only — not available as a regular program',
+    sources: [{ label: 'Biomedical Engineering — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/biomedical-engineering' }],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::life-science': {
+    programId: 'waterloo::life-science',
+    requiredCourses: [
+      'English (ENG4U)',
+      'Advanced Functions',
+      'Calculus and Vectors',
+      'Two of: Biology, Chemistry, Earth and Space Science, Mathematics of Data Management, Physics',
+    ],
+    minCourseGrade: 'Minimum final grade of 70% in English, Advanced Functions and Calculus and Vectors',
+    statedAverage: 'Low 80s',
+    coop: 'Applicants choose between the co-op program and the regular system of study',
+    sources: [{ label: 'Life Sciences — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/life-sciences' }],
+    verified: '2026-08-07',
+  },
+
+  // The dataset separates the co-op-only spellings of these programs; Waterloo
+  // publishes one page per program covering both, so the same source applies.
+  'waterloo::computer-engineering-co-op-only': {
+    programId: 'waterloo::computer-engineering-co-op-only',
+    requiredCourses: ['Advanced Functions', 'Calculus and Vectors', 'Chemistry', 'Physics', 'English (ENG4U)'],
+    minCourseGrade: 'Minimum final grade of 70% in each required course',
+    statedAverage: 'Individual selection from the high 80s to low 90s',
+    coop: 'Co-op only — not available as a regular program',
+    sources: [{ label: 'Computer Engineering — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/computer-engineering' }],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::mechatronic-engineering-co-op-only': {
+    programId: 'waterloo::mechatronic-engineering-co-op-only',
+    requiredCourses: ['Advanced Functions', 'Calculus and Vectors', 'Chemistry', 'English (ENG4U)', 'Physics'],
+    minCourseGrade: 'Minimum final grade of 70% in each required course',
+    statedAverage: 'Individual selection from the high 80s to low 90s',
+    coop: 'Co-op only — not available as a regular program',
+    sources: [{ label: 'Mechatronics Engineering — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/mechatronics-engineering' }],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::software-engineering-co-op-only': {
+    programId: 'waterloo::software-engineering-co-op-only',
+    requiredCourses: ['Advanced Functions', 'Calculus and Vectors', 'Chemistry', 'Physics', 'English (ENG4U)'],
+    minCourseGrade: 'Minimum final grade of 70% in each required course',
+    statedAverage: 'Individual selection from the low to mid-90s',
+    coop: 'Co-op only — not available as a regular program',
+    supplementary: 'Admission Information Form (AIF) required',
+    sources: [{ label: 'Software Engineering — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/software-engineering' }],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::computer-science-co-op-and-regular': {
+    programId: 'waterloo::computer-science-co-op-and-regular',
+    requiredCourses: ['Advanced Functions', 'Calculus and Vectors', 'Any Grade 12 U English', 'One other 4U course'],
+    statedAverage: 'Admission average in the low to mid-90s, through individual selection',
+    coop: 'Available as a co-op program',
+    supplementary: 'Admission Information Form (AIF) required',
+    sources: [{ label: 'Computer Science — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/computer-science' }],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::management-engineering': {
+    programId: 'waterloo::management-engineering',
+    requiredCourses: ['Advanced Functions', 'Calculus and Vectors', 'Chemistry', 'Physics', 'English (ENG4U)'],
+    minCourseGrade: 'Minimum final grade of 70% in each required course',
+    statedAverage: 'Individual selection from the mid-to-high 80s',
+    coop: 'Co-op only — not available as a regular program',
+    notes: ['Six Grade 12 U and/or M courses required in total.'],
+    sources: [{ label: 'Management Engineering — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/management-engineering' }],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::system-design-engineering': {
+    programId: 'waterloo::system-design-engineering',
+    requiredCourses: ['Advanced Functions', 'Calculus and Vectors', 'Chemistry', 'Physics', 'English (ENG4U)'],
+    minCourseGrade: 'Minimum final grade of 70% in each required course',
+    statedAverage: 'Individual selection from the high 80s to low 90s',
+    coop: 'Co-op only — not available as a regular program',
+    notes: ['Six Grade 12 U and/or M courses required in total.'],
+    sources: [{ label: 'Systems Design Engineering — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/systems-design-engineering' }],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::chemical-engineering': {
+    programId: 'waterloo::chemical-engineering',
+    requiredCourses: ['Advanced Functions', 'Calculus and Vectors', 'Chemistry', 'Physics', 'English (ENG4U)'],
+    minCourseGrade: 'Minimum final grade of 70% in each required course',
+    statedAverage: 'Individual selection from the mid-to-high 80s',
+    coop: 'Co-op only — no regular option',
+    notes: ['Six Grade 12 U and/or M courses required in total.'],
+    sources: [{ label: 'Chemical Engineering — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/chemical-engineering' }],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::planning': {
+    programId: 'waterloo::planning',
+    requiredCourses: ['Any Grade 12 U English'],
+    minCourseGrade: 'Minimum final grade of 75% in English',
+    statedAverage: 'Low 80s',
+    coop: 'Co-op only — not available as a regular program',
+    notes: ['Six Grade 12 U and/or M courses required in total.'],
+    sources: [{ label: 'Planning — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/planning' }],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::accounting-and-financial-management': {
+    programId: 'waterloo::accounting-and-financial-management',
+    requiredCourses: [
+      'Any Grade 12 U English',
+      'Advanced Functions',
+      'Calculus and Vectors',
+    ],
+    minCourseGrade: 'Minimum final grade of 75% in each required course',
+    statedAverage: 'Mid-80s',
+    coop: 'Co-op only — not available in a regular format',
+    sources: [{ label: 'Accounting and Financial Management — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/accounting-and-financial-management' }],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::mathematic-co-op': {
+    programId: 'waterloo::mathematic-co-op',
+    requiredCourses: ['Advanced Functions', 'Calculus and Vectors', 'Any 4U English', 'One other 4U course'],
+    statedAverage: 'Individual selection from the mid-80s',
+    coop: 'Available as both a co-op and a regular program',
+    supplementary: 'Admission Information Form (AIF) required',
+    sources: [{ label: 'Mathematics — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/mathematics' }],
+    verified: '2026-08-07',
+  },
+
+  // One Waterloo page covers Health Sciences in both study systems, so it
+  // applies to the co-op and regular dataset entries alike.
+  'waterloo::health-science': {
+    programId: 'waterloo::health-science',
+    requiredCourses: [
+      'Any Grade 12 U English',
+      'Any Grade 12 U Mathematics',
+      'Biology',
+      'Chemistry',
+    ],
+    minCourseGrade: 'Minimum final grade of 70% in each required course',
+    statedAverage: 'Mid 80s (regular) and high 80s (co-op)',
+    lengthYears: '4 years regular; 5 years co-op',
+    coop: 'Available in both systems; co-op takes five years and includes 20 months of paid work experience',
+    sources: [{ label: 'Health Sciences — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/health-sciences' }],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::health-science-co-op': {
+    programId: 'waterloo::health-science-co-op',
+    requiredCourses: [
+      'Any Grade 12 U English',
+      'Any Grade 12 U Mathematics',
+      'Biology',
+      'Chemistry',
+    ],
+    minCourseGrade: 'Minimum final grade of 70% in each required course',
+    statedAverage: 'Mid 80s (regular) and high 80s (co-op)',
+    lengthYears: '5 years for co-op',
+    coop: 'Co-op takes five years and includes 20 months of paid work experience',
+    sources: [{ label: 'Health Sciences — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/health-sciences' }],
+    verified: '2026-08-07',
+  },
+
   'tmu::nursing-at-tmu': {
     programId: 'tmu::nursing-at-tmu',
     requiredCourses: [
