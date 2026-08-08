@@ -6,17 +6,22 @@ import Button from '../components/ui/Button'
 import Tabs from '../components/Tabs'
 import UniversityMark from '../components/UniversityMark'
 import AverageDistribution from '../components/AverageDistribution'
+import DecisionMix from '../components/DecisionMix'
+import OutcomeCompare from '../components/OutcomeCompare'
+import CycleTrend from '../components/CycleTrend'
+import {
+  averagesFor,
+  summarise,
+  medianByCycle,
+  decisionMix,
+  type Summary,
+  type CyclePoint,
+  type DecisionSlice,
+} from '../lib/analytics'
 import { loadPrograms, loadUniversities, loadStats } from '../lib/dataSource'
 import { findProgram, similarPrograms, difficultyBand, DIFFICULTY_LABELS } from '../lib/search'
 import { getProgramInfo, getUniversityInfo, type ProgramInfo, type Source } from '../data/program-info'
 import type { CommunityStat, Program as ProgramType, University } from '../data/types'
-
-const DECISION_LABELS: Record<string, string> = {
-  offer: 'Offers',
-  rejected: 'Rejections',
-  waitlisted: 'Waitlisted',
-  deferred: 'Deferred',
-}
 
 export default function Program() {
   const { universityId = '', slug = '' } = useParams()
@@ -41,12 +46,27 @@ export default function Program() {
     [data, universityId, slug],
   )
 
-  const offerAverages = useMemo(() => {
-    if (!data || !program) return []
-    return data.stats
-      .filter((s) => s.p === program.id && s.d === 'offer' && s.a !== null)
-      .map((s) => s.a as number)
-  }, [data, program])
+  const offerAverages = useMemo(
+    () => (data && program ? averagesFor(data.stats, program.id, 'offer') : []),
+    [data, program],
+  )
+
+  // Offers vs rejections, only where both groups clear MIN_GROUP. Just 22 of
+  // 2,436 programs have five or more reported rejection averages, so this is
+  // absent on most pages by design rather than rendered thin.
+  const outcome = useMemo(() => {
+    if (!data || !program) return null
+    const offers = summarise(offerAverages)
+    const rejections = summarise(averagesFor(data.stats, program.id, 'rejected'))
+    return offers && rejections ? { offers, rejections } : null
+  }, [data, program, offerAverages])
+
+  const cyclePoints = useMemo(
+    () => (data && program ? medianByCycle(data.stats, program.id) : []),
+    [data, program],
+  )
+
+  const mix = useMemo(() => (program ? decisionMix(program.counts) : []), [program])
 
   if (error) {
     return <Shell><p className="text-slate">Couldn’t load program data. Try refreshing.</p></Shell>
@@ -124,7 +144,14 @@ export default function Program() {
             id: 'analytics',
             label: 'Analytics',
             content: (
-              <AnalyticsTab program={program} offerAverages={offerAverages} cycleRange={cycleRange} />
+              <AnalyticsTab
+                program={program}
+                offerAverages={offerAverages}
+                cycleRange={cycleRange}
+                outcome={outcome}
+                cyclePoints={cyclePoints}
+                mix={mix}
+              />
             ),
           },
           {
@@ -208,11 +235,14 @@ function GeneralTab({
 }
 
 function AnalyticsTab({
-  program, offerAverages, cycleRange,
+  program, offerAverages, cycleRange, outcome, cyclePoints, mix,
 }: {
   program: ProgramType
   offerAverages: number[]
   cycleRange: string
+  outcome: { offers: Summary; rejections: Summary } | null
+  cyclePoints: CyclePoint[]
+  mix: DecisionSlice[]
 }) {
   if (program.insufficientData) {
     return (
@@ -256,17 +286,28 @@ function AnalyticsTab({
         Half of reported offers sat between {a.p25}% and {a.p75}%.
       </p>
 
+      {cyclePoints.length >= 2 && (
+        <>
+          <h3 className="mt-10 font-display text-display-3 font-600 text-ink">By admission cycle</h3>
+          <CycleTrend points={cyclePoints} />
+        </>
+      )}
+
+      {outcome && (
+        <>
+          <h3 className="mt-10 font-display text-display-3 font-600 text-ink">
+            Offers vs rejections
+          </h3>
+          <p className="mt-2 max-w-2xl text-sm text-slate">
+            What each group reported as their average. Shown only where at least five students
+            reported a rejection average — for most programs there are too few to say anything.
+          </p>
+          <OutcomeCompare offers={outcome.offers} rejections={outcome.rejections} />
+        </>
+      )}
+
       <h3 className="mt-10 font-display text-display-3 font-600 text-ink">What students reported</h3>
-      <dl className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
-        {(['offer', 'rejected', 'waitlisted', 'deferred'] as const).map((k) => (
-          <div key={k} className="rounded-xl border border-line bg-paper p-4">
-            <dt className="text-xs uppercase tracking-wider text-slate">{DECISION_LABELS[k]}</dt>
-            <dd className="mt-1 font-display text-2xl font-600 text-ink [font-variant-numeric:tabular-nums]">
-              {program.counts[k]}
-            </dd>
-          </div>
-        ))}
-      </dl>
+      <DecisionMix slices={mix} />
       <p className="mt-4 max-w-2xl rounded-lg border border-line bg-surface p-4 text-sm leading-relaxed text-slate">
         <strong className="font-600 text-ink">This is not an acceptance rate.</strong> Students who
         get in are far more likely to report than students who don’t, so offers are heavily

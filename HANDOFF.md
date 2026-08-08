@@ -90,7 +90,7 @@ src/
 ```
 npm run dev          dev server on :5173
 npm run build        typecheck + production build
-npm test             68 tests
+npm test             79 tests
 npm run data:build   regenerate dataset from data/raw/
 npm run data:check   same, but report only — does not write the dataset
 npm run shots        screenshot the dev server (see below)
@@ -155,6 +155,18 @@ blur blob, but it also cut off the search suggestions, which drop below the
 hero's bottom edge. Verified no horizontal overflow at 375 / 1512 / 2560 after
 the change.
 
+**Analytics gates live in `src/lib/analytics.ts`, not in JSX.** Nothing renders
+below 5 reports in a group. That is why the offers-vs-rejections comparison is
+absent on most pages: only **22 of 2,436** programs have 5+ reported rejection
+averages, and only 3 have 20+. The cycle trend drops thin years for the same
+reason — McMaster Engineering has n=2 for 2022-23 against n=153 for 2025-26, so
+plotting every cycle would show a trend in reporting volume, not admissions.
+
+**`pct()` in `analytics.ts` must match `percentile()` in `scripts/normalize.mjs`.**
+Both interpolate between neighbours. A nearest-rank version made the same
+program read 95.9% in the page header (from the ETL) and 95.8% in the
+offers-vs-rejections strip. There is a regression test pinning this.
+
 **Charts follow the `dataviz` skill.** Load it before touching chart code. The
 histogram uses a single sequential hue, hairline gridlines, 2px surface gaps,
 labels only on the median, and a table view so no value is tooltip-only. The
@@ -205,7 +217,7 @@ by volume; deliberately not auto-merged — "Engineering I" and "Engineering I
 |---|---|
 | **Home** (`/`) | Complete. Hero + **typeahead search** (`HeroSearch.tsx` — suggests programs as you type, keyboard-navigable combobox, loads the catalogue on first focus so the Home bundle stays clean), stats band with scroll-zoom, university logo band, pinned full-screen roadmap, program cards, two carousels, CTA. |
 | **Explore** (`/explore`) | **Interim.** Search works over all 2,436 programs; results are 3-per-row cards linking to program pages, 30 at a time behind a "Show more", with a live result count. Every program is reachable — low-data ones render "not enough data yet" rather than being hidden. **No filter UI yet** — that is the remaining gap. |
-| **Program** (`/program/:universityId/:slug`) | Complete. Four tabs: General, Analytics, Requirements, Extras. Distribution histogram, range readout, decision counts, similar programs. |
+| **Program** (`/program/:universityId/:slug`) | Complete. Four tabs: General, Analytics, Requirements, Extras. Analytics carries the distribution histogram, the range readout, median by admission cycle, an offers-vs-rejections comparison (gated), the decision mix bar, and similar programs. |
 | **Profile / Community / About** | Still `Placeholder` stubs. |
 
 Also built: dark mode (defaults to light, remembers choice), paper/grid
