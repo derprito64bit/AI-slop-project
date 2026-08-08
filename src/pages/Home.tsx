@@ -5,6 +5,7 @@ import Reveal from '../components/Reveal'
 import Parallax from '../components/Parallax'
 import CountUp from '../components/CountUp'
 import Carousel from '../components/Carousel'
+import UniversityBanner from '../components/UniversityBanner'
 import Roadmap from '../components/Roadmap'
 import Button from '../components/ui/Button'
 import Tag from '../components/ui/Tag'
@@ -47,11 +48,13 @@ const STEPS = [
   { n: '03', title: 'Check your odds', body: 'Realistic admission chances, grounded in what actual students reported.' },
 ]
 
+// `id` is the university id, so the card can pull the same logo the Explore
+// cards and program pages use.
 const FEATURED = [
-  { program: 'Computer Science', school: 'University of Waterloo', avg: 'low-90s', tag: 'Reach' },
-  { program: 'Life Sciences', school: 'McMaster University', avg: 'mid-80s', tag: 'Likely' },
-  { program: 'Commerce', school: 'Queen’s University', avg: 'high-80s', tag: 'Reach' },
-  { program: 'Engineering', school: 'University of Toronto', avg: 'low-90s', tag: 'Reach' },
+  { id: 'waterloo', program: 'Computer Science', school: 'University of Waterloo', avg: 'low-90s', tag: 'Reach' },
+  { id: 'mcmaster', program: 'Life Sciences', school: 'McMaster University', avg: 'mid-80s', tag: 'Likely' },
+  { id: 'queens', program: 'Commerce', school: 'Queen’s University', avg: 'high-80s', tag: 'Reach' },
+  { id: 'toronto', program: 'Engineering', school: 'University of Toronto', avg: 'low-90s', tag: 'Reach' },
 ]
 
 const VALUES = [
@@ -215,13 +218,16 @@ export default function Home() {
               <Reveal key={f.program + f.school} delay={i * 0.08}>
                 <Link
                   to="/program"
-                  className="group block h-full rounded-2xl border border-line bg-paper p-5 transition-all hover:-translate-y-1 hover:shadow-[0_12px_36px_rgba(20,24,31,0.08)]"
+                  className="group block h-full overflow-hidden rounded-2xl border border-line bg-paper transition-all hover:-translate-y-1 hover:shadow-[0_12px_36px_rgba(20,24,31,0.08)]"
                 >
-                  <div className="mb-4 h-24 rounded-xl bg-gradient-to-br from-brand-100 to-brand-50" />
-                  <Tag tone={f.tag === 'Reach' ? 'reach' : 'likely'}>{f.tag}</Tag>
-                  <h3 className="mt-3 font-600 text-ink group-hover:text-brand-600">{f.program}</h3>
-                  <p className="text-sm text-slate">{f.school}</p>
-                  <p className="mt-3 text-xs text-slate">Accepted avg · {f.avg}</p>
+                  {/* Same logo band as the Explore cards — fills the top edge to edge. */}
+                  <UniversityBanner id={f.id} name={f.school} className="aspect-[16/9]" />
+                  <div className="p-5">
+                    <Tag tone={f.tag === 'Reach' ? 'reach' : 'likely'}>{f.tag}</Tag>
+                    <h3 className="mt-3 font-600 text-ink group-hover:text-brand-600">{f.program}</h3>
+                    <p className="text-sm text-slate">{f.school}</p>
+                    <p className="mt-3 text-xs text-slate">Accepted avg · {f.avg}</p>
+                  </div>
                 </Link>
               </Reveal>
             ))}
@@ -241,6 +247,7 @@ export default function Home() {
             aspect="4 / 3"
             gap={18}
             startOffset={0.5}
+            imgFit="contain"
           />
         </div>
       </section>
