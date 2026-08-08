@@ -1,4 +1,4 @@
-# GOON — project state and handoff
+# Acceptiversity — project state and handoff
 
 Written 2026-08-07. Everything below reflects the repo as it stands on `main`,
 which is fully merged and deployed. Read this first in a new session.
@@ -15,12 +15,9 @@ than the vague cutoffs official sites publish. Built from the vision doc at
 **Live:** https://derprito64bit.github.io/AI-slop-project/
 **Repo:** https://github.com/derprito64bit/AI-slop-project
 
-Working product name is **GOON** (one constant, `BRAND` in `src/nav.ts`, plus
-title/OG tags in `index.html` and the favicon's `aria-label`).
-
-> Flagged once and not pressed again: "gooning" carries a widely-known sexual
-> slang meaning among roughly the age group this site targets. The user was told
-> and chose to keep it. It is a one-line change if that ever changes.
+Working product name is **Acceptiversity** (one constant, `BRAND` in
+`src/nav.ts`, plus title/OG tags in `index.html` and the favicon's
+`aria-label`). Renamed 2026-08-08 from the earlier working name GOON.
 
 ---
 
@@ -261,18 +258,17 @@ and pastes the requirements text. Structuring and citing it takes seconds.
 9. **Extras tab content** — recommended extracurriculars. Deliberately empty
    for now. Ivey's stated 50/50 academic/leadership weighting is the kind of
    sourced claim this should be built from, not generic advice.
-10. **Product name decision** (see §1).
-11. **Tuition as links, not cached figures** (see §4).
+10. **Tuition as links, not cached figures** (see §4).
 
 ### Housekeeping
 
-12. `claude-test.txt` in the repo root is a leftover from an early git test and
+11. `claude-test.txt` in the repo root is a leftover from an early git test and
     can be deleted.
-13. PR #3 (wireframe-only) is still open and now redundant — its content is in
+12. PR #3 (wireframe-only) is still open and now redundant — its content is in
     `main`. Safe to close.
-14. The `wireframe/` folder is the original grey-box HTML mockup. Superseded by
+13. The `wireframe/` folder is the original grey-box HTML mockup. Superseded by
     the React app; keep or delete as preferred.
-15. `feature/*` branches from the wireframe era (`feature/explore`,
+14. `feature/*` branches from the wireframe era (`feature/explore`,
     `feature/profile`, `feature/community`, `feature/about`) predate React and
     contain nothing useful. Delete rather than build on them.
 
