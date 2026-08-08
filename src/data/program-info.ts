@@ -49,6 +49,39 @@ export type UniversityInfo = {
 
 // ---------------------------------------------------------------- programs
 
+/**
+ * U of T Engineering publishes one prerequisite set for every stream and sorts
+ * the streams into two competitive ranges. Rather than copy that block a dozen
+ * times, this builds it — the source and wording stay identical across streams,
+ * which is exactly what the page states.
+ */
+function UofTEng(programId: string, band: 'low' | 'high'): ProgramInfo {
+  return {
+    programId,
+    requiredCourses: [
+      'English (ENG4U)',
+      'Advanced Functions (MHF4U)',
+      'Calculus and Vectors (MCV4U)',
+      'Chemistry (SCH4U)',
+      'Physics (SPH4U)',
+    ],
+    statedAverage:
+      band === 'low'
+        ? 'Low to mid 90s — the range U of T states for Computer, Electrical, Engineering Science, TrackOne and Undeclared Engineering'
+        : 'High 80s to low 90s — the range U of T states for Chemical, Civil, Industrial, Materials, Mechanical and Mineral Engineering',
+    supplementary: 'Online Student Profile required, including short written responses and video submissions',
+    notes: [
+      'U of T states that meeting the minimum averages does not guarantee admission.',
+      'Prerequisite courses must be completed within five years of the intended start date.',
+    ],
+    sources: [
+      { label: 'FAQs — Future Engineering Undergraduates, University of Toronto', url: 'https://discover.engineering.utoronto.ca/faqs/' },
+      { label: 'Academic Requirements — U of T Engineering', url: 'https://discover.engineering.utoronto.ca/admission-requirements/' },
+    ],
+    verified: '2026-08-07',
+  }
+}
+
 export const PROGRAM_INFO: Record<string, ProgramInfo> = {
   'waterloo::engineering': {
     programId: 'waterloo::engineering',
@@ -310,6 +343,19 @@ export const PROGRAM_INFO: Record<string, ProgramInfo> = {
     verified: '2026-08-07',
   },
 
+  // The U of T Engineering FAQ names each stream against one of two competitive
+  // ranges, so the streams below come from that single page. The PEY co-op
+  // variants are the same programs with the co-op option, not separate
+  // admissions.
+  'toronto::electrical-engineering': UofTEng('toronto::electrical-engineering', 'low'),
+  'toronto::trackone-undeclared-engineering': UofTEng('toronto::trackone-undeclared-engineering', 'low'),
+  'toronto::engineering-science-including-pey-co-op-option': UofTEng('toronto::engineering-science-including-pey-co-op-option', 'low'),
+  'toronto::computer-engineering-including-pey-co-op-option': UofTEng('toronto::computer-engineering-including-pey-co-op-option', 'low'),
+  'toronto::mechanical-engineering': UofTEng('toronto::mechanical-engineering', 'high'),
+  'toronto::chemical-engineering': UofTEng('toronto::chemical-engineering', 'high'),
+  'toronto::civil-engineering': UofTEng('toronto::civil-engineering', 'high'),
+  'toronto::industrial-engineering': UofTEng('toronto::industrial-engineering', 'high'),
+
   'toronto::rotman-commerce': {
     programId: 'toronto::rotman-commerce',
     requiredCourses: [
@@ -532,6 +578,97 @@ export const PROGRAM_INFO: Record<string, ProgramInfo> = {
     statedAverage: 'Individual selection from the high 80s to low 90s',
     coop: 'Co-op only — not available as a regular program',
     sources: [{ label: 'Biomedical Engineering — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/biomedical-engineering' }],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::civil-engineering': {
+    programId: 'waterloo::civil-engineering',
+    requiredCourses: ['Advanced Functions', 'Calculus and Vectors', 'Chemistry', 'Physics', 'English (ENG4U)'],
+    minCourseGrade: 'Minimum final grade of 70% in each required course',
+    statedAverage: 'Individual selection from the mid-to-high 80s',
+    coop: 'Co-op only',
+    sources: [{ label: 'Civil Engineering — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/civil-engineering' }],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::electrical-engineering-co-op-only': {
+    programId: 'waterloo::electrical-engineering-co-op-only',
+    requiredCourses: ['Advanced Functions', 'Calculus and Vectors', 'Physics', 'Chemistry', 'English (ENG4U)'],
+    minCourseGrade: 'Minimum final grade of 70% in each required course',
+    statedAverage: 'Individual selection from the high 80s to low 90s',
+    coop: 'Co-op only — not available as a regular program',
+    sources: [{ label: 'Electrical Engineering — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/electrical-engineering' }],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::computing-and-financial-management': {
+    programId: 'waterloo::computing-and-financial-management',
+    requiredCourses: [
+      'Any Grade 12 U English',
+      'Advanced Functions',
+      'Calculus and Vectors',
+      'One other Grade 12 U course',
+    ],
+    minCourseGrade: 'Minimum final grade of 75% in English',
+    statedAverage: 'Individual selection from the low to mid-90s',
+    coop: 'Co-op only — not available as a regular program',
+    sources: [{ label: 'Computing and Financial Management — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/computing-and-financial-management' }],
+    verified: '2026-08-07',
+  },
+
+  // One Waterloo page covers Physical Sciences in both study systems.
+  'waterloo::physical-science': {
+    programId: 'waterloo::physical-science',
+    requiredCourses: [
+      'English (ENG4U)',
+      'Advanced Functions',
+      'Calculus and Vectors',
+      'Two of: Biology, Chemistry, Earth and Space Science, Mathematics of Data Management, Physics',
+    ],
+    minCourseGrade: 'Minimum final grade of 70% in English, Advanced Functions and Calculus and Vectors',
+    statedAverage: 'Low 80s',
+    coop: 'Each major is available through both co-op and regular study, except Medicinal Chemistry which is co-op only',
+    sources: [{ label: 'Physical Sciences — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/physical-sciences' }],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::physical-science-co-op': {
+    programId: 'waterloo::physical-science-co-op',
+    requiredCourses: [
+      'English (ENG4U)',
+      'Advanced Functions',
+      'Calculus and Vectors',
+      'Two of: Biology, Chemistry, Earth and Space Science, Mathematics of Data Management, Physics',
+    ],
+    minCourseGrade: 'Minimum final grade of 70% in English, Advanced Functions and Calculus and Vectors',
+    statedAverage: 'Low 80s',
+    coop: 'Each major is available through both co-op and regular study, except Medicinal Chemistry which is co-op only',
+    sources: [{ label: 'Physical Sciences — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/physical-sciences' }],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::mathematic-co-op-and-regular': {
+    programId: 'waterloo::mathematic-co-op-and-regular',
+    requiredCourses: ['Advanced Functions', 'Calculus and Vectors', 'Any 4U English', 'One other 4U course'],
+    statedAverage: 'Individual selection from the mid-80s',
+    coop: 'Available as both a co-op and a regular program',
+    supplementary: 'Admission Information Form (AIF) required',
+    sources: [{ label: 'Mathematics — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/mathematics' }],
+    verified: '2026-08-07',
+  },
+
+  'waterloo::life-science-co-op': {
+    programId: 'waterloo::life-science-co-op',
+    requiredCourses: [
+      'English (ENG4U)',
+      'Advanced Functions',
+      'Calculus and Vectors',
+      'Two of: Biology, Chemistry, Earth and Space Science, Mathematics of Data Management, Physics',
+    ],
+    minCourseGrade: 'Minimum final grade of 70% in English, Advanced Functions and Calculus and Vectors',
+    statedAverage: 'Low 80s',
+    coop: 'Applicants choose between the co-op program and the regular system of study',
+    sources: [{ label: 'Life Sciences — University of Waterloo', url: 'https://uwaterloo.ca/future-students/programs/life-sciences' }],
     verified: '2026-08-07',
   },
 
