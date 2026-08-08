@@ -82,8 +82,12 @@ export default function AverageDistribution({ values, median, p25, p75 }: Props)
 
   if (!buckets.length) return null
 
-  const H = W < 420 ? 170 : 200
-  const PAD = { top: 16, right: 10, bottom: 30, left: 34 }
+  const H = W < 420 ? 186 : 216
+  // top reserves a label band ABOVE the plot. The median label used to be drawn
+  // at PAD.top + 6 — inside the plot — so any full-height bar ran straight
+  // through the text. The median sits where the tallest bars are by definition,
+  // so that collided on nearly every program.
+  const PAD = { top: 32, right: 10, bottom: 30, left: 34 }
   const plotW = W - PAD.left - PAD.right
   const plotH = H - PAD.top - PAD.bottom
 
@@ -182,13 +186,14 @@ export default function AverageDistribution({ values, median, p25, p75 }: Props)
         <line
           x1={xFor(median)}
           x2={xFor(median)}
-          y1={PAD.top - 4}
+          y1={PAD.top - 10}
           y2={PAD.top + plotH}
           stroke="var(--color-ink)"
           strokeWidth="2"
         />
-        {/* Flip the label to the left of the rule when it would otherwise run
-            into the right edge, rather than clamping it flush against it. */}
+        {/* Label lives in the reserved band above the plot, so it can never
+            overlap a bar. Still flips side near the right edge rather than
+            clamping flush against it. */}
         {(() => {
           const label = `median ${median}%`
           const est = label.length * 5.8 + 4 // ~11px semibold
@@ -196,7 +201,7 @@ export default function AverageDistribution({ values, median, p25, p75 }: Props)
           return (
             <text
               x={flip ? xFor(median) - 6 : xFor(median) + 6}
-              y={PAD.top + 6}
+              y={PAD.top - 14}
               textAnchor={flip ? 'end' : 'start'}
               fontSize="11"
               fill="var(--color-ink)"
@@ -207,13 +212,45 @@ export default function AverageDistribution({ values, median, p25, p75 }: Props)
           )
         })()}
 
-        {/* x axis: only the two ends, so labels never collide */}
-        <text x={PAD.left} y={H - 10} fontSize="10" fill="var(--color-slate)" style={{ fontVariantNumeric: 'tabular-nums' }}>
-          {lo}%
-        </text>
-        <text x={W - PAD.right} y={H - 10} textAnchor="end" fontSize="10" fill="var(--color-slate)" style={{ fontVariantNumeric: 'tabular-nums' }}>
-          {hi}%
-        </text>
+        {/* x axis. Interior ticks as well as the ends — two labels alone made it
+            hard to read a bar's value off the axis. Spaced by width so they
+            never collide on a narrow container. */}
+        {(() => {
+          const span = hi - lo
+          const want = W < 420 ? 3 : 5
+          const raw = span / (want - 1)
+          const nice = [1, 2, 5, 10, 20, 25, 50].find((n) => n >= raw) ?? 50
+          const ticks: number[] = []
+          for (let v = Math.ceil(lo / nice) * nice; v <= hi; v += nice) ticks.push(v)
+          if (!ticks.includes(lo)) ticks.unshift(lo)
+          if (!ticks.includes(hi)) ticks.push(hi)
+          return ticks.map((v) => {
+            const atStart = v === lo
+            const atEnd = v === hi
+            return (
+              <g key={`x-${v}`}>
+                <line
+                  x1={xFor(v)}
+                  x2={xFor(v)}
+                  y1={PAD.top + plotH}
+                  y2={PAD.top + plotH + 4}
+                  stroke="var(--color-line)"
+                  strokeWidth="1"
+                />
+                <text
+                  x={xFor(v)}
+                  y={H - 10}
+                  textAnchor={atStart ? 'start' : atEnd ? 'end' : 'middle'}
+                  fontSize="10"
+                  fill="var(--color-slate)"
+                  style={{ fontVariantNumeric: 'tabular-nums' }}
+                >
+                  {v}%
+                </text>
+              </g>
+            )
+          })
+        })()}
       </svg>
       </div>
 
