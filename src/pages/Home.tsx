@@ -1,11 +1,12 @@
-import { useRef, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { motion, useScroll, useTransform, useReducedMotion } from 'motion/react'
 import Reveal from '../components/Reveal'
 import Parallax from '../components/Parallax'
 import CountUp from '../components/CountUp'
 import Carousel from '../components/Carousel'
 import UniversityBanner from '../components/UniversityBanner'
+import HeroSearch from '../components/HeroSearch'
 import Roadmap from '../components/Roadmap'
 import Button from '../components/ui/Button'
 import Eyebrow from '../components/ui/Eyebrow'
@@ -41,26 +42,23 @@ const VALUES = [
 ]
 
 export default function Home() {
-  const navigate = useNavigate()
-  const [query, setQuery] = useState('')
-
-  const onSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    const q = query.trim()
-    navigate(q ? `/explore?q=${encodeURIComponent(q)}` : '/explore')
-  }
-
   return (
     <>
       {/* ================= HERO ================= */}
-      <section className="relative overflow-hidden">
-        {/* soft background wash + graph-paper texture (decorative) */}
-        <div className="pointer-events-none absolute inset-0 -z-20 bg-gradient-to-b from-brand-50 to-paper" />
-        <div className="bg-grid pattern-fade pointer-events-none absolute inset-0 -z-10" aria-hidden="true" />
-        {/* parallax accent blob — drifts as you scroll */}
-        <Parallax distance={70} className="pointer-events-none absolute -right-32 -top-32 -z-10">
-          <div className="h-96 w-96 rounded-full bg-brand-100 opacity-60 blur-3xl" />
-        </Parallax>
+      {/* The section deliberately does NOT clip. Its overflow-hidden used to
+          live here to contain the blur blob, but it also clipped the search
+          suggestions, which drop below the hero's bottom edge. Clipping is now
+          scoped to the decorative layer only. */}
+      <section className="relative">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+          {/* soft background wash + graph-paper texture (decorative) */}
+          <div className="absolute inset-0 -z-20 bg-gradient-to-b from-brand-50 to-paper" />
+          <div className="bg-grid pattern-fade absolute inset-0 -z-10" />
+          {/* parallax accent blob — drifts as you scroll */}
+          <Parallax distance={70} className="absolute -right-32 -top-32 -z-10">
+            <div className="h-96 w-96 rounded-full bg-brand-100 opacity-60 blur-3xl" />
+          </Parallax>
+        </div>
 
         {/* Floating editorial photos — desktop only. Squared frames, slight tilt.
             Swap the placeholders for real campus/student photos later. */}
@@ -82,27 +80,27 @@ export default function Home() {
 
         <div className="relative z-10 container-page pb-24 pt-20 sm:pt-28">
           <motion.p
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
             className="text-sm font-500 uppercase tracking-wider text-brand-500"
           >
             For Ontario high schoolers
           </motion.p>
 
           <motion.h1
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.05, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.45, delay: 0.04, ease: [0.22, 1, 0.36, 1] }}
             className="mt-4 max-w-3xl font-display text-display-1 font-600 text-ink"
           >
             Find where you <span className="text-brand-500">actually</span> get in.
           </motion.h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
             className="mt-6 max-w-xl text-lead text-slate"
           >
             Official sites give vague cutoffs. We use real admission data — personalized to
@@ -110,9 +108,9 @@ export default function Home() {
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 24 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.2, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.45, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
             className="mt-9 flex flex-wrap items-center gap-3"
           >
             <Button to="/profile">Build my profile</Button>
@@ -121,29 +119,15 @@ export default function Home() {
             </Button>
           </motion.div>
 
-          {/* Quick search — routes to Explore with the query */}
-          <motion.form
-            onSubmit={onSearch}
-            initial={{ opacity: 0, y: 24 }}
+          {/* Quick search — suggests programs as you type, and falls through to
+              Explore for the full result list. */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.7, delay: 0.28, ease: [0.22, 1, 0.36, 1] }}
-            className="mt-8 flex max-w-md items-center gap-2 rounded-full border border-line bg-paper p-1.5 shadow-sm focus-within:border-brand-300"
+            transition={{ duration: 0.45, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
           >
-            <input
-              type="text"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search a program or university…"
-              aria-label="Search programs or universities"
-              className="min-w-0 flex-1 bg-transparent px-4 py-2 text-sm text-ink outline-none placeholder:text-slate"
-            />
-            <button
-              type="submit"
-              className="shrink-0 rounded-full bg-brand-500 px-5 py-2 text-sm font-600 text-white transition-colors hover:bg-brand-600"
-            >
-              Search
-            </button>
-          </motion.form>
+            <HeroSearch />
+          </motion.div>
         </div>
       </section>
 
@@ -192,7 +176,7 @@ export default function Home() {
 
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {FEATURED.map((f, i) => (
-              <Reveal key={`${f.universityId}-${f.slug}`} delay={i * 0.08}>
+              <Reveal key={`${f.universityId}-${f.slug}`} delay={i * 0.04}>
                 <Link
                   to={`/program/${f.universityId}/${f.slug}`}
                   className="group block h-full overflow-hidden rounded-2xl border border-line bg-paper transition-all hover:-translate-y-1 hover:shadow-[0_12px_36px_rgba(20,24,31,0.08)]"
@@ -241,7 +225,7 @@ export default function Home() {
         </Reveal>
         <div className="mt-12 grid gap-8 md:grid-cols-3">
           {VALUES.map((v, i) => (
-            <Reveal key={v.title} delay={i * 0.1}>
+            <Reveal key={v.title} delay={i * 0.04}>
               <div className="border-t-2 border-brand-500 pt-5">
                 <h3 className="text-lg font-600 text-ink">{v.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate">{v.body}</p>

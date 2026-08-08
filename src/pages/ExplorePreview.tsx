@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import Eyebrow from '../components/ui/Eyebrow'
 import Tag from '../components/ui/Tag'
 import UniversityBanner from '../components/UniversityBanner'
@@ -13,7 +13,16 @@ import type { Program, University } from '../data/types'
 export default function ExplorePreview() {
   const [data, setData] = useState<{ programs: Program[]; universities: University[] } | null>(null)
   const [error, setError] = useState(false)
-  const [query, setQuery] = useState('')
+
+  // Seed from ?q=. The Home hero has always navigated to /explore?q=… but this
+  // page never read the param, so every search from the landing page was
+  // silently thrown away and you arrived at an unfiltered list.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const query = searchParams.get('q') ?? ''
+  const setQuery = (next: string) => {
+    // replace: typing should not push a history entry per keystroke.
+    setSearchParams(next ? { q: next } : {}, { replace: true })
+  }
 
   // How many results are rendered. Everything matching is reachable via "Show
   // more" — this only bounds the DOM, it never hides a program the way the old
@@ -34,9 +43,18 @@ export default function ExplorePreview() {
   // No withDataOnly filter: programs below the reporting threshold are real
   // programs and students search for them. The card renders an honest
   // "not enough data yet" state for them rather than inventing a median.
-  const matches = data ? queryPrograms(data.programs, { query }, data.universities) : []
+  //
+  // Memoised because this searches and sorts 2,436 programs; without it every
+  // "Show more" click re-runs the whole query just to render 30 more cards.
+  const matches = useMemo(
+    () => (data ? queryPrograms(data.programs, { query }, data.universities) : []),
+    [data, query],
+  )
   const results = matches.slice(0, shown)
-  const uniName = new Map((data?.universities ?? []).map((u) => [u.id, u.name]))
+  const uniName = useMemo(
+    () => new Map((data?.universities ?? []).map((u) => [u.id, u.name])),
+    [data],
+  )
 
   return (
     <div className="relative">
@@ -78,8 +96,15 @@ export default function ExplorePreview() {
             {results.map((p) => {
               const band = difficultyBand(p)
               const school = uniName.get(p.universityId) ?? p.universityId
+              // content-visibility lets the browser skip layout and paint for
+              // cards scrolled out of view. The list runs to hundreds now that
+              // paging replaced the 20-result cap; contain-intrinsic-size is the
+              // placeholder height, so the scrollbar stays honest.
               return (
-                <li key={p.id} className="flex">
+                <li
+                  key={p.id}
+                  className="flex [content-visibility:auto] [contain-intrinsic-size:auto_360px]"
+                >
                   <Link
                     to={`/program/${p.universityId}/${p.slug}`}
                     className="group flex w-full flex-col overflow-hidden rounded-xl border border-line bg-paper transition-shadow hover:shadow-[0_12px_34px_rgba(20,24,31,0.09)]"

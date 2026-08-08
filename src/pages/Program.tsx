@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import Eyebrow from '../components/ui/Eyebrow'
 import Tag from '../components/ui/Tag'
@@ -33,6 +33,21 @@ export default function Program() {
       .catch(() => setError(true))
   }, [])
 
+  // These sit above the early returns so the hook order never changes between
+  // renders. Both are memoised: offerAverages scans all 10,372 stat records,
+  // and without this it re-ran on every render — including each tab switch.
+  const program = useMemo(
+    () => (data ? findProgram(data.programs, universityId, slug) : null),
+    [data, universityId, slug],
+  )
+
+  const offerAverages = useMemo(() => {
+    if (!data || !program) return []
+    return data.stats
+      .filter((s) => s.p === program.id && s.d === 'offer' && s.a !== null)
+      .map((s) => s.a as number)
+  }, [data, program])
+
   if (error) {
     return <Shell><p className="text-slate">Couldn’t load program data. Try refreshing.</p></Shell>
   }
@@ -40,7 +55,6 @@ export default function Program() {
     return <Shell><p className="text-slate">Loading…</p></Shell>
   }
 
-  const program = findProgram(data.programs, universityId, slug)
   if (!program) {
     return (
       <Shell>
@@ -60,10 +74,6 @@ export default function Program() {
   const similar = similarPrograms(data.programs, program)
   const info = getProgramInfo(program.id)
   const uniInfo = getUniversityInfo(program.universityId)
-
-  const offerAverages = data.stats
-    .filter((s) => s.p === program.id && s.d === 'offer' && s.a !== null)
-    .map((s) => s.a as number)
 
   const cycleRange =
     program.cycles.length > 1

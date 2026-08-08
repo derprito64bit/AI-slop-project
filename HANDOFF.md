@@ -141,6 +141,20 @@ below. **KokonutUI** is worth using but is *not* a dependency — its components
 are copy-in and already assume Motion + Tailwind, so paste individual ones in as
 needed.
 
+**Motion timings come from the `ui-ux-pro-max` motion table**
+(`~/.claude/skills/ui-ux-pro-max/data/motion.csv`), not taste. Scroll reveals
+are 400ms at `y: 12` (its Subtle tier: *"keep the y offset small (8-16px) so it
+reads as a fade, not a slide"*), staggers are 0.04s/item (it warns against more
+than 0.1s per item and more than ~8 staggered children), and the hero settles in
+0.61s rather than the old 0.98s. If motion starts feeling sluggish again, check
+these numbers before adding anything new.
+
+**The hero section must not clip.** Its `overflow-hidden` now lives on the inner
+decorative layer, not the `<section>`. It was on the section to contain the
+blur blob, but it also cut off the search suggestions, which drop below the
+hero's bottom edge. Verified no horizontal overflow at 375 / 1512 / 2560 after
+the change.
+
 **Charts follow the `dataviz` skill.** Load it before touching chart code. The
 histogram uses a single sequential hue, hairline gridlines, 2px surface gaps,
 labels only on the median, and a table view so no value is tooltip-only. The
@@ -189,7 +203,7 @@ by volume; deliberately not auto-merged — "Engineering I" and "Engineering I
 
 | Page | State |
 |---|---|
-| **Home** (`/`) | Complete. Hero + quick search, stats band with scroll-zoom, university logo band, pinned full-screen roadmap, program cards, two carousels, testimonials, CTA. |
+| **Home** (`/`) | Complete. Hero + **typeahead search** (`HeroSearch.tsx` — suggests programs as you type, keyboard-navigable combobox, loads the catalogue on first focus so the Home bundle stays clean), stats band with scroll-zoom, university logo band, pinned full-screen roadmap, program cards, two carousels, CTA. |
 | **Explore** (`/explore`) | **Interim.** Search works over all 2,436 programs; results are 3-per-row cards linking to program pages, 30 at a time behind a "Show more", with a live result count. Every program is reachable — low-data ones render "not enough data yet" rather than being hidden. **No filter UI yet** — that is the remaining gap. |
 | **Program** (`/program/:universityId/:slug`) | Complete. Four tabs: General, Analytics, Requirements, Extras. Distribution histogram, range readout, decision counts, similar programs. |
 | **Profile / Community / About** | Still `Placeholder` stubs. |
