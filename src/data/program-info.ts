@@ -264,6 +264,52 @@ export const PROGRAM_INFO: Record<string, ProgramInfo> = {
     verified: '2026-08-07',
   },
 
+  // --- U of T Engineering. One FAQ page states the prerequisites plus two
+  // distinct competitive ranges depending on the stream. ---
+
+  'toronto::engineering-science': {
+    programId: 'toronto::engineering-science',
+    requiredCourses: [
+      'English (ENG4U)',
+      'Advanced Functions (MHF4U)',
+      'Calculus and Vectors (MCV4U)',
+      'Chemistry (SCH4U)',
+      'Physics (SPH4U)',
+    ],
+    statedAverage: 'Low to mid 90s — the range stated for Engineering Science, Computer, Electrical, TrackOne and Undeclared Engineering',
+    supplementary: 'Online Student Profile required, including short written responses and video submissions',
+    notes: [
+      'U of T states that meeting the minimum averages does not guarantee admission.',
+      'Prerequisite courses must be completed within five years of the intended start date.',
+    ],
+    sources: [
+      { label: 'FAQs — Future Engineering Undergraduates, University of Toronto', url: 'https://discover.engineering.utoronto.ca/faqs/' },
+      { label: 'Academic Requirements — U of T Engineering', url: 'https://discover.engineering.utoronto.ca/admission-requirements/' },
+    ],
+    verified: '2026-08-07',
+  },
+
+  'toronto::computer-engineering': {
+    programId: 'toronto::computer-engineering',
+    requiredCourses: [
+      'English (ENG4U)',
+      'Advanced Functions (MHF4U)',
+      'Calculus and Vectors (MCV4U)',
+      'Chemistry (SCH4U)',
+      'Physics (SPH4U)',
+    ],
+    statedAverage: 'Low to mid 90s — the range stated for Computer, Electrical, Engineering Science, TrackOne and Undeclared Engineering',
+    supplementary: 'Online Student Profile required, including short written responses and video submissions',
+    notes: [
+      'U of T states that meeting the minimum averages does not guarantee admission.',
+      'Prerequisite courses must be completed within five years of the intended start date.',
+    ],
+    sources: [
+      { label: 'FAQs — Future Engineering Undergraduates, University of Toronto', url: 'https://discover.engineering.utoronto.ca/faqs/' },
+    ],
+    verified: '2026-08-07',
+  },
+
   'toronto::rotman-commerce': {
     programId: 'toronto::rotman-commerce',
     requiredCourses: [
@@ -318,6 +364,47 @@ export const PROGRAM_INFO: Record<string, ProgramInfo> = {
         label: 'Health Sciences (BSc) — Wilfrid Laurier University',
         url: 'https://www.wlu.ca/programs/science/undergraduate/health-sciences-bsc/index.html',
       },
+    ],
+    verified: '2026-08-07',
+  },
+
+  // NOTE: a search summary gave "SCH4U or SPH4U", a 75% math average and a 78%
+  // offer-maintenance average. The Lassonde page states Chemistry AND Physics
+  // at 70% each and a low-80s admission average. The official page wins.
+  'york::engineering': {
+    programId: 'york::engineering',
+    requiredCourses: [
+      'English (ENG4U)',
+      'Chemistry (SCH4U)',
+      'Physics (SPH4U)',
+      'Advanced Functions (MHF4U)',
+      'Calculus & Vectors (MCV4U)',
+      'One additional 4U/M course',
+    ],
+    minCourseGrade: 'Minimum 70% in each prerequisite',
+    statedAverage: 'Low 80s',
+    sources: [
+      { label: 'Admission Requirements — Lassonde School of Engineering, York University', url: 'https://lassonde.yorku.ca/discover/program-requirements' },
+    ],
+    verified: '2026-08-07',
+  },
+
+  'york::nursing-direct-entry': {
+    programId: 'york::nursing-direct-entry',
+    requiredCourses: [
+      'ENG4U',
+      '4U Math',
+      'SBI4U',
+      'SCH4U or SPH4U',
+      'Two additional 4U/4M courses',
+    ],
+    minCourseGrade: 'At least 70% in each prerequisite',
+    statedAverage: 'Overall average in at least the high 80s',
+    notes: [
+      'York states that meeting the minimum admission requirements does not guarantee admission, and that competitive applicants typically present grades in the high 80s or above in prerequisite courses.',
+    ],
+    sources: [
+      { label: 'Direct Entry Nursing Program — Faculty of Health, York University', url: 'https://www.yorku.ca/health/direct-entry-nursing/' },
     ],
     verified: '2026-08-07',
   },
@@ -608,6 +695,160 @@ export const PROGRAM_INFO: Record<string, ProgramInfo> = {
     verified: '2026-08-07',
   },
 
+  // TMU publishes a consistent per-program page: prerequisites with per-course
+  // minimums, an overall average floor, and the previous year's range — which
+  // it explicitly notes can fluctuate year to year.
+  'tmu::biomedical-science': {
+    programId: 'tmu::biomedical-science',
+    requiredCourses: [
+      'English/anglais (ENG4U/EAE4U preferred)',
+      'Advanced Functions (MHF4U)',
+      'Two of: Physics (SPH4U), Chemistry (SCH4U) or Biology (SBI4U)',
+    ],
+    minCourseGrade: 'Minimum 70% in each required course',
+    statedAverage: 'Overall average of 70% required for consideration; previous year’s range mid 80s',
+    notes: [
+      'A "Grades-Only" program — admission decisions are based on academic performance.',
+      'TMU notes the average needed for admission can fluctuate each year.',
+    ],
+    sources: [{ label: 'Biomedical Sciences — Toronto Metropolitan University', url: 'https://www.torontomu.ca/programs/undergraduate/biomedical-sciences/' }],
+    verified: '2026-08-07',
+  },
+
+  'tmu::computer-science': {
+    programId: 'tmu::computer-science',
+    requiredCourses: [
+      'English/anglais (ENG4U/EAE4U preferred)',
+      'Advanced Functions (MHF4U)',
+      'One of: Calculus and Vectors (MCV4U, preferred) or Mathematics of Data Management (MDM4U)',
+      'One of: Physics (SPH4U), Chemistry (SCH4U) or Biology (SBI4U)',
+    ],
+    minCourseGrade: 'Minimum 70% in each required course',
+    statedAverage: 'Overall average of 70% across six Grade 12 U/M courses; previous year’s range low 80s',
+    notes: ['TMU notes the average needed for admission can fluctuate each year.'],
+    sources: [{ label: 'Computer Science — Toronto Metropolitan University', url: 'https://www.torontomu.ca/programs/undergraduate/computer-science/' }],
+    verified: '2026-08-07',
+  },
+
+  'tmu::accounting-and-finance': {
+    programId: 'tmu::accounting-and-finance',
+    requiredCourses: [
+      'English/anglais (ENG4U/EAE4U preferred)',
+      'Advanced Functions (MHF4U)',
+      'Calculus and Vectors (MCV4U)',
+    ],
+    minCourseGrade: 'Minimum 75% in each required course',
+    statedAverage: 'Overall average of 70% required for consideration; previous year’s range mid 80s',
+    sources: [{ label: 'Accounting & Finance — Toronto Metropolitan University', url: 'https://www.torontomu.ca/programs/undergraduate/accounting-finance/' }],
+    verified: '2026-08-07',
+  },
+
+  'tmu::undeclared-engineering': {
+    programId: 'tmu::undeclared-engineering',
+    requiredCourses: [
+      'English/anglais (ENG4U/EAE4U preferred)',
+      'Advanced Functions (MHF4U)',
+      'Calculus and Vectors (MCV4U)',
+      'Physics (SPH4U)',
+      'Chemistry (SCH4U)',
+    ],
+    minCourseGrade: 'Minimum 70% in each required course',
+    statedAverage: 'Overall average of 70% required for consideration; previous year’s range high 80s',
+    notes: ['TMU notes the average needed for admission can fluctuate each year.'],
+    sources: [{ label: 'Undeclared Engineering — Toronto Metropolitan University', url: 'https://www.torontomu.ca/programs/undergraduate/undeclared-engineering/' }],
+    verified: '2026-08-07',
+  },
+
+  'tmu::mechanical-engineering': {
+    programId: 'tmu::mechanical-engineering',
+    requiredCourses: [
+      'English/anglais (ENG4U/EAE4U preferred)',
+      'Advanced Functions (MHF4U)',
+      'Calculus and Vectors (MCV4U)',
+      'Physics (SPH4U)',
+      'Chemistry (SCH4U)',
+    ],
+    minCourseGrade: 'Minimum 70% in each required course',
+    statedAverage: 'Overall average of 70% required for consideration; previous year’s range high 80s',
+    notes: ['TMU notes the average needed for admission can fluctuate each year.'],
+    sources: [{ label: 'Mechanical Engineering — Toronto Metropolitan University', url: 'https://www.torontomu.ca/programs/undergraduate/mechanical-engineering/' }],
+    verified: '2026-08-07',
+  },
+
+  'tmu::mechatronic-engineering': {
+    programId: 'tmu::mechatronic-engineering',
+    requiredCourses: [
+      'English/anglais (ENG4U/EAE4U preferred)',
+      'Advanced Functions (MHF4U)',
+      'Calculus and Vectors (MCV4U)',
+      'Physics (SPH4U)',
+      'Chemistry (SCH4U)',
+    ],
+    minCourseGrade: 'Minimum 70% in each required course',
+    statedAverage: 'Overall average of 70% required for consideration; previous year’s range high 80s',
+    notes: ['TMU notes the average needed for admission can fluctuate each year.'],
+    sources: [{ label: 'Mechatronics Engineering — Toronto Metropolitan University', url: 'https://www.torontomu.ca/programs/undergraduate/mechatronics-engineering/' }],
+    verified: '2026-08-07',
+  },
+
+  'tmu::urban-and-regional-planning': {
+    programId: 'tmu::urban-and-regional-planning',
+    requiredCourses: ['English/anglais (ENG4U/EAE4U preferred)'],
+    recommendedCourses: [
+      'Grade 12 U/M courses in social sciences and humanities, economics, Canadian and world studies, science or mathematics',
+    ],
+    minCourseGrade: 'Minimum 70% in English',
+    statedAverage: 'Six Grade 12 U/M courses with a minimum overall average of 70%; previous year’s range low 80s',
+    notes: ['TMU notes the average needed for admission can fluctuate each year.'],
+    sources: [{ label: 'Urban and Regional Planning — Toronto Metropolitan University', url: 'https://www.torontomu.ca/programs/undergraduate/urban-regional-planning/' }],
+    verified: '2026-08-07',
+  },
+
+  'tmu::computer-engineering': {
+    programId: 'tmu::computer-engineering',
+    requiredCourses: [
+      'English/anglais (ENG4U/EAE4U preferred)',
+      'Advanced Functions (MHF4U)',
+      'Calculus and Vectors (MCV4U)',
+      'Physics (SPH4U)',
+      'Chemistry (SCH4U)',
+    ],
+    minCourseGrade: 'Minimum 70% in each required course',
+    statedAverage: 'Overall average of 70% required for consideration; previous year’s range high 80s',
+    notes: ['TMU notes the average needed for admission can fluctuate each year.'],
+    sources: [{ label: 'Computer Engineering — Toronto Metropolitan University', url: 'https://www.torontomu.ca/programs/undergraduate/computer-engineering/' }],
+    verified: '2026-08-07',
+  },
+
+  'tmu::electrical-engineering': {
+    programId: 'tmu::electrical-engineering',
+    requiredCourses: [
+      'English/anglais (ENG4U/EAE4U preferred)',
+      'Advanced Functions (MHF4U)',
+      'Calculus and Vectors (MCV4U)',
+      'Physics (SPH4U)',
+      'Chemistry (SCH4U)',
+    ],
+    minCourseGrade: 'Minimum 70% in each required course',
+    statedAverage: 'Overall average of 70% required for consideration; previous year’s range high 80s',
+    notes: ['TMU notes the average needed for admission can fluctuate each year.'],
+    sources: [{ label: 'Electrical Engineering — Toronto Metropolitan University', url: 'https://www.torontomu.ca/programs/undergraduate/electrical-engineering/' }],
+    verified: '2026-08-07',
+  },
+
+  'tmu::business-management': {
+    programId: 'tmu::business-management',
+    requiredCourses: [
+      'English/anglais (ENG4U/EAE4U preferred)',
+      'One of: Calculus and Vectors (MCV4U), Advanced Functions (MHF4U) or Mathematics of Data Management (MDM4U)',
+    ],
+    minCourseGrade: 'Minimum 70% in each required course',
+    statedAverage: 'Overall average of 70% required for consideration; previous year’s range high 70s',
+    notes: ['TMU notes the average needed for admission can fluctuate each year.'],
+    sources: [{ label: 'Business Management — Toronto Metropolitan University', url: 'https://www.torontomu.ca/programs/undergraduate/business-management/' }],
+    verified: '2026-08-07',
+  },
+
   'tmu::nursing-at-tmu': {
     programId: 'tmu::nursing-at-tmu',
     requiredCourses: [
@@ -744,6 +985,39 @@ export const PROGRAM_INFO: Record<string, ProgramInfo> = {
         label: 'Business — McMaster Future Students',
         url: 'https://future.mcmaster.ca/programs/business/',
       },
+    ],
+    verified: '2026-08-07',
+  },
+
+  // Western's Faculty of Science page states one requirement set explicitly
+  // covering Science, Computer Science and Integrated Science.
+  'western::science': {
+    programId: 'western::science',
+    requiredCourses: [
+      'English (ENG4U)',
+      'Two of: Advanced Functions (MHF4U), Calculus and Vectors (MCV4U), Biology (SBI4U), Chemistry (SCH4U), Computer and Information Science (ICS4U), Earth and Space Sciences (SES4U), Math and Data Management (MDM4U), Physics (SPH4U)',
+      'Two additional Grade 12 U/M courses',
+    ],
+    notes: ['The page does not state a minimum grade or admission average for these programs.'],
+    sources: [
+      { label: 'Admission Requirements — Faculty of Science, Western University', url: 'https://www.uwo.ca/sci/undergraduate/future_students/admission/index.html' },
+    ],
+    verified: '2026-08-07',
+  },
+
+  'western::computer-science': {
+    programId: 'western::computer-science',
+    requiredCourses: [
+      'English (ENG4U)',
+      'Two of: Advanced Functions (MHF4U), Calculus and Vectors (MCV4U), Biology (SBI4U), Chemistry (SCH4U), Computer and Information Science (ICS4U), Earth and Space Sciences (SES4U), Math and Data Management (MDM4U), Physics (SPH4U)',
+      'Two additional Grade 12 U/M courses',
+    ],
+    notes: [
+      'Western states this requirement set covers Science, Computer Science and Integrated Science.',
+      'The page does not state a minimum grade or admission average for these programs.',
+    ],
+    sources: [
+      { label: 'Admission Requirements — Faculty of Science, Western University', url: 'https://www.uwo.ca/sci/undergraduate/future_students/admission/index.html' },
     ],
     verified: '2026-08-07',
   },
