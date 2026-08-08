@@ -13,7 +13,11 @@ type RevealProps = {
   as?: 'div' | 'section' | 'li' | 'span'
 }
 
-export default function Reveal({ children, delay = 0, y = 24, className, as = 'div' }: RevealProps) {
+// Defaults follow the ui-ux-pro-max motion table, Scroll Reveal / Subtle:
+// 300-400ms, and "keep the y offset small (8-16px) so it reads as a fade, not a
+// slide". The previous 600ms at y=24 was the main source of the site feeling
+// sluggish — every section made you wait out a visible slide.
+export default function Reveal({ children, delay = 0, y = 12, className, as = 'div' }: RevealProps) {
   const MotionTag = motion[as]
   return (
     <MotionTag
@@ -21,7 +25,7 @@ export default function Reveal({ children, delay = 0, y = 24, className, as = 'd
       initial={{ opacity: 0, y }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: '-80px' }}
-      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.4, delay, ease: [0.22, 1, 0.36, 1] }}
     >
       {children}
     </MotionTag>
