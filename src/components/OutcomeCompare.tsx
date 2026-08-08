@@ -1,3 +1,4 @@
+import { motion, useReducedMotion } from 'motion/react'
 import type { Summary } from '../lib/analytics'
 
 // Offer vs rejection averages, as two range strips on a shared scale.
@@ -26,6 +27,7 @@ const ROWS = [
 ] as const
 
 export default function OutcomeCompare({ offers, rejections }: Props) {
+  const reduced = useReducedMotion()
   // Shared scale across both rows, padded so end caps are never flush.
   const lo = Math.floor(Math.min(offers.min, rejections.min) / 5) * 5
   const hi = Math.ceil(Math.max(offers.max, rejections.max) / 5) * 5
@@ -58,19 +60,32 @@ export default function OutcomeCompare({ offers, rejections }: Props) {
                   className="absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-line"
                   style={{ left: `${pos(s.min)}%`, width: `${pos(s.max) - pos(s.min)}%` }}
                 />
-                {/* p25–p75, where the middle half sat */}
-                <div
+                {/* p25–p75, where the middle half sat. Grows from the median
+                    outwards, so the eye lands on the median first. */}
+                <motion.div
                   className="absolute top-1/2 h-4 -translate-y-1/2 rounded-md"
-                  style={{
+                  style={{ background: row.fill }}
+                  initial={
+                    reduced ? false : { left: `${pos(s.median)}%`, width: '0%', opacity: 0 }
+                  }
+                  animate={{
                     left: `${pos(s.p25)}%`,
                     width: `${Math.max(0.6, pos(s.p75) - pos(s.p25))}%`,
-                    background: row.fill,
+                    opacity: 1,
                   }}
+                  transition={
+                    reduced
+                      ? { duration: 0 }
+                      : { duration: 0.5, delay: row.key === 'offers' ? 0.05 : 0.15, ease: [0.22, 1, 0.36, 1] }
+                  }
                 />
                 {/* median — the one direct marker */}
-                <div
+                <motion.div
                   className="absolute top-1/2 h-6 w-0.5 -translate-y-1/2 bg-ink"
                   style={{ left: `${pos(s.median)}%` }}
+                  initial={reduced ? false : { scaleY: 0, opacity: 0 }}
+                  animate={{ scaleY: 1, opacity: 1 }}
+                  transition={reduced ? { duration: 0 } : { duration: 0.3, delay: 0.25 }}
                 />
               </div>
             </li>
