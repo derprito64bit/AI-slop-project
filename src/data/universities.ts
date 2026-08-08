@@ -1,4 +1,6 @@
-// Placeholder university/program data for the carousels.
+import SUMMARY from './generated/summary.json'
+
+// University/program data for the carousels.
 // Swap `img` in later (drop files in /public/universities or use a URL) and
 // the carousels pick them up automatically — no layout changes needed.
 export type CarouselItem = {
@@ -33,16 +35,30 @@ export const CAMPUS_ITEMS: CarouselItem[] = [
 ]
 
 // Popular programs band (the "Trending programs" carousel).
-// `img` points at the same square logo files the cards and program pages use,
-// so a school looks identical everywhere. Rendered with imgFit="contain" on a
-// white tile — object-cover would crop the wordmarks.
+//
+// Built from the generated summary rather than hand-written, so the names,
+// averages and links are real. The previous version listed invented averages
+// and pointed every tile at a bare /program, which just redirects to Explore —
+// a tile advertising "Computer Science · Waterloo" landed you on the search page.
+//
+// `img` is the same square logo the cards and program pages use, rendered with
+// imgFit="contain" on a white tile — object-cover would crop the wordmarks.
 const mark = (id: string) => asset(`images/universities/square/${id}.png`)
 
-export const POPULAR_ITEMS: CarouselItem[] = [
-  { id: 'cs-waterloo', name: 'Computer Science', caption: 'Waterloo · avg low-90s', img: mark('waterloo'), gradient: 'from-brand-100 to-brand-50', href: '/program' },
-  { id: 'lifesci-mac', name: 'Life Sciences', caption: 'McMaster · avg mid-80s', img: mark('mcmaster'), gradient: 'from-brand-50 to-cloud', href: '/program' },
-  { id: 'commerce-queens', name: 'Commerce', caption: "Queen's · avg high-80s", img: mark('queens'), gradient: 'from-cloud to-brand-100', href: '/program' },
-  { id: 'eng-uoft', name: 'Engineering', caption: 'Toronto · avg low-90s', img: mark('toronto'), gradient: 'from-brand-100 to-cloud', href: '/program' },
-  { id: 'nursing-mac', name: 'Nursing', caption: 'McMaster · avg high-80s', img: mark('mcmaster'), gradient: 'from-brand-50 to-brand-100', href: '/program' },
-  { id: 'bio-western', name: 'Medical Sciences', caption: 'Western · avg high-80s', img: mark('western'), gradient: 'from-cloud to-brand-50', href: '/program' },
+const GRADIENTS = [
+  'from-brand-100 to-brand-50',
+  'from-brand-50 to-cloud',
+  'from-cloud to-brand-100',
+  'from-brand-100 to-cloud',
+  'from-brand-50 to-brand-100',
+  'from-cloud to-brand-50',
 ]
+
+export const POPULAR_ITEMS: CarouselItem[] = SUMMARY.featured.map((f, i) => ({
+  id: `${f.universityId}-${f.slug}`,
+  name: f.name,
+  caption: `${f.school} · median ${f.median}%`,
+  img: mark(f.universityId),
+  gradient: GRADIENTS[i % GRADIENTS.length],
+  href: `/program/${f.universityId}/${f.slug}`,
+}))

@@ -195,11 +195,15 @@ function Tile({
             }`}
           />
         ) : (
-          // Labeled placeholder tile (until real images are added).
+          // Placeholder tile. The "image" chip is a build-time hint for photo
+          // tiles; on a logo tile it just reads as a broken asset, and the
+          // caption below already names the school, so leave it clean.
           <div className={`flex h-full w-full items-center justify-center bg-gradient-to-br ${item.gradient ?? 'from-brand-100 to-brand-50'}`}>
-            <span className="rounded-md bg-white/70 px-2 py-1 text-[10px] font-600 uppercase tracking-wider text-slate">
-              image
-            </span>
+            {imgFit !== 'contain' && (
+              <span className="rounded-md bg-white/70 px-2 py-1 text-[10px] font-600 uppercase tracking-wider text-slate">
+                image
+              </span>
+            )}
           </div>
         )}
 

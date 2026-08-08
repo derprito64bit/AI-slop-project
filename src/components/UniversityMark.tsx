@@ -50,7 +50,13 @@ export default function UniversityMark({
   className?: string
 }) {
   const [attempt, setAttempt] = useState(0)
-  const exhausted = attempt >= EXTENSIONS.length
+
+  // Below ~48px a wordmark lockup is an unreadable smudge — at 36px in "Similar
+  // programs" the marks read as blank white squares. A two-letter monogram is
+  // legible at any size, so prefer it there. Crest-only artwork could raise
+  // this threshold; today's files are lockups.
+  const tooSmallForArt = size < 48
+  const exhausted = tooSmallForArt || attempt >= EXTENSIONS.length
 
   const box = `shrink-0 overflow-hidden rounded-md ${className}`
   const style = { width: size, height: size }

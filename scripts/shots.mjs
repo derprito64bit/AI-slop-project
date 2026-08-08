@@ -20,7 +20,7 @@
 // fights programmatic scrolling, so without it captures are racy. Reduced
 // motion makes content render immediately and the results deterministic.
 
-import { mkdirSync, rmSync } from 'node:fs'
+import { mkdirSync } from 'node:fs'
 import { launch } from 'puppeteer-core'
 
 const BASE = process.env.SHOTS_BASE ?? 'http://localhost:5173'
@@ -58,7 +58,9 @@ if (!routes.length) {
   process.exit(1)
 }
 
-rmSync(OUT, { recursive: true, force: true })
+// Overwrite in place rather than wiping the directory: a filtered run
+// (`npm run shots -- program`) should not delete the captures from the run
+// before it.
 mkdirSync(OUT, { recursive: true })
 
 const browser = await launch({

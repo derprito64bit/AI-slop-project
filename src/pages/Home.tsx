@@ -8,38 +8,19 @@ import Carousel from '../components/Carousel'
 import UniversityBanner from '../components/UniversityBanner'
 import Roadmap from '../components/Roadmap'
 import Button from '../components/ui/Button'
-import Tag from '../components/ui/Tag'
 import Eyebrow from '../components/ui/Eyebrow'
 import { CAMPUS_ITEMS, POPULAR_ITEMS } from '../data/universities'
+import SUMMARY from '../data/generated/summary.json'
 
-// Placeholder voices until real community stats land. Swap `initials` for
-// student avatars once we have them.
-const TESTIMONIALS = [
-  {
-    quote: 'I thought my average locked me out of everything. Turned out three programs I loved were well within reach.',
-    name: 'Priya',
-    detail: 'Grade 12 · Mississauga',
-    initials: 'PR',
-  },
-  {
-    quote: 'The forums all said 95+. Seeing what people actually got in with took so much pressure off.',
-    name: 'Daniel',
-    detail: 'Grade 12 · Ottawa',
-    initials: 'DA',
-  },
-  {
-    quote: 'I finally had a shortlist I could explain to my parents, with real numbers behind it.',
-    name: 'Amara',
-    detail: 'First year · Hamilton',
-    initials: 'AM',
-  },
-]
-
+// Every figure below comes from src/data/generated/summary.json, which the ETL
+// writes from the dataset. It is ~1kB, so unlike programs.json it can be
+// imported eagerly here. Hand-typing these was how the page ended up claiming
+// "120+ programs" against a real 2,436.
 const STATS = [
-  { end: 120, suffix: '+', label: 'Programs tracked' },
-  { end: 20, suffix: '+', label: 'Ontario universities' },
-  { end: 3500, suffix: '+', label: 'Data points' },
-  { end: 100, suffix: '%', label: 'Sources cited' },
+  { end: SUMMARY.programs, suffix: '', label: 'Programs tracked' },
+  { end: SUMMARY.universities, suffix: '', label: 'Universities' },
+  { end: SUMMARY.reports, suffix: '', label: 'Student reports' },
+  { end: SUMMARY.programsWithCharts, suffix: '', label: 'With enough data to chart' },
 ]
 
 const STEPS = [
@@ -48,14 +29,10 @@ const STEPS = [
   { n: '03', title: 'Check your odds', body: 'Realistic admission chances, grounded in what actual students reported.' },
 ]
 
-// `id` is the university id, so the card can pull the same logo the Explore
-// cards and program pages use.
-const FEATURED = [
-  { id: 'waterloo', program: 'Computer Science', school: 'University of Waterloo', avg: 'low-90s', tag: 'Reach' },
-  { id: 'mcmaster', program: 'Life Sciences', school: 'McMaster University', avg: 'mid-80s', tag: 'Likely' },
-  { id: 'queens', program: 'Commerce', school: 'Queen’s University', avg: 'high-80s', tag: 'Reach' },
-  { id: 'toronto', program: 'Engineering', school: 'University of Toronto', avg: 'low-90s', tag: 'Reach' },
-]
+// Real programs, real medians, real links — the four most-reported, one per
+// school. Previously these were hand-written with invented averages and all
+// four linked to a bare /program, which just redirects to Explore.
+const FEATURED = SUMMARY.featured.slice(0, 4)
 
 const VALUES = [
   { title: 'Real accepted averages', body: 'Not the vague cutoffs on official sites — the numbers students actually got in with.' },
@@ -92,13 +69,13 @@ export default function Home() {
         <div className="pointer-events-none absolute inset-0 z-0 hidden lg:block" aria-hidden="true">
           <div className="container-page relative h-full">
             <Parallax distance={38} className="absolute right-0 top-16 w-52 rotate-3 2xl:w-64 3xl:w-72">
-              <PhotoFrame label="Campus life" gradient="from-brand-100 to-brand-50" ratio="4 / 5" />
+              <PhotoFrame label="Waterloo" logo="waterloo" gradient="from-brand-100 to-brand-50" ratio="4 / 5" />
             </Parallax>
             <Parallax distance={80} className="absolute right-48 top-48 w-40 -rotate-3 2xl:right-56 2xl:w-48 3xl:right-64 3xl:w-56">
-              <PhotoFrame label="Students" gradient="from-cloud to-brand-100" ratio="1 / 1" />
+              <PhotoFrame label="McMaster" logo="mcmaster" gradient="from-cloud to-brand-100" ratio="1 / 1" />
             </Parallax>
             <Parallax distance={56} className="absolute right-6 top-80 w-36 rotate-6 2xl:w-44 3xl:w-52">
-              <PhotoFrame label="On campus" gradient="from-brand-50 to-cloud" ratio="4 / 3" />
+              <PhotoFrame label="Western" logo="western" gradient="from-brand-50 to-cloud" ratio="4 / 3" />
             </Parallax>
           </div>
         </div>
@@ -215,18 +192,21 @@ export default function Home() {
 
           <div className="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {FEATURED.map((f, i) => (
-              <Reveal key={f.program + f.school} delay={i * 0.08}>
+              <Reveal key={`${f.universityId}-${f.slug}`} delay={i * 0.08}>
                 <Link
-                  to="/program"
+                  to={`/program/${f.universityId}/${f.slug}`}
                   className="group block h-full overflow-hidden rounded-2xl border border-line bg-paper transition-all hover:-translate-y-1 hover:shadow-[0_12px_36px_rgba(20,24,31,0.08)]"
                 >
                   {/* Same logo band as the Explore cards — fills the top edge to edge. */}
-                  <UniversityBanner id={f.id} name={f.school} className="aspect-[16/9]" />
+                  <UniversityBanner id={f.universityId} name={f.school} className="aspect-[16/9]" />
                   <div className="p-5">
-                    <Tag tone={f.tag === 'Reach' ? 'reach' : 'likely'}>{f.tag}</Tag>
-                    <h3 className="mt-3 font-600 text-ink group-hover:text-brand-600">{f.program}</h3>
+                    <h3 className="font-600 text-ink group-hover:text-brand-600">{f.name}</h3>
                     <p className="text-sm text-slate">{f.school}</p>
-                    <p className="mt-3 text-xs text-slate">Accepted avg · {f.avg}</p>
+                    {/* Median with its sample size — a median without an n is the
+                        kind of number this site exists to replace. */}
+                    <p className="mt-3 text-xs text-slate">
+                      Accepted median · {f.median}% of {f.sampleSize} offers
+                    </p>
                   </div>
                 </Link>
               </Reveal>
@@ -271,43 +251,11 @@ export default function Home() {
         </div>
       </section>
 
-      {/* ================= SOCIAL PROOF ================= */}
-      {/* Placeholder voices — replaced by real community stats later.
-          Faces/avatars go in the circle once we have them. */}
-      <section className="bg-cloud">
-        <div className="container-page py-20">
-          <Reveal>
-            <Eyebrow>From students like you</Eyebrow>
-            <h2 className="mt-2 max-w-2xl font-display text-display-2 font-600 text-ink">
-              You’re not behind. You just need better information.
-            </h2>
-          </Reveal>
-
-          <div className="mt-12 grid gap-6 md:grid-cols-3">
-            {TESTIMONIALS.map((t, i) => (
-              <Reveal key={t.name} delay={i * 0.1}>
-                <figure className="flex h-full flex-col rounded-lg border border-line bg-paper p-6">
-                  <blockquote className="flex-1 text-[15px] leading-relaxed text-ink">
-                    “{t.quote}”
-                  </blockquote>
-                  <figcaption className="mt-5 flex items-center gap-3 border-t border-line pt-4">
-                    <span
-                      className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-brand-100 text-xs font-600 text-brand-600"
-                      aria-hidden="true"
-                    >
-                      {t.initials}
-                    </span>
-                    <span>
-                      <span className="block text-sm font-600 text-ink">{t.name}</span>
-                      <span className="block text-xs text-slate">{t.detail}</span>
-                    </span>
-                  </figcaption>
-                </figure>
-              </Reveal>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* A testimonials section lived here with three invented students
+          ("Priya, Grade 12 · Mississauga"). Removed 2026-08-08: fabricated
+          quotes are the one thing that would undercut a site whose whole pitch
+          is not misleading students. Bring it back when the community page
+          produces real, consented submissions. */}
 
       {/* ================= CTA ================= */}
       <section className="container-page pb-8 pt-20">
@@ -329,19 +277,42 @@ export default function Home() {
   )
 }
 
-// A squared, slightly-matted photo frame placeholder. Intentionally NOT
-// pill-rounded — editorial, not corporate. Set a real <img> here later.
-function PhotoFrame({ label, gradient, ratio }: { label: string; gradient: string; ratio: string }) {
+// A squared, slightly-matted frame. Intentionally NOT pill-rounded — editorial,
+// not corporate. With `logo` it shows a university mark on white; without one it
+// falls back to the original gradient tile, so campus photos can replace either
+// later without touching the layout.
+function PhotoFrame({
+  label,
+  gradient,
+  ratio,
+  logo,
+}: {
+  label: string
+  gradient: string
+  ratio: string
+  logo?: string
+}) {
   return (
     <div className="rounded-md border border-line bg-paper p-1.5 shadow-[0_12px_40px_rgba(20,24,31,0.12)]">
-      <div
-        className={`flex items-end justify-start rounded-sm bg-gradient-to-br ${gradient} p-2`}
-        style={{ aspectRatio: ratio }}
-      >
-        <span className="rounded bg-paper/80 px-1.5 py-0.5 text-[9px] font-600 uppercase tracking-wider text-slate">
-          {label}
-        </span>
-      </div>
+      {logo ? (
+        <img
+          src={`${import.meta.env.BASE_URL}images/universities/square/${logo}.png`}
+          alt=""
+          aria-hidden="true"
+          loading="lazy"
+          className="w-full rounded-sm bg-white object-contain p-3"
+          style={{ aspectRatio: ratio }}
+        />
+      ) : (
+        <div
+          className={`flex items-end justify-start rounded-sm bg-gradient-to-br ${gradient} p-2`}
+          style={{ aspectRatio: ratio }}
+        >
+          <span className="rounded bg-paper/80 px-1.5 py-0.5 text-[9px] font-600 uppercase tracking-wider text-slate">
+            {label}
+          </span>
+        </div>
+      )}
     </div>
   )
 }
