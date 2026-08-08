@@ -1,4 +1,4 @@
-import { useId, useMemo, useState } from 'react'
+import { useEffect, useId, useMemo, useRef, useState } from 'react'
 
 // Distribution of reported accepted averages for one program.
 //
@@ -14,14 +14,32 @@ import { useId, useMemo, useState } from 'react'
 
 export type Bucket = { from: number; to: number; count: number }
 
-/** Group averages into fixed-width buckets spanning the observed range. */
-export function bucketize(values: number[], width = 2): Bucket[] {
+/**
+ * Bucket width for an observed range. A fixed 2-point width looks fine on a
+ * tight range but falls apart on a wide one: Waterloo CS spans 42–100 because
+ * of a single outlier, which at width 2 is 29 buckets of which 22 are empty.
+ * Scaling the width keeps the bar count in a readable 12–20 band without
+ * dropping any data.
+ */
+export function chooseWidth(range: number): number {
+  if (range <= 10) return 1
+  if (range <= 24) return 2
+  if (range <= 45) return 3
+  if (range <= 70) return 5
+  return 10
+}
+
+/** Group averages into buckets spanning the observed range. */
+export function bucketize(values: number[], width?: number): Bucket[] {
   if (!values.length) return []
-  const lo = Math.floor(Math.min(...values) / width) * width
+  const min = Math.min(...values)
+  const max = Math.max(...values)
+  width = width ?? chooseWidth(max - min)
+  const lo = Math.floor(min / width) * width
   // When every value is identical, or they all land on one boundary, lo and hi
   // collapse and the loop below would emit nothing — the chart would silently
   // disappear. Always leave at least one bucket's worth of range.
-  const hi = Math.max(Math.ceil(Math.max(...values) / width) * width, lo + width)
+  const hi = Math.max(Math.ceil(max / width) * width, lo + width)
   const buckets: Bucket[] = []
   for (let from = lo; from < hi; from += width) {
     const to = from + width
@@ -46,12 +64,26 @@ export default function AverageDistribution({ values, median, p25, p75 }: Props)
   const titleId = useId()
   const buckets = useMemo(() => bucketize(values), [values])
 
+  // The viewBox tracks the container's real pixel width so 1 user unit = 1 CSS
+  // px. With a fixed viewBox the whole drawing scales down on narrow screens
+  // and the 10px axis labels render at ~4.5px on a phone — illegible.
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const [W, setW] = useState(720)
+  useEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([entry]) => {
+      const w = Math.round(entry.contentRect.width)
+      if (w > 0) setW(w)
+    })
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
+
   if (!buckets.length) return null
 
-  // Geometry in SVG user units; the viewBox scales to the container.
-  const W = 720
-  const H = 200
-  const PAD = { top: 16, right: 8, bottom: 30, left: 34 }
+  const H = W < 420 ? 170 : 200
+  const PAD = { top: 16, right: 10, bottom: 30, left: 34 }
   const plotW = W - PAD.left - PAD.right
   const plotH = H - PAD.top - PAD.bottom
 
@@ -72,12 +104,13 @@ export default function AverageDistribution({ values, median, p25, p75 }: Props)
         Reported averages of students who received an offer ({values.length} reports)
       </figcaption>
 
+      <div ref={wrapRef} className="mt-3 w-full">
       <svg
         viewBox={`0 0 ${W} ${H}`}
-        className="mt-3 w-full"
+        width="100%"
+        height={H}
         role="img"
         aria-labelledby={titleId}
-        style={{ height: 'auto' }}
       >
         {/* p25–p75 band — where the middle half of offers sat */}
         <rect
@@ -154,15 +187,25 @@ export default function AverageDistribution({ values, median, p25, p75 }: Props)
           stroke="var(--color-ink)"
           strokeWidth="2"
         />
-        <text
-          x={Math.min(xFor(median) + 6, W - PAD.right - 68)}
-          y={PAD.top + 6}
-          fontSize="11"
-          fill="var(--color-ink)"
-          style={{ fontWeight: 600 }}
-        >
-          median {median}%
-        </text>
+        {/* Flip the label to the left of the rule when it would otherwise run
+            into the right edge, rather than clamping it flush against it. */}
+        {(() => {
+          const label = `median ${median}%`
+          const est = label.length * 5.8 + 4 // ~11px semibold
+          const flip = xFor(median) + 6 + est > W - PAD.right
+          return (
+            <text
+              x={flip ? xFor(median) - 6 : xFor(median) + 6}
+              y={PAD.top + 6}
+              textAnchor={flip ? 'end' : 'start'}
+              fontSize="11"
+              fill="var(--color-ink)"
+              style={{ fontWeight: 600 }}
+            >
+              {label}
+            </text>
+          )
+        })()}
 
         {/* x axis: only the two ends, so labels never collide */}
         <text x={PAD.left} y={H - 10} fontSize="10" fill="var(--color-slate)" style={{ fontVariantNumeric: 'tabular-nums' }}>
@@ -172,6 +215,7 @@ export default function AverageDistribution({ values, median, p25, p75 }: Props)
           {hi}%
         </text>
       </svg>
+      </div>
 
       {/* Table view — the chart's WCAG-clean twin, so no value is tooltip-only. */}
       <button
