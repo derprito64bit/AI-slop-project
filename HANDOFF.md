@@ -90,7 +90,24 @@ npm run build        typecheck + production build
 npm test             68 tests
 npm run data:build   regenerate dataset from data/raw/
 npm run data:check   same, but report only — does not write the dataset
+npm run shots        screenshot the dev server (see below)
 ```
+
+**Visual checks.** `npm run shots` captures `/`, `/explore` and a program page
+at 375 / 1512 / 2560 in both themes, into a gitignored `.shots/`. It drives the
+Chrome already installed on the machine via `puppeteer-core` (a devDependency —
+no browser download, nothing added to the app bundle). Needs `npm run dev`
+running.
+
+```
+npm run shots -- explore                       one route
+npm run shots -- --full                        full page, not just the viewport
+npm run shots -- home --section="Popular right now"    just that section
+```
+
+It forces `prefers-reduced-motion` and waits for animations to settle, because
+`Reveal` fades content in over 0.6s with a stagger and screenshotting mid-flight
+produces half-transparent elements.
 
 ---
 
@@ -110,6 +127,16 @@ chunk in the build output.
 sub-page or said figures "are finalized in the spring". A copied figure is wrong
 within months. Recommendation (not yet implemented): store the official fees
 **URL** per university and link out.
+
+**Motion is the one animation library.** `motion` (motion.dev) v13 is already a
+dependency and drives `Reveal`, `Parallax`, `CountUp`, `Roadmap` and the Home
+scroll-zoom, always gated behind `useReducedMotion`. Reviewed 2026-08-08 and
+decided against adding more: **anime.js** duplicates what Motion already does in
+React (two animation systems, two mental models, more bundle, no capability this
+site is missing), and **Bklit** charts conflict with the library-free histogram
+below. **KokonutUI** is worth using but is *not* a dependency — its components
+are copy-in and already assume Motion + Tailwind, so paste individual ones in as
+needed.
 
 **Charts follow the `dataviz` skill.** Load it before touching chart code. The
 histogram uses a single sequential hue, hairline gridlines, 2px surface gaps,
@@ -279,9 +306,17 @@ and pastes the requirements text. Structuring and citing it takes seconds.
 - **Vite HMR can serve stale CSS** after many edits in one session — dark mode
   appeared broken (light background, light text) until a hard reload. If
   something looks impossible, hard-reload before debugging.
+- **The in-app Browser pane only renders while it is visible.** If it is
+  collapsed, Chrome stops compositing that page: screenshots time out with
+  "the Browser pane is not displayed", and `loading="lazy"` images never fetch
+  (a page that is not rendering never decides an image is in view). This cost
+  most of a session — logos looked broken when they were fine. **Use
+  `npm run shots` instead**, which drives headless Chrome and does not care
+  about the pane.
 - **Lenis smooth scroll fights programmatic scrolling.** `window.scrollTo` gets
   reverted, which makes automated screenshots of mid-page sections unreliable.
-  Use real wheel events, or verify via DOM measurements.
+  Use real wheel events, or verify via DOM measurements. `npm run shots` sidesteps
+  this by forcing `prefers-reduced-motion`, which disables Lenis.
 - **Windows line endings** produce LF/CRLF warnings on every commit. Harmless.
 - **`npm audit`** reports 2 high advisories in react-router. Both are
   SSR/RSC-only and do not apply to this client-only SPA.

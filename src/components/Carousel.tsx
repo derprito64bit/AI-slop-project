@@ -186,7 +186,13 @@ function Tile({
             alt={item.name}
             loading="lazy"
             onError={() => setFailed(true)}
-            className={`h-full w-full ${imgFit === 'contain' ? 'object-contain' : 'object-cover'} transition-transform duration-500 group-hover:scale-105`}
+            // Contain tiles reserve room at the bottom so the caption bar sits
+            // beside the logo rather than clipping it.
+            className={`h-full w-full transition-transform duration-500 group-hover:scale-105 ${
+              imgFit === 'contain'
+                ? `object-contain px-4 pt-4 ${showCaption ? 'pb-16' : 'pb-4'}`
+                : 'object-cover'
+            }`}
           />
         ) : (
           // Labeled placeholder tile (until real images are added).
@@ -197,12 +203,21 @@ function Tile({
           </div>
         )}
 
-        {showCaption && (
-          <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 pt-8">
-            <p className="text-sm font-600 leading-tight text-white">{item.name}</p>
-            {item.caption && <p className="text-xs text-white/80">{item.caption}</p>}
-          </div>
-        )}
+        {/* The dark scrim is for photos. Over a contain-fitted logo the tile is
+            white, so white-on-scrim turns into white-on-light-grey — unreadable.
+            Those tiles get a solid bar in theme ink instead. */}
+        {showCaption &&
+          (imgFit === 'contain' ? (
+            <div className="absolute inset-x-0 bottom-0 border-t border-line bg-paper p-3">
+              <p className="text-sm font-600 leading-tight text-ink">{item.name}</p>
+              {item.caption && <p className="text-xs text-slate">{item.caption}</p>}
+            </div>
+          ) : (
+            <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3 pt-8">
+              <p className="text-sm font-600 leading-tight text-white">{item.name}</p>
+              {item.caption && <p className="text-xs text-white/80">{item.caption}</p>}
+            </div>
+          ))}
       </div>
     )
 
