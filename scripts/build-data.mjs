@@ -362,10 +362,44 @@ const write = (name, data) => {
   return { name, kb: Math.round(json.length / 1024) }
 }
 
+// A deliberately tiny summary the Home page can import eagerly. programs.json
+// is ~950kB and lazy-loaded on purpose, so without this the landing page has no
+// way to state real figures and drifts into hand-typed ones that go stale.
+// Keep it small — anything added here lands in the main bundle.
+// One per university, so the showcase row reads as a spread of schools rather
+// than the same two repeated.
+const seenSchools = new Set()
+const featured = programs
+  .filter((p) => !p.insufficientData && p.accepted)
+  .sort((a, b) => b.totalReports - a.totalReports)
+  .filter((p) => {
+    if (seenSchools.has(p.universityId)) return false
+    seenSchools.add(p.universityId)
+    return true
+  })
+  .slice(0, 6)
+  .map((p) => ({
+    universityId: p.universityId,
+    slug: p.slug,
+    name: p.name,
+    school: universities.find((u) => u.id === p.universityId)?.name ?? p.universityId,
+    median: p.accepted.median,
+    sampleSize: p.sampleSize,
+  }))
+
+const summary = {
+  programs: programs.length,
+  universities: universities.length,
+  reports: programs.reduce((n, p) => n + p.totalReports, 0),
+  programsWithCharts: programs.filter((p) => !p.insufficientData).length,
+  featured,
+}
+
 const written = [
   write('universities.json', universities),
   write('programs.json', programs),
   write('stats.json', stats),
+  write('summary.json', summary),
 ]
 
 // ------------------------------------------------------------------ QA report

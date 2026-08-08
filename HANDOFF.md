@@ -73,7 +73,10 @@ src/
     types.ts            canonical types
     universities.ts     carousel items (home page logo band)
     program-info.ts     HAND-RESEARCHED requirements, with sources + dates
-    generated/*.json    ETL output (committed; programs, universities, stats)
+    generated/*.json    ETL output (committed; programs, universities, stats,
+                        plus summary.json — a ~1kB totals + featured-programs
+                        file the Home page imports eagerly, since programs.json
+                        is far too big to load on the landing page)
   lib/
     dataSource.ts       the ONE seam to swap if a backend ever lands
     search.ts           pure search/filter/sort + findProgram/similarPrograms
@@ -90,7 +93,24 @@ npm run build        typecheck + production build
 npm test             68 tests
 npm run data:build   regenerate dataset from data/raw/
 npm run data:check   same, but report only — does not write the dataset
+npm run shots        screenshot the dev server (see below)
 ```
+
+**Visual checks.** `npm run shots` captures `/`, `/explore` and a program page
+at 375 / 1512 / 2560 in both themes, into a gitignored `.shots/`. It drives the
+Chrome already installed on the machine via `puppeteer-core` (a devDependency —
+no browser download, nothing added to the app bundle). Needs `npm run dev`
+running.
+
+```
+npm run shots -- explore                       one route
+npm run shots -- --full                        full page, not just the viewport
+npm run shots -- home --section="Popular right now"    just that section
+```
+
+It forces `prefers-reduced-motion` and waits for animations to settle, because
+`Reveal` fades content in over 0.6s with a stagger and screenshotting mid-flight
+produces half-transparent elements.
 
 ---
 
@@ -111,6 +131,16 @@ sub-page or said figures "are finalized in the spring". A copied figure is wrong
 within months. Recommendation (not yet implemented): store the official fees
 **URL** per university and link out.
 
+**Motion is the one animation library.** `motion` (motion.dev) v13 is already a
+dependency and drives `Reveal`, `Parallax`, `CountUp`, `Roadmap` and the Home
+scroll-zoom, always gated behind `useReducedMotion`. Reviewed 2026-08-08 and
+decided against adding more: **anime.js** duplicates what Motion already does in
+React (two animation systems, two mental models, more bundle, no capability this
+site is missing), and **Bklit** charts conflict with the library-free histogram
+below. **KokonutUI** is worth using but is *not* a dependency — its components
+are copy-in and already assume Motion + Tailwind, so paste individual ones in as
+needed.
+
 **Charts follow the `dataviz` skill.** Load it before touching chart code. The
 histogram uses a single sequential hue, hairline gridlines, 2px surface gaps,
 labels only on the median, and a table view so no value is tooltip-only. The
@@ -125,6 +155,9 @@ outside it. **Re-run the palette validator if that colour changes.**
 ```
 Google Form -> Google Sheet -> [team reviews] -> export .xlsx to data/raw/
    -> npm run data:build -> src/data/generated/*.json + data/qa-report.md
+                            (including summary.json — the Home page's numbers
+                             come from here, so they can never drift from the
+                             dataset the way hand-typed figures did)
 ```
 
 **Current dataset:** 10,372 records kept from 11,701 rows across 4 sheets →
@@ -157,7 +190,7 @@ by volume; deliberately not auto-merged — "Engineering I" and "Engineering I
 | Page | State |
 |---|---|
 | **Home** (`/`) | Complete. Hero + quick search, stats band with scroll-zoom, university logo band, pinned full-screen roadmap, program cards, two carousels, testimonials, CTA. |
-| **Explore** (`/explore`) | **Interim.** Search works over all 2,436 programs; results are 3-per-row cards linking to program pages. **No filter UI yet**, capped at 20 results, and hides every `insufficientData` program. |
+| **Explore** (`/explore`) | **Interim.** Search works over all 2,436 programs; results are 3-per-row cards linking to program pages, 30 at a time behind a "Show more", with a live result count. Every program is reachable — low-data ones render "not enough data yet" rather than being hidden. **No filter UI yet** — that is the remaining gap. |
 | **Program** (`/program/:universityId/:slug`) | Complete. Four tabs: General, Analytics, Requirements, Extras. Distribution histogram, range readout, decision counts, similar programs. |
 | **Profile / Community / About** | Still `Placeholder` stubs. |
 
@@ -224,10 +257,11 @@ and pastes the requirements text. Structuring and citing it takes seconds.
 
 1. **Explore filter UI.** The functions already exist and are tested —
    `filterPrograms` in `src/lib/search.ts` supports university, province, field,
-   difficulty band and median ceiling. There is no UI for any of them. Also:
-   results are capped at 20 and `insufficientData` programs are hidden, so most
-   of the 2,436 programs are currently unreachable. **Biggest gap between what's
-   built and what's usable.**
+   difficulty band and median ceiling. There is no UI for any of them. The
+   reachability half of this was fixed on 2026-08-08 (paging replaced the hard
+   20-result cap, and low-data programs are no longer hidden); the filter
+   controls are what remain. **Biggest gap between what's built and what's
+   usable.**
 2. **Finish the ≥20-report research tier** — 36 left, of which ~20 sit at the
    blocked schools (McMaster 12, Western, uOttawa). Needs pasted page text.
 3. **Profile page + alignment engine.** The core differentiator and still a stub.
@@ -259,11 +293,14 @@ and pastes the requirements text. Structuring and citing it takes seconds.
    for now. Ivey's stated 50/50 academic/leadership weighting is the kind of
    sourced claim this should be built from, not generic advice.
 10. **Tuition as links, not cached figures** (see §4).
+11. **Real testimonials.** The home page had three invented students ("Priya,
+    Grade 12 · Mississauga"). Removed 2026-08-08 — fabricated quotes are the
+    one thing that would undercut a site whose pitch is not misleading
+    students. Restore the section only with real, consented submissions, which
+    is a natural output of the Community page (#7).
 
 ### Housekeeping
 
-11. `claude-test.txt` in the repo root is a leftover from an early git test and
-    can be deleted.
 12. PR #3 (wireframe-only) is still open and now redundant — its content is in
     `main`. Safe to close.
 13. The `wireframe/` folder is the original grey-box HTML mockup. Superseded by
@@ -279,9 +316,17 @@ and pastes the requirements text. Structuring and citing it takes seconds.
 - **Vite HMR can serve stale CSS** after many edits in one session — dark mode
   appeared broken (light background, light text) until a hard reload. If
   something looks impossible, hard-reload before debugging.
+- **The in-app Browser pane only renders while it is visible.** If it is
+  collapsed, Chrome stops compositing that page: screenshots time out with
+  "the Browser pane is not displayed", and `loading="lazy"` images never fetch
+  (a page that is not rendering never decides an image is in view). This cost
+  most of a session — logos looked broken when they were fine. **Use
+  `npm run shots` instead**, which drives headless Chrome and does not care
+  about the pane.
 - **Lenis smooth scroll fights programmatic scrolling.** `window.scrollTo` gets
   reverted, which makes automated screenshots of mid-page sections unreliable.
-  Use real wheel events, or verify via DOM measurements.
+  Use real wheel events, or verify via DOM measurements. `npm run shots` sidesteps
+  this by forcing `prefers-reduced-motion`, which disables Lenis.
 - **Windows line endings** produce LF/CRLF warnings on every commit. Harmless.
 - **`npm audit`** reports 2 high advisories in react-router. Both are
   SSR/RSC-only and do not apply to this client-only SPA.

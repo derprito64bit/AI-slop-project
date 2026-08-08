@@ -15,13 +15,27 @@ export default function ExplorePreview() {
   const [error, setError] = useState(false)
   const [query, setQuery] = useState('')
 
+  // How many results are rendered. Everything matching is reachable via "Show
+  // more" — this only bounds the DOM, it never hides a program the way the old
+  // hard .slice(0, 20) did.
+  const PAGE = 30
+  const [shown, setShown] = useState(PAGE)
+
   useEffect(() => {
     loadCatalogue().then(setData).catch(() => setError(true))
   }, [])
 
-  const results = data
-    ? queryPrograms(data.programs, { query, filters: { withDataOnly: true } }, data.universities).slice(0, 20)
-    : []
+  // Reset paging whenever the query changes, so a new search starts at the top
+  // of its own list rather than inheriting the last one's expansion.
+  useEffect(() => {
+    setShown(PAGE)
+  }, [query])
+
+  // No withDataOnly filter: programs below the reporting threshold are real
+  // programs and students search for them. The card renders an honest
+  // "not enough data yet" state for them rather than inventing a median.
+  const matches = data ? queryPrograms(data.programs, { query }, data.universities) : []
+  const results = matches.slice(0, shown)
   const uniName = new Map((data?.universities ?? []).map((u) => [u.id, u.name]))
 
   return (
@@ -51,6 +65,13 @@ export default function ExplorePreview() {
             aria-label="Search programs"
             className="mt-8 w-full max-w-2xl rounded-full border border-line bg-paper px-5 py-3 text-sm text-ink outline-none placeholder:text-slate focus:border-brand-300"
           />
+
+          {/* Result count, so the catalogue figure above is verifiable rather
+              than a claim — and so it is obvious when a search narrows things. */}
+          <p className="mt-4 text-sm text-slate" role="status">
+            Showing {results.length.toLocaleString()} of {matches.length.toLocaleString()}
+            {query ? ' matching programs' : ' programs'}
+          </p>
 
           {/* Always 3 across on desktop. */}
           <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -107,10 +128,22 @@ export default function ExplorePreview() {
             })}
             {!results.length && (
               <li className="rounded-xl border border-line bg-paper p-6 text-center text-slate sm:col-span-2 lg:col-span-3">
-                No programs with enough reported data match that search yet.
+                No programs match that search.
               </li>
             )}
           </ul>
+
+          {matches.length > results.length && (
+            <div className="mt-8 text-center">
+              <button
+                type="button"
+                onClick={() => setShown((n) => n + PAGE)}
+                className="rounded-full border border-line bg-paper px-6 py-3 text-sm font-600 text-ink transition-colors hover:border-brand-300 hover:text-brand-600"
+              >
+                Show more ({(matches.length - results.length).toLocaleString()} left)
+              </button>
+            </div>
+          )}
 
           <p className="mt-8 text-xs leading-relaxed text-slate">
             Medians reflect the averages of students who reported an offer. Because people who
