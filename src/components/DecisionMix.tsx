@@ -1,3 +1,5 @@
+import { useState } from 'react'
+import { motion, useReducedMotion } from 'motion/react'
 import type { DecisionSlice } from '../lib/analytics'
 
 // Decision mix as one proportional bar.
@@ -20,6 +22,8 @@ const SHADE: Record<string, string> = {
 }
 
 export default function DecisionMix({ slices }: { slices: DecisionSlice[] }) {
+  const reduced = useReducedMotion()
+  const [hover, setHover] = useState<string | null>(null)
   if (!slices.length) return null
   const total = slices.reduce((n, s) => n + s.count, 0)
 
@@ -30,12 +34,24 @@ export default function DecisionMix({ slices }: { slices: DecisionSlice[] }) {
         role="img"
         aria-label={slices.map((s) => `${s.label}: ${s.count}`).join(', ')}
       >
-        {slices.map((s) => (
-          <div
+        {slices.map((s, i) => (
+          <motion.div
             key={s.key}
             // 2px surface gap between segments rather than a stroke, per the
             // dataviz guidance already followed by the histogram.
-            style={{ width: `${s.share * 100}%`, background: SHADE[s.key], marginRight: 2 }}
+            style={{ background: SHADE[s.key], marginRight: 2 }}
+            initial={reduced ? false : { width: 0 }}
+            animate={{
+              width: `${s.share * 100}%`,
+              opacity: hover === null || hover === s.key ? 1 : 0.5,
+            }}
+            transition={
+              reduced
+                ? { duration: 0 }
+                : { duration: 0.55, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] }
+            }
+            onPointerEnter={() => setHover(s.key)}
+            onPointerLeave={() => setHover((k) => (k === s.key ? null : k))}
             title={`${s.label}: ${s.count} of ${total}`}
           />
         ))}
@@ -44,7 +60,12 @@ export default function DecisionMix({ slices }: { slices: DecisionSlice[] }) {
       {/* Legend carries the counts directly, so identity is never colour-alone. */}
       <ul className="mt-3 flex flex-wrap gap-x-5 gap-y-2">
         {slices.map((s) => (
-          <li key={s.key} className="flex items-center gap-2 text-sm">
+          <li
+            key={s.key}
+            className="flex items-center gap-2 text-sm"
+            onPointerEnter={() => setHover(s.key)}
+            onPointerLeave={() => setHover((k) => (k === s.key ? null : k))}
+          >
             <span
               aria-hidden="true"
               className="h-2.5 w-2.5 shrink-0 rounded-sm border border-line"

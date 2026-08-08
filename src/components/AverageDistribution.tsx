@@ -1,4 +1,5 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
+import { motion, useReducedMotion } from 'motion/react'
 
 // Distribution of reported accepted averages for one program.
 //
@@ -61,6 +62,8 @@ type Props = {
 
 export default function AverageDistribution({ values, median, p25, p75 }: Props) {
   const [showTable, setShowTable] = useState(false)
+  const [hover, setHover] = useState<number | null>(null)
+  const reduced = useReducedMotion()
   const titleId = useId()
   const buckets = useMemo(() => bucketize(values), [values])
 
@@ -104,8 +107,22 @@ export default function AverageDistribution({ values, median, p25, p75 }: Props)
 
   return (
     <figure className="mt-6">
-      <figcaption id={titleId} className="text-sm text-slate">
-        Reported averages of students who received an offer ({values.length} reports)
+      <figcaption id={titleId} className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 text-sm text-slate">
+        <span>Reported averages of students who received an offer ({values.length} reports)</span>
+        {/* Live readout for the hovered bucket. Reserves its own row rather than
+            floating over the plot, so it can never cover the bars — the mistake
+            the median label used to make. aria-live keeps it useful to a screen
+            reader driving the chart by keyboard. */}
+        <span
+          aria-live="polite"
+          className="[font-variant-numeric:tabular-nums] min-h-[1.25rem] font-600 text-ink"
+        >
+          {hover !== null && buckets[hover]
+            ? `${buckets[hover].from}–${buckets[hover].to}% · ${buckets[hover].count} report${
+                buckets[hover].count === 1 ? '' : 's'
+              } (${Math.round((buckets[hover].count / values.length) * 100)}%)`
+            : ''}
+        </span>
       </figcaption>
 
       <div ref={wrapRef} className="mt-3 w-full">
@@ -153,22 +170,54 @@ export default function AverageDistribution({ values, median, p25, p75 }: Props)
           )
         })}
 
-        {/* bars — one hue, 2px surface gap, 4px rounded top, square at baseline */}
-        {buckets.map((b) => {
+        {/* bars — one hue, 2px surface gap, 4px rounded top, square at baseline.
+            They grow from the baseline on first paint: a distribution is a shape,
+            and drawing it in makes the shape read rather than just appear. */}
+        {buckets.map((b, i) => {
           const h = maxCount ? (b.count / maxCount) * plotH : 0
           const x = PAD.left + ((b.from - lo) / (hi - lo)) * plotW
           const w = Math.max(1, bandW - 2)
           const y = PAD.top + plotH - h
           if (h <= 0) return null
           const r = Math.min(4, h, w / 2)
+          const isHot = hover === i
           return (
-            <path
+            <motion.path
               key={b.from}
               d={`M${x},${PAD.top + plotH} L${x},${y + r} Q${x},${y} ${x + r},${y} L${x + w - r},${y} Q${x + w},${y} ${x + w},${y + r} L${x + w},${PAD.top + plotH} Z`}
               fill="var(--color-chart)"
+              // Scale about the baseline so bars rise instead of fading in place.
+              style={{ transformOrigin: `${x + w / 2}px ${PAD.top + plotH}px` }}
+              initial={reduced ? false : { scaleY: 0, opacity: 0.6 }}
+              animate={{ scaleY: 1, opacity: isHot ? 1 : 0.92 }}
+              transition={
+                reduced
+                  ? { duration: 0 }
+                  : // Stagger caps out so a 20-bucket chart still finishes fast.
+                    { duration: 0.45, delay: Math.min(i * 0.025, 0.4), ease: [0.22, 1, 0.36, 1] }
+              }
+            />
+          )
+        })}
+
+        {/* Hover layer: full-height hit targets, so you do not have to land on a
+            short bar to read it. The dataviz skill treats this as standard for
+            bar charts, not an extra. */}
+        {buckets.map((b, i) => {
+          const x = PAD.left + ((b.from - lo) / (hi - lo)) * plotW
+          return (
+            <rect
+              key={`hit-${b.from}`}
+              x={x}
+              y={PAD.top}
+              width={Math.max(1, bandW)}
+              height={plotH}
+              fill="transparent"
+              onPointerEnter={() => setHover(i)}
+              onPointerLeave={() => setHover((h) => (h === i ? null : h))}
             >
               <title>{`${b.from}–${b.to}%: ${b.count} report${b.count === 1 ? '' : 's'}`}</title>
-            </path>
+            </rect>
           )
         })}
 
