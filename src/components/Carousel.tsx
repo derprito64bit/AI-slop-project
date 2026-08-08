@@ -38,6 +38,12 @@ type CarouselProps = {
   variant?: 'photo' | 'logo'
   /** logo variant only: rendered height in px */
   logoHeight?: number
+  /**
+   * photo variant only. 'cover' fills the tile and crops (right for photos);
+   * 'contain' fits the whole image on a white tile (right for logos, where
+   * cropping would cut letters off a wordmark).
+   */
+  imgFit?: 'cover' | 'contain'
   className?: string
 }
 
@@ -55,6 +61,7 @@ export default function Carousel({
   startOffset = 0,
   variant = 'photo',
   logoHeight = 44,
+  imgFit = 'cover',
   className = '',
 }: CarouselProps) {
   if (!items.length) return null
@@ -100,6 +107,7 @@ export default function Carousel({
             ariaHidden={i >= items.length}
             variant={variant}
             logoHeight={logoHeight}
+            imgFit={imgFit}
           />
         ))}
       </ul>
@@ -116,6 +124,7 @@ function Tile({
   ariaHidden,
   variant,
   logoHeight,
+  imgFit,
 }: {
   item: CarouselItem
   width: number
@@ -125,6 +134,7 @@ function Tile({
   ariaHidden: boolean
   variant: 'photo' | 'logo'
   logoHeight: number
+  imgFit: 'cover' | 'contain'
 }) {
   // If an image 404s (e.g. the file hasn't been added yet), fall back to the
   // placeholder instead of showing a broken-image icon.
@@ -167,7 +177,7 @@ function Tile({
       </div>
     ) : (
       <div
-        className={`group relative shrink-0 overflow-hidden border border-line ${rounded} bg-cloud transition-transform duration-300 hover:-translate-y-1`}
+        className={`group relative shrink-0 overflow-hidden border border-line ${rounded} ${imgFit === 'contain' ? 'bg-white' : 'bg-cloud'} transition-transform duration-300 hover:-translate-y-1`}
         style={{ width, aspectRatio: aspect }}
       >
         {hasImg ? (
@@ -176,7 +186,7 @@ function Tile({
             alt={item.name}
             loading="lazy"
             onError={() => setFailed(true)}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className={`h-full w-full ${imgFit === 'contain' ? 'object-contain' : 'object-cover'} transition-transform duration-500 group-hover:scale-105`}
           />
         ) : (
           // Labeled placeholder tile (until real images are added).

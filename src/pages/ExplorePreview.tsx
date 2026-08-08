@@ -2,25 +2,10 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import Eyebrow from '../components/ui/Eyebrow'
 import Tag from '../components/ui/Tag'
-import UniversityMark from '../components/UniversityMark'
+import UniversityBanner from '../components/UniversityBanner'
 import { loadCatalogue } from '../lib/dataSource'
 import { queryPrograms, difficultyBand, DIFFICULTY_LABELS } from '../lib/search'
 import type { Program, University } from '../data/types'
-
-// Placeholder banner tints for the card image area, until real campus photos
-// exist. Drawn from the theme tokens so they follow light/dark, and picked
-// deterministically so a school always looks the same across cards.
-const BANNERS = [
-  'from-brand-100 to-brand-50',
-  'from-cloud to-brand-100',
-  'from-brand-50 to-surface',
-  'from-surface to-cloud',
-]
-function bannerFor(id: string): string {
-  let hash = 0
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0
-  return BANNERS[hash % BANNERS.length]
-}
 
 // Interim Explore page: proves the data pipeline end-to-end (lazy load →
 // search → render) while the full filtered browse UI is built. Deliberately
@@ -78,13 +63,12 @@ export default function ExplorePreview() {
                     to={`/program/${p.universityId}/${p.slug}`}
                     className="group flex w-full flex-col overflow-hidden rounded-xl border border-line bg-paper transition-shadow hover:shadow-[0_12px_34px_rgba(20,24,31,0.09)]"
                   >
-                    {/* --- image band --- */}
-                    <div className={`relative flex aspect-[16/9] items-center justify-center bg-gradient-to-br ${bannerFor(p.universityId)}`}>
-                      <UniversityMark
+                    {/* --- image band: the logo fills it edge to edge --- */}
+                    <div className="relative">
+                      <UniversityBanner
                         id={p.universityId}
                         name={school}
-                        size={64}
-                        className="shadow-sm ring-1 ring-black/5"
+                        className="aspect-[16/9]"
                       />
                       {band && (
                         <div className="absolute left-3 top-3">

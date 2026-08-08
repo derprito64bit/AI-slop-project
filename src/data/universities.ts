@@ -32,12 +32,17 @@ export const CAMPUS_ITEMS: CarouselItem[] = [
   { id: 'york', name: 'York University', caption: 'Toronto, ON', img: asset('images/universities/york.svg'), gradient: 'from-brand-100 to-brand-50' },
 ]
 
-// Popular programs band (in the "Popular right now" section).
+// Popular programs band (the "Trending programs" carousel).
+// `img` points at the same square logo files the cards and program pages use,
+// so a school looks identical everywhere. Rendered with imgFit="contain" on a
+// white tile — object-cover would crop the wordmarks.
+const mark = (id: string) => asset(`images/universities/square/${id}.png`)
+
 export const POPULAR_ITEMS: CarouselItem[] = [
-  { id: 'cs-waterloo', name: 'Computer Science', caption: 'Waterloo · avg low-90s', gradient: 'from-brand-100 to-brand-50', href: '/program' },
-  { id: 'lifesci-mac', name: 'Life Sciences', caption: 'McMaster · avg mid-80s', gradient: 'from-brand-50 to-cloud', href: '/program' },
-  { id: 'commerce-queens', name: 'Commerce', caption: "Queen's · avg high-80s", gradient: 'from-cloud to-brand-100', href: '/program' },
-  { id: 'eng-uoft', name: 'Engineering', caption: 'Toronto · avg low-90s', gradient: 'from-brand-100 to-cloud', href: '/program' },
-  { id: 'nursing-mac', name: 'Nursing', caption: 'McMaster · avg high-80s', gradient: 'from-brand-50 to-brand-100', href: '/program' },
-  { id: 'bio-western', name: 'Medical Sciences', caption: 'Western · avg high-80s', gradient: 'from-cloud to-brand-50', href: '/program' },
+  { id: 'cs-waterloo', name: 'Computer Science', caption: 'Waterloo · avg low-90s', img: mark('waterloo'), gradient: 'from-brand-100 to-brand-50', href: '/program' },
+  { id: 'lifesci-mac', name: 'Life Sciences', caption: 'McMaster · avg mid-80s', img: mark('mcmaster'), gradient: 'from-brand-50 to-cloud', href: '/program' },
+  { id: 'commerce-queens', name: 'Commerce', caption: "Queen's · avg high-80s", img: mark('queens'), gradient: 'from-cloud to-brand-100', href: '/program' },
+  { id: 'eng-uoft', name: 'Engineering', caption: 'Toronto · avg low-90s', img: mark('toronto'), gradient: 'from-brand-100 to-cloud', href: '/program' },
+  { id: 'nursing-mac', name: 'Nursing', caption: 'McMaster · avg high-80s', img: mark('mcmaster'), gradient: 'from-brand-50 to-brand-100', href: '/program' },
+  { id: 'bio-western', name: 'Medical Sciences', caption: 'Western · avg high-80s', img: mark('western'), gradient: 'from-cloud to-brand-50', href: '/program' },
 ]
