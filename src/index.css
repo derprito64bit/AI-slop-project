@@ -151,6 +151,54 @@ html {
    The track holds TWO copies of the items; sliding it -50%
    creates a seamless infinite loop.
    ============================================================ */
+/* ---------------------------------------------------------------- glass ----
+   Frosted surface for CHROME only — navigation, the search panel, menus.
+   Deliberately not applied to charts, tables or result cards: the style table
+   rates this "performance: moderate-poor" and lists "complex data" and
+   "critical accessibility" under do-not-use, and this site is both.
+   Taken from it: backdrop blur 10-20px, translucent fill, 1px light border,
+   a specular top edge. Left out: iridescence, chromatic aberration and
+   hue-rotate, which would fight the validated chart hue and cost more paint.
+
+   The fill is built from theme tokens rather than hardcoded rgba(255,255,255),
+   so it inverts correctly in dark mode instead of fogging the page white. */
+.glass {
+  background: color-mix(in oklab, var(--color-paper) 72%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-line) 70%, transparent);
+  /* saturate lifts the colour that shows through; without it the blur reads
+     grey and muddy rather than like glass.
+     -webkit- FIRST, standard LAST. With the standard property written first the
+     minifier collapsed the pair down to the -webkit- one only, and Chrome does
+     not support that prefix — the blur silently did nothing in the build while
+     working in dev. */
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+  position: relative;
+}
+
+/* Specular highlight along the top edge — the detail that reads as a lit pane
+   of glass rather than a translucent box.
+   An inset shadow, NOT an overlay pseudo-element: as a gradient ::after it
+   painted on top of the panel's own content and visibly washed out the first
+   rows of the search suggestions. An inset shadow lives on the box itself, so
+   it can never reduce the contrast of text inside. */
+.glass {
+  box-shadow: inset 0 1px 0 color-mix(in oklab, var(--color-paper) 85%, transparent);
+}
+
+:root[data-theme='dark'] .glass {
+  background: color-mix(in oklab, var(--color-paper) 62%, transparent);
+  border-color: color-mix(in oklab, var(--color-line) 90%, transparent);
+}
+
+/* No backdrop-filter (older Firefox, some Android): fall back to an opaque
+   surface so text never lands on a see-through background. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass {
+    background: var(--color-paper);
+  }
+}
+
 /* Offscreen sections skip layout, style and paint until they are approached.
    contain-intrinsic-size supplies a placeholder height so the scrollbar stays
    honest and skipping does not itself cause layout shift.
