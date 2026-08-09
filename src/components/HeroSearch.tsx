@@ -113,7 +113,7 @@ export default function HeroSearch() {
           e.preventDefault()
           goToSearch()
         }}
-        className="glass flex items-center gap-2 rounded-full p-1.5 shadow-sm transition-colors duration-150 focus-within:border-brand-300"
+        className="flex items-center gap-2 rounded-full border border-line bg-paper p-1.5 shadow-sm transition-colors focus-within:border-brand-300"
       >
         <input
           type="text"
@@ -152,10 +152,7 @@ export default function HeroSearch() {
             // 180ms sits in the motion table's micro-interaction band. The panel
             // is a response to typing, so anything slower feels laggy.
             transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
-            // Glass: the panel floats over the hero artwork, which is exactly
-            // the case the style table calls glass's best use — a layer that
-            // should read as above the page rather than cut into it.
-            className="glass absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-2xl shadow-[0_18px_50px_rgba(20,24,31,0.14)]"
+            className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-line bg-paper shadow-[0_18px_50px_rgba(20,24,31,0.14)]"
           >
             {!data ? (
               <p className="px-4 py-3 text-sm text-slate">Loading programs…</p>

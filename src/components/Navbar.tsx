@@ -26,10 +26,8 @@ export default function Navbar() {
 
   return (
     <header
-      // Glass only once scrolled: over the hero it would blur the artwork it is
-      // sitting on for no reason, and an unscrolled page has nothing to frost.
       className={`sticky top-0 z-50 transition-colors duration-300 ${
-        scrolled ? 'glass border-x-0 border-t-0' : 'border-b border-transparent bg-transparent'
+        scrolled ? 'bg-paper/90 backdrop-blur border-b border-line' : 'bg-transparent border-b border-transparent'
       }`}
     >
       <nav className="container-page flex h-16 items-center justify-between px-6">
@@ -114,7 +112,7 @@ export default function Navbar() {
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: DUR.panel, ease: EASE.out }}
-            className="glass overflow-hidden border-x-0 border-b-0 md:hidden"
+            className="overflow-hidden border-t border-line bg-paper md:hidden"
           >
             <div className="flex flex-col gap-1 px-6 py-3">
               {NAV_LINKS.map((l, i) => (

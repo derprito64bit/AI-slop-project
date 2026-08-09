@@ -152,21 +152,11 @@ export default function Home() {
       </section>
 
       {/* ================= HOW IT WORKS ================= */}
-      {/* Inline, not pinned — the pinned variant stuck this to the viewport and
-          drove it from scroll position.
-          The heading lives here because only the PINNED variant rendered its
-          own. Dropping `pinned` without this left the roadmap as an orphan
-          graphic with no title and no section, which is what "the animation
-          broke" looked like. InlineRoadmap draws only the path and steps. */}
-      <section className="cv-section container-page py-20">
-        <Reveal>
-          <Eyebrow>How it works</Eyebrow>
-          <h2 className="mt-2 max-w-3xl font-display text-display-1 font-600 text-ink">
-            Three steps from “I have no idea” to a real shortlist.
-          </h2>
-        </Reveal>
-        <Roadmap steps={STEPS} />
-      </section>
+      {/* Inline, not pinned. The pinned variant stuck this 2,700px section to
+          the viewport and drove it from scroll position, which fought Lenis and
+          was the main suspect in the ~520ms long task measured on the first
+          wheel event. It still draws its path as it enters view. */}
+      <Roadmap steps={STEPS} />
 
       {/* ================= FEATURED PROGRAMS ================= */}
       <section className="cv-section relative bg-surface">
