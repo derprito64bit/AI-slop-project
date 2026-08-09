@@ -141,23 +141,6 @@ below. **KokonutUI** is worth using but is *not* a dependency — its components
 are copy-in and already assume Motion + Tailwind, so paste individual ones in as
 needed.
 
-**Motion vocabulary lives in `src/lib/motion.ts`** — durations, easings and the
-route transition. Import from there rather than writing literals; the same
-cubic-bezier used to be pasted 14 times. `<MotionConfig reducedMotion="user">`
-in `main.tsx` makes every Motion animation respect the OS setting globally.
-
-**Marketing animates, data does not.** `Reveal` is for Home's marketing
-sections. Charts, tables and result lists render immediately — a reader who
-navigated to see a number should not have to scroll to make it appear, and a
-blank data panel reads as broken. Explore's grid staggers only its first 8 cards
-(the motion table's cap) and fades the rest in as a group.
-
-**Loading states must reserve height.** Skeletons exist to stop the footer
-jumping when data lands, which measured as CLS 0.34 on Explore and 0.14 on
-Program. The reserved height goes on the *wrapper*, outside `DelayedSkeleton` —
-inside, it does not exist during the 300ms delay and the footer jumps anyway
-(that mistake measured 0.25). Now 0.001 and 0.
-
 **Motion timings come from the `ui-ux-pro-max` motion table**
 (`~/.claude/skills/ui-ux-pro-max/data/motion.csv`), not taste. Scroll reveals
 are 400ms at `y: 12` (its Subtle tier: *"keep the y offset small (8-16px) so it
@@ -366,22 +349,10 @@ and pastes the requirements text. Structuring and citing it takes seconds.
   most of a session — logos looked broken when they were fine. **Use
   `npm run shots` instead**, which drives headless Chrome and does not care
   about the pane.
-- **Lenis and `window.scrollTo`.** An earlier version of this file claimed Lenis
-  reverts `window.scrollTo`. Measured on 2026-08-09 and that is **not** true for
-  route changes: navigating from 2,747px down lands at 0, and Back correctly
-  restores 2,400px. `Layout.tsx` needs no fix. Mid-scroll programmatic jumps
-  during an active wheel gesture are still worth avoiding — `npm run shots`
-  forces `prefers-reduced-motion`, which disables Lenis entirely.
-- **`npx vite preview` does not serve at the deploy base.** `vite.config.ts`
-  only applies `base: '/AI-slop-project/'` when `command === 'build'`, so
-  preview serves at `/` while `dist/index.html` asks for `/AI-slop-project/...`
-  — every asset 404s and you get a **blank page that looks like a broken
-  build**. This cost real time. Run it as:
-  `MSYS_NO_PATHCONV=1 npx vite preview --port 4200 --base /AI-slop-project/`
-  (the MSYS var stops Git Bash rewriting the base into a Windows path). Then
-  `SHOTS_BASE=http://localhost:4200/AI-slop-project npm run shots`.
-- **`vite preview` caches its file list at startup.** Rebuild while it is
-  running and the new hashed bundle 404s. Restart it after every build.
+- **Lenis smooth scroll fights programmatic scrolling.** `window.scrollTo` gets
+  reverted, which makes automated screenshots of mid-page sections unreliable.
+  Use real wheel events, or verify via DOM measurements. `npm run shots` sidesteps
+  this by forcing `prefers-reduced-motion`, which disables Lenis.
 - **Windows line endings** produce LF/CRLF warnings on every commit. Harmless.
 - **`npm audit`** reports 2 high advisories in react-router. Both are
   SSR/RSC-only and do not apply to this client-only SPA.

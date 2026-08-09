@@ -3,7 +3,6 @@ import { Link, useSearchParams } from 'react-router-dom'
 import Eyebrow from '../components/ui/Eyebrow'
 import Tag from '../components/ui/Tag'
 import UniversityBanner from '../components/UniversityBanner'
-import { CardGridSkeleton, DelayedSkeleton } from '../components/Skeleton'
 import { loadCatalogue } from '../lib/dataSource'
 import { queryPrograms, difficultyBand, DIFFICULTY_LABELS } from '../lib/search'
 import type { Program, University } from '../data/types'
@@ -66,19 +65,7 @@ export default function ExplorePreview() {
       <h1 className="mt-2 font-display text-display-1 font-600 text-ink">Find your programs.</h1>
 
       {error && <p className="mt-6 text-slate">Couldn’t load the program data. Try refreshing.</p>}
-      {/* min-h-screen is on the wrapper, not inside DelayedSkeleton, so the
-          height is reserved from the very first frame. If it only appeared with
-          the skeleton 300ms later, the footer would sit at the fold until then
-          and jump twice instead of once. */}
-      {!data && !error && (
-        <div className="min-h-screen">
-          <DelayedSkeleton>
-            <div className="skeleton mt-3 h-5 w-80 max-w-full" aria-hidden="true" />
-            <div className="skeleton mt-8 h-12 w-full max-w-2xl rounded-full" aria-hidden="true" />
-            <CardGridSkeleton />
-          </DelayedSkeleton>
-        </div>
-      )}
+      {!data && !error && <p className="mt-6 text-slate">Loading programs…</p>}
 
       {data && (
         <>
