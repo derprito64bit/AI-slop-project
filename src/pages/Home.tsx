@@ -137,7 +137,7 @@ export default function Home() {
       {/* ============ CAMPUS CAROUSEL (above How it works) ============ */}
       {/* Rotating band of university images. Placeholders for now — set
           `img` on each item in src/data/universities.ts to use real photos. */}
-      <section className="cv-section py-10">
+      <section className="py-10">
         <Reveal className="container-page mb-6">
           <Eyebrow>Universities on the platform</Eyebrow>
         </Reveal>
@@ -152,24 +152,13 @@ export default function Home() {
       </section>
 
       {/* ================= HOW IT WORKS ================= */}
-      {/* Inline, not pinned — the pinned variant stuck this to the viewport and
-          drove it from scroll position.
-          The heading lives here because only the PINNED variant rendered its
-          own. Dropping `pinned` without this left the roadmap as an orphan
-          graphic with no title and no section, which is what "the animation
-          broke" looked like. InlineRoadmap draws only the path and steps. */}
-      <section className="cv-section container-page py-20">
-        <Reveal>
-          <Eyebrow>How it works</Eyebrow>
-          <h2 className="mt-2 max-w-3xl font-display text-display-1 font-600 text-ink">
-            Three steps from “I have no idea” to a real shortlist.
-          </h2>
-        </Reveal>
-        <Roadmap steps={STEPS} />
-      </section>
+      {/* TEST feature: `pinned` makes this stick to the full screen while the
+          roadmap draws as you scroll. Drop `pinned` to revert to inline. The
+          pinned variant renders its own heading + full-viewport section. */}
+      <Roadmap steps={STEPS} pinned />
 
       {/* ================= FEATURED PROGRAMS ================= */}
-      <section className="cv-section relative bg-surface">
+      <section className="relative bg-surface">
         {/* dot grid (decorative) */}
         <div className="bg-dots pattern-fade pointer-events-none absolute inset-0" aria-hidden="true" />
         <div className="relative container-page py-20">
@@ -253,7 +242,7 @@ export default function Home() {
           produces real, consented submissions. */}
 
       {/* ================= CTA ================= */}
-      <section className="cv-section container-page pb-8 pt-20">
+      <section className="container-page pb-8 pt-20">
         <Reveal>
           <div className="overflow-hidden rounded-3xl bg-brand-700 px-8 py-16 text-center sm:px-16">
             <h2 className="mx-auto max-w-2xl font-display text-display-2 font-600 text-white">
