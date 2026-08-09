@@ -6,7 +6,7 @@ import Tag from '../components/ui/Tag'
 import Button from '../components/ui/Button'
 import Tabs from '../components/Tabs'
 import UniversityMark from '../components/UniversityMark'
-import Reveal from '../components/Reveal'
+import { DelayedSkeleton, ProgramSkeleton } from '../components/Skeleton'
 import AverageDistribution from '../components/AverageDistribution'
 import DecisionMix from '../components/DecisionMix'
 import OutcomeCompare from '../components/OutcomeCompare'
@@ -74,7 +74,18 @@ export default function Program() {
     return <Shell><p className="text-slate">Couldn’t load program data. Try refreshing.</p></Shell>
   }
   if (!data) {
-    return <Shell><p className="text-slate">Loading…</p></Shell>
+    return (
+      <Shell>
+        {/* Height reserved on the wrapper, outside DelayedSkeleton. Inside, it
+            would not exist for the first 300ms, and the footer would sit
+            visible at ~600px and then jump — which measured as 0.25. */}
+        <div className="min-h-[150vh]">
+          <DelayedSkeleton>
+            <ProgramSkeleton />
+          </DelayedSkeleton>
+        </div>
+      </Shell>
+    )
   }
 
   if (!program) {
@@ -174,10 +185,10 @@ export default function Program() {
         <section className="mt-14">
           <h2 className="font-display text-display-3 font-600 text-ink">Similar programs</h2>
           <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {similar.map((p, i) => {
+            {similar.map((p) => {
               const u = data.universities.find((x) => x.id === p.universityId)
               return (
-                <Reveal as="li" key={p.id} delay={i * 0.04}>
+                <li key={p.id}>
                   <Link
                     to={`/program/${p.universityId}/${p.slug}`}
                     className="flex items-center gap-3 rounded-lg border border-line bg-paper p-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(20,24,31,0.07)]"
@@ -191,7 +202,7 @@ export default function Program() {
                       {p.accepted?.median}%
                     </span>
                   </Link>
-                </Reveal>
+                </li>
               )
             })}
           </ul>
@@ -278,7 +289,6 @@ function AnalyticsTab({
 
       <AverageDistribution values={offerAverages} median={a.median} p25={a.p25} p75={a.p75} />
 
-      <Reveal delay={0.05}>
       <h3 className="mt-10 font-display text-display-3 font-600 text-ink">The range</h3>
       <dl className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-5">
         {([['Lowest', a.min], ['25th pct', a.p25], ['Median', a.median], ['75th pct', a.p75], ['Highest', a.max]] as const).map(
@@ -293,17 +303,16 @@ function AnalyticsTab({
       <p className="mt-3 text-sm text-slate">
         Half of reported offers sat between {a.p25}% and {a.p75}%.
       </p>
-      </Reveal>
 
       {cyclePoints.length >= 2 && (
-        <Reveal delay={0.1}>
+        <>
           <h3 className="mt-10 font-display text-display-3 font-600 text-ink">By admission cycle</h3>
           <CycleTrend points={cyclePoints} />
-        </Reveal>
+        </>
       )}
 
       {outcome && (
-        <Reveal delay={0.15}>
+        <>
           <h3 className="mt-10 font-display text-display-3 font-600 text-ink">
             Offers vs rejections
           </h3>
@@ -312,10 +321,9 @@ function AnalyticsTab({
             reported a rejection average — for most programs there are too few to say anything.
           </p>
           <OutcomeCompare offers={outcome.offers} rejections={outcome.rejections} />
-        </Reveal>
+        </>
       )}
 
-      <Reveal delay={0.2}>
       <h3 className="mt-10 font-display text-display-3 font-600 text-ink">What students reported</h3>
       <DecisionMix slices={mix} />
       <p className="mt-4 max-w-2xl rounded-lg border border-line bg-surface p-4 text-sm leading-relaxed text-slate">
@@ -328,7 +336,6 @@ function AnalyticsTab({
         Based on {program.totalReports} anonymous student report
         {program.totalReports === 1 ? '' : 's'} covering {cycleRange}.
       </p>
-      </Reveal>
     </>
   )
 }
