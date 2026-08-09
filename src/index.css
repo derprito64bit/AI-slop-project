@@ -151,6 +151,43 @@ html {
    The track holds TWO copies of the items; sliding it -50%
    creates a seamless infinite loop.
    ============================================================ */
+/* Offscreen sections skip layout, style and paint until they are approached.
+   contain-intrinsic-size supplies a placeholder height so the scrollbar stays
+   honest and skipping does not itself cause layout shift.
+   Only for below-the-fold content whose height is roughly predictable. */
+.cv-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 700px;
+}
+
+/* Skeleton shimmer.
+   A background-position sweep rather than an opacity pulse: a pulse reads as
+   "broken/disabled", a sweep reads as "loading". One keyframe shared by every
+   skeleton so a group of them waves as a single unit instead of each element
+   running its own loop out of phase. */
+@keyframes skeleton-sweep {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+.skeleton {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-cloud) 25%,
+    color-mix(in oklab, var(--color-cloud) 55%, var(--color-paper)) 37%,
+    var(--color-cloud) 63%
+  );
+  background-size: 200% 100%;
+  /* 1.4s keeps the loop under the ~1.5s cap, so a long wait never feels like
+     the UI froze on a single beat. */
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+  border-radius: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton { animation: none; }
+}
+
 @keyframes marquee-left {
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }

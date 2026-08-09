@@ -137,7 +137,7 @@ export default function Home() {
       {/* ============ CAMPUS CAROUSEL (above How it works) ============ */}
       {/* Rotating band of university images. Placeholders for now — set
           `img` on each item in src/data/universities.ts to use real photos. */}
-      <section className="py-10">
+      <section className="cv-section py-10">
         <Reveal className="container-page mb-6">
           <Eyebrow>Universities on the platform</Eyebrow>
         </Reveal>
@@ -152,13 +152,14 @@ export default function Home() {
       </section>
 
       {/* ================= HOW IT WORKS ================= */}
-      {/* TEST feature: `pinned` makes this stick to the full screen while the
-          roadmap draws as you scroll. Drop `pinned` to revert to inline. The
-          pinned variant renders its own heading + full-viewport section. */}
-      <Roadmap steps={STEPS} pinned />
+      {/* Inline, not pinned. The pinned variant stuck this 2,700px section to
+          the viewport and drove it from scroll position, which fought Lenis and
+          was the main suspect in the ~520ms long task measured on the first
+          wheel event. It still draws its path as it enters view. */}
+      <Roadmap steps={STEPS} />
 
       {/* ================= FEATURED PROGRAMS ================= */}
-      <section className="relative bg-surface">
+      <section className="cv-section relative bg-surface">
         {/* dot grid (decorative) */}
         <div className="bg-dots pattern-fade pointer-events-none absolute inset-0" aria-hidden="true" />
         <div className="relative container-page py-20">
@@ -242,7 +243,7 @@ export default function Home() {
           produces real, consented submissions. */}
 
       {/* ================= CTA ================= */}
-      <section className="container-page pb-8 pt-20">
+      <section className="cv-section container-page pb-8 pt-20">
         <Reveal>
           <div className="overflow-hidden rounded-3xl bg-brand-700 px-8 py-16 text-center sm:px-16">
             <h2 className="mx-auto max-w-2xl font-display text-display-2 font-600 text-white">
