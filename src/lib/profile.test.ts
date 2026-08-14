@@ -7,6 +7,14 @@ import {
   saveProfile,
   clearProfile,
   toggleShortlist,
+  toggleCourse,
+  updateProfile,
+  setNote,
+  toggleTag,
+  allTags,
+  fitFor,
+  balanceOf,
+  EMPTY_PROFILE,
   type SurveyAnswers,
 } from './profile'
 import type { Program, University } from '../data/types'
@@ -143,9 +151,9 @@ describe('storage', () => {
   })
 
   it('round-trips a profile', () => {
-    saveProfile(answers(), ['a'])
+    saveProfile({ ...EMPTY_PROFILE, answers: answers(), shortlist: ['a'] })
     const loaded = loadProfile()
-    expect(loaded?.answers.average).toBe(88)
+    expect(loaded?.answers?.average).toBe(88)
     expect(loaded?.shortlist).toEqual(['a'])
   })
 
@@ -154,17 +162,115 @@ describe('storage', () => {
   })
 
   it('ignores a corrupted value instead of throwing', () => {
-    localStorage.setItem('acceptiversity.profile.v1', '{ not json')
+    localStorage.setItem('acceptiversity.profile.v2', '{ not json')
     expect(loadProfile()).toBeNull()
   })
 
   it('toggles a program on and off the shortlist', () => {
-    saveProfile(answers())
+    saveProfile({ ...EMPTY_PROFILE, answers: answers() })
     expect(toggleShortlist('a')?.shortlist).toEqual(['a'])
     expect(toggleShortlist('a')?.shortlist).toEqual([])
   })
 
-  it('does nothing when there is no profile to attach a shortlist to', () => {
-    expect(toggleShortlist('a')).toBeNull()
+  it('creates a profile on demand, so the survey can be skipped', () => {
+    expect(loadProfile()).toBeNull()
+    const created = toggleShortlist('a')
+    expect(created.shortlist).toEqual(['a'])
+    // No survey answers yet — that is a valid state, not an error.
+    expect(created.answers).toBeNull()
+  })
+
+  it('fills in fields a hand-edited record is missing', () => {
+    localStorage.setItem('acceptiversity.profile.v2', JSON.stringify({ shortlist: ['a'] }))
+    const loaded = loadProfile()!
+    expect(loaded.courses).toEqual([])
+    expect(loaded.notes).toEqual({})
+    expect(loaded.tags).toEqual({})
+    expect(loaded.answers).toBeNull()
+  })
+
+  it('migrates a v1 record forward and retires the old key', () => {
+    localStorage.setItem(
+      'acceptiversity.profile.v1',
+      JSON.stringify({ answers: answers(), shortlist: ['a', 'b'] }),
+    )
+    const loaded = loadProfile()!
+    expect(loaded.answers?.average).toBe(88)
+    expect(loaded.shortlist).toEqual(['a', 'b'])
+    expect(loaded.courses).toEqual([])
+    expect(localStorage.getItem('acceptiversity.profile.v1')).toBeNull()
+  })
+
+  it('keeps notes and drops them when blanked', () => {
+    expect(setNote('a', 'ask Mr Patel').notes.a).toBe('ask Mr Patel')
+    expect(setNote('a', '   ').notes.a).toBeUndefined()
+  })
+
+  it('toggles tags and lists them for filter chips', () => {
+    toggleTag('a', 'dream')
+    toggleTag('b', 'backup')
+    toggleTag('a', 'visited')
+    expect(allTags(loadProfile())).toEqual(['backup', 'dream', 'visited'])
+    toggleTag('a', 'dream')
+    expect(loadProfile()?.tags.a).toEqual(['visited'])
+  })
+
+  // Regression: the course toggle used to take the list from React state, so
+  // four quick clicks all computed from the same stale array and only the last
+  // survived. Reading from storage makes rapid toggling safe.
+  it('accumulates rapid course toggles instead of losing all but the last', () => {
+    toggleCourse('ENG4U')
+    toggleCourse('MHF4U')
+    toggleCourse('SCH4U')
+    toggleCourse('SPH4U')
+    expect(loadProfile()?.courses.sort()).toEqual(['ENG4U', 'MHF4U', 'SCH4U', 'SPH4U'])
+    toggleCourse('SCH4U')
+    expect(loadProfile()?.courses.sort()).toEqual(['ENG4U', 'MHF4U', 'SPH4U'])
+  })
+
+  it('merges a partial update without clobbering the rest', () => {
+    saveProfile({ ...EMPTY_PROFILE, answers: answers(), shortlist: ['a'] })
+    const next = updateProfile({ courses: ['ENG4U'] })
+    expect(next.courses).toEqual(['ENG4U'])
+    expect(next.shortlist).toEqual(['a'])
+    expect(next.answers?.average).toBe(88)
+  })
+})
+
+describe('fitFor', () => {
+  it('buckets a program against the student, not in the abstract', () => {
+    // An 88 average: a 95 median is ambitious, 88 is in range, 80 comfortable.
+    expect(fitFor(88, 95)).toBe('ambitious')
+    expect(fitFor(88, 88)).toBe('in-range')
+    expect(fitFor(88, 80)).toBe('comfortable')
+  })
+
+  it('treats a few points either way as in range', () => {
+    expect(fitFor(88, 91)).toBe('in-range')
+    expect(fitFor(88, 85)).toBe('in-range')
+    expect(fitFor(88, 92)).toBe('ambitious')
+  })
+
+  it('returns null rather than guessing when there is no median', () => {
+    expect(fitFor(88, null)).toBeNull()
+    expect(fitFor(88, undefined)).toBeNull()
+  })
+
+  it('flips with the student, so the same program reads differently', () => {
+    expect(fitFor(75, 90)).toBe('ambitious')
+    expect(fitFor(97, 90)).toBe('comfortable')
+  })
+})
+
+describe('balanceOf', () => {
+  it('counts the shape of a list so an all-reach list is visible', () => {
+    const list = [
+      { accepted: { median: 97 } },
+      { accepted: { median: 96 } },
+      { accepted: { median: 88 } },
+      { accepted: { median: 80 } },
+      { accepted: null },
+    ]
+    expect(balanceOf(88, list)).toEqual({ ambitious: 2, 'in-range': 1, comfortable: 1 })
   })
 })

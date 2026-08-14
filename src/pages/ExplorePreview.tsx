@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import Eyebrow from '../components/ui/Eyebrow'
 import Tag from '../components/ui/Tag'
 import UniversityBanner from '../components/UniversityBanner'
+import KeepButton from '../components/KeepButton'
 import { loadCatalogue } from '../lib/dataSource'
 import { queryPrograms, difficultyBand, DIFFICULTY_LABELS } from '../lib/search'
 import type { Program, University } from '../data/types'
@@ -116,6 +117,11 @@ export default function ExplorePreview() {
                         name={school}
                         className="aspect-[16/9]"
                       />
+                      {/* Keep works without a survey — that is what lets a
+                          student build a list by browsing. */}
+                      <div className="absolute right-3 top-3">
+                        <KeepButton programId={p.id} />
+                      </div>
                       {band && (
                         <div className="absolute left-3 top-3">
                           <Tag tone={band === 'highly-competitive' ? 'reach' : band === 'competitive' ? 'safety' : 'likely'}>

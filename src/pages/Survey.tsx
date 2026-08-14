@@ -11,7 +11,7 @@ import {
   PROVINCE_LABELS,
   averageBand,
   matchPrograms,
-  saveProfile,
+  updateProfile,
   type Ambition,
   type SurveyAnswers,
 } from '../lib/profile'
@@ -85,7 +85,7 @@ export default function Survey() {
     // never waits on a sleeping server to see their results — the telemetry
     // POST is fired afterwards and its failure is deliberately ignored.
     const matches = data ? matchPrograms(answers, data.programs, data.universities) : []
-    saveProfile(answers)
+    updateProfile({ answers })
     navigate('/profile')
 
     submitSurvey({

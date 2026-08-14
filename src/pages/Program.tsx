@@ -6,6 +6,7 @@ import Tag from '../components/ui/Tag'
 import Button from '../components/ui/Button'
 import Tabs from '../components/Tabs'
 import UniversityMark from '../components/UniversityMark'
+import KeepButton from '../components/KeepButton'
 import Reveal from '../components/Reveal'
 import AverageDistribution from '../components/AverageDistribution'
 import DecisionMix from '../components/DecisionMix'
@@ -125,6 +126,7 @@ export default function Program() {
               </Tag>
             )}
             <Tag>{program.field.replace(/-/g, ' ')}</Tag>
+            <KeepButton programId={program.id} size="md" className="ml-1" />
           </div>
         </div>
       </motion.header>
