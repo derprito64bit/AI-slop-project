@@ -7,7 +7,11 @@ import Placeholder from './pages/Placeholder'
 import ExplorePreview from './pages/ExplorePreview'
 import Program from './pages/Program'
 import Survey from './pages/Survey'
-import Profile from './pages/Profile'
+import DashboardShell from './pages/dashboard/DashboardShell'
+import ListView from './pages/dashboard/ListView'
+import BalanceView from './pages/dashboard/BalanceView'
+import CoursesView from './pages/dashboard/CoursesView'
+import CompareView from './pages/dashboard/CompareView'
 
 // Section pages beyond Home are placeholders for now — each is being
 // built on its own branch (feature/explore, feature/program, ...).
@@ -28,7 +32,17 @@ export default function App() {
               questions, land on /profile with a shortlist. Not in the nav
               during the test — reached from the "Build my profile" CTAs. */}
           <Route path="/survey" element={<Survey />} />
-          <Route path="/profile" element={<Profile />} />
+          {/* Each dashboard tool is its own route, not a tab: it can be linked
+              to, and the back button steps between tools instead of leaving
+              the dashboard. The shell owns the profile and catalogue and
+              passes them down through the outlet. */}
+          <Route path="/profile" element={<DashboardShell />}>
+            <Route index element={<Navigate to="list" replace />} />
+            <Route path="list" element={<ListView />} />
+            <Route path="balance" element={<BalanceView />} />
+            <Route path="courses" element={<CoursesView />} />
+            <Route path="compare" element={<CompareView />} />
+          </Route>
           <Route
             path="/community"
             element={<Placeholder title="Community stats" blurb="See real admitted-student stats and share your own results." />}
