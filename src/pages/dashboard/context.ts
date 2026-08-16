@@ -24,6 +24,14 @@ export type DashboardContext = {
   /** ids currently staged for side-by-side comparison */
   compare: string[]
   toggleCompare: (id: string) => void
+  /**
+   * Kept programs with an unmet prerequisite.
+   *
+   * Computed once in the shell, where the sidebar badge already needed it,
+   * rather than by each view that wants to mention it — it walks the whole
+   * shortlist through `gapFor` and there is no reason to do that twice.
+   */
+  gapCount: number
 }
 
 export function useDashboard(): DashboardContext {
