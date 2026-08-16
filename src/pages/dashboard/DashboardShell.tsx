@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { NavLink, Outlet, Link, useLocation } from 'react-router-dom'
-import { AnimatePresence, motion } from 'motion/react'
+import { motion } from 'motion/react'
 import Button from '../../components/ui/Button'
 import Eyebrow from '../../components/ui/Eyebrow'
-import { VIEW_VARIANTS } from '../../lib/motion'
+import { VIEW_ENTER } from '../../lib/motion'
 import { loadCatalogue } from '../../lib/dataSource'
 import { gapFor } from '../../lib/courses'
 import { getProgramInfo } from '../../data/program-info'
@@ -220,7 +220,17 @@ export default function DashboardShell() {
         </aside>
 
         {/* ------------------------------------------------------- main --- */}
-        <main className="min-w-0 flex-1">
+        {/* A div, not a <main>: Layout already renders the page's <main
+            id="main">, and this sits inside it. Two main landmarks is one too
+            many — a screen reader offers "main" twice and neither is the
+            document's content.
+
+            The minimum height is part of the transition, not the layout. Views
+            differ enormously in length — Programs runs to hundreds of rows,
+            Deadlines is a short list — and without a floor the footer flew up
+            the screen on every switch, which reads as a jolt however smooth
+            the fade on top of it is. */}
+        <div className="min-h-[60vh] min-w-0 flex-1">
           {/* Mobile: the sidebar becomes one scrolling row. Every in-dashboard
               section is here, in sidebar order — a phone should not get a
               smaller product, only a narrower one. Links out of the dashboard
@@ -259,22 +269,19 @@ export default function DashboardShell() {
             </ul>
           </nav>
 
-          {/* Tools cross-fade into each other. No movement: the sidebar and
-              the rail stay put, so anything that slid here would look like the
-              page had come loose from its own chrome. Keyed on pathname, which
-              is what changes when you pick a different tool. */}
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={pathname}
-              variants={VIEW_VARIANTS}
-              initial="initial"
-              animate="animate"
-              exit="exit"
-            >
-              <Outlet context={context} />
-            </motion.div>
-          </AnimatePresence>
-        </main>
+          {/* The new tool eases up into place; the old one is simply gone.
+              No AnimatePresence, because the thing that made this flash was
+              waiting out an exit: the column stood empty in between. Keying on
+              pathname is what replays the entrance when you switch tools. */}
+          <motion.div
+            key={pathname}
+            variants={VIEW_ENTER}
+            initial="initial"
+            animate="animate"
+          >
+            <Outlet context={context} />
+          </motion.div>
+        </div>
 
         {/* -------------------------------------------------------- rail --- */}
         {/* Context, not navigation: what we know about you and how to change

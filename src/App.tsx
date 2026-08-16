@@ -1,5 +1,4 @@
 import { Routes, Route, useLocation } from 'react-router-dom'
-import { AnimatePresence } from 'motion/react'
 import Layout from './components/Layout'
 import SmoothScroll from './components/SmoothScroll'
 import FirstLoad from './components/FirstLoad'
@@ -45,11 +44,13 @@ export default function App() {
       <SmoothScroll />
       <FirstLoad />
       <Layout>
-        {/* mode="wait" so the outgoing page has left before the next arrives.
-            Overlapping them means two full pages absolutely positioned over
-            each other, which reflows the footer on every navigation. */}
-        <AnimatePresence mode="wait" initial={false}>
-          <PageTransition key={sectionKey(location.pathname)}>
+        {/* No AnimatePresence. It was here with mode="wait", which is what
+            produced the blink: the outgoing page had to finish fading to zero
+            before the incoming one was allowed to mount, so every navigation
+            passed through a blank screen. The new page now replaces the old
+            one immediately and eases in. The key is what replays that
+            entrance. */}
+        <PageTransition key={sectionKey(location.pathname)}>
             <Routes location={location}>
               <Route path="/" element={<Home />} />
               <Route path="/explore" element={<ExplorePreview />} />
@@ -101,8 +102,7 @@ export default function App() {
                 element={<Placeholder title="Page not found" blurb="That page doesn’t exist yet. Head back home to keep exploring." />}
               />
             </Routes>
-          </PageTransition>
-        </AnimatePresence>
+        </PageTransition>
       </Layout>
     </>
   )

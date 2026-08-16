@@ -1,23 +1,24 @@
 import { useEffect, type ReactNode } from 'react'
 import { motion } from 'motion/react'
-import { PAGE_VARIANTS } from '../lib/motion'
+import { PAGE_ENTER } from '../lib/motion'
 
-// One page's entrance and exit.
+// One page's entrance.
 //
-// The scroll reset lives here rather than in Layout, on a pathname effect.
-// That mattered: with an exit animation, the outgoing page is still on screen
-// while it fades, so resetting scroll on pathname change yanked the page you
-// were leaving back to the top before it had gone. Mounting this component is
-// the moment the NEW page appears, which is exactly when the scroll should
-// move — AnimatePresence mode="wait" guarantees the old one has finished by
-// then.
+// There is no exit — see PAGE_ENTER for the measurement that removed it. The
+// short version: fading the old page out before bringing the new one in left
+// the screen blank for seven frames per navigation.
+//
+// The scroll reset lives here rather than in Layout on a pathname effect,
+// because mounting this component is the moment the NEW page appears, and
+// that is exactly when the scroll should move. On a pathname effect it fired
+// while the previous page was still on screen and yanked it to the top.
 export default function PageTransition({ children }: { children: ReactNode }) {
   useEffect(() => {
     window.scrollTo(0, 0)
   }, [])
 
   return (
-    <motion.div variants={PAGE_VARIANTS} initial="initial" animate="animate" exit="exit">
+    <motion.div variants={PAGE_ENTER} initial="initial" animate="animate">
       {children}
     </motion.div>
   )
