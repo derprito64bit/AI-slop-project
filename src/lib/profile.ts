@@ -23,12 +23,20 @@ const LEGACY_KEY = 'acceptiversity.profile.v1'
 export type Ambition = 'safe' | 'balanced' | 'reach'
 
 export type SurveyAnswers = {
-  /** program field, e.g. 'engineering' — matches Program.field */
+  /** program field, e.g. 'engineering' — matches Program.field. '' = skipped */
   field: string
-  /** province code, or '' for no preference */
+  /** province code, or '' for no preference / skipped */
   province: string
-  /** current overall average, 0-100 */
-  average: number
+  /**
+   * Current overall average, 0-100 — or null when the question was skipped.
+   *
+   * null is a real answer, not a missing one. The survey lets a student skip
+   * any question, and plenty will skip this one: they do not know it yet, or
+   * they would rather not type it. Everything downstream treats null as "do
+   * not filter by average" rather than as zero — an average of 0 would silently
+   * match nothing, which is the worst way to handle a blank.
+   */
+  average: number | null
   ambition: Ambition
 }
 
@@ -113,7 +121,13 @@ export function toFilters(a: SurveyAnswers): ProgramFilters {
     // Matching compares against a reported median, so a program without one
     // cannot be matched at all — it would be an empty row in the results.
     withDataOnly: true,
-    medianAtMost: Math.min(100, a.average + HEADROOM[a.ambition]),
+    // No average means no ceiling. Skipping the question has to widen the
+    // shortlist, never empty it: `0 + headroom` would ask for programs whose
+    // admitted median was at most 3%, and match nothing at all.
+    medianAtMost:
+      typeof a.average === 'number'
+        ? Math.min(100, a.average + HEADROOM[a.ambition])
+        : undefined,
   }
 }
 
@@ -142,7 +156,9 @@ export function matchPrograms(
  * The exact average stays on the device; only the band is ever sent, so a
  * submission can never be traced back to one student's transcript.
  */
-export function averageBand(average: number): string {
+export function averageBand(average: number | null): string {
+  // A skipped average is reported as skipped, not bucketed as a low one.
+  if (typeof average !== 'number') return 'not-given'
   if (average >= 95) return '95+'
   if (average >= 90) return '90-94'
   if (average >= 85) return '85-89'
@@ -186,7 +202,12 @@ export function loadProfile(): SavedProfile | null {
 }
 
 function isAnswers(a: unknown): a is SurveyAnswers {
-  return Boolean(a) && typeof (a as SurveyAnswers).average === 'number'
+  if (!a || typeof a !== 'object') return false
+  const { average, ambition } = a as SurveyAnswers
+  // A record counts as answers if it has the shape, even when every question
+  // was skipped: `average: null` with no field is still a set of answers, and
+  // is what "Skip all" stores.
+  return (average === null || typeof average === 'number') && typeof ambition === 'string'
 }
 
 /** v1 stored only { answers, shortlist }. Carry it forward once, then leave it. */
