@@ -148,15 +148,26 @@ html {
 
 /* ============================================================
    Marquee / carousel keyframes.
-   The track holds TWO copies of the items; sliding it -50%
-   creates a seamless infinite loop.
+
+   The track holds N copies of the items and slides by exactly
+   one copy's width, so the frame it wraps on is identical to
+   the frame it started from.
+
+   --marquee-shift is that distance as a percentage of the whole
+   track: 2 copies -> -50%, 3 -> -33.333%, and so on. It used to
+   be hard-coded at -50%, which silently assumed two copies were
+   always enough. They are not: one copy of the logo band is
+   1,357px, so on a 1920px or 2560px monitor the track ran out
+   of items and a gap trailed the last logo before it snapped
+   back. Carousel.tsx now measures a copy and repeats until the
+   track is wider than the container, then sets this variable.
    ============================================================ */
 @keyframes marquee-left {
   from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
+  to   { transform: translateX(var(--marquee-shift, -50%)); }
 }
 @keyframes marquee-right {
-  from { transform: translateX(-50%); }
+  from { transform: translateX(var(--marquee-shift, -50%)); }
   to   { transform: translateX(0); }
 }
 .marquee-track {
@@ -173,6 +184,41 @@ html {
 }
 @media (prefers-reduced-motion: reduce) {
   .marquee-track { animation: none; }
+}
+
+/* ============================================================
+   Skeletons — see components/Skeleton.tsx for why these exist
+   (layout shift, not decoration).
+
+   The sheen is a moving highlight over the theme's surface
+   colour, so it works in both themes without a second palette.
+   ============================================================ */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--color-slate) 12%, transparent);
+  border-radius: 0.375rem;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--color-paper) 55%, transparent),
+    transparent
+  );
+  animation: skeleton-sheen 1.4s ease-in-out infinite;
+}
+@keyframes skeleton-sheen {
+  to { transform: translateX(100%); }
+}
+/* Reduced motion keeps the reserved space — which is the whole
+   point — and drops only the moving highlight. */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after { animation: none; opacity: 0; }
 }
 
 body {

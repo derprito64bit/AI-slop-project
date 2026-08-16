@@ -1,7 +1,8 @@
 import type { ReactNode } from 'react'
 
-// Small status chip. Admission odds are always framed positively —
-// Safety / Likely / Reach — never "you won't get in".
+// Small status chip. How competitive a program is, framed positively —
+// Safety / Likely / Reach — never as a chance of admission, and never
+// "you won't get in".
 export type TagTone = 'reach' | 'likely' | 'safety' | 'neutral'
 
 const TONES: Record<TagTone, string> = {

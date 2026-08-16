@@ -6,8 +6,10 @@ import Tag from '../components/ui/Tag'
 import Button from '../components/ui/Button'
 import Tabs from '../components/Tabs'
 import UniversityMark from '../components/UniversityMark'
+import KeepButton from '../components/KeepButton'
 import Reveal from '../components/Reveal'
 import AverageDistribution from '../components/AverageDistribution'
+import { ProgramPageSkeleton, LoadingNote } from '../components/Skeleton'
 import DecisionMix from '../components/DecisionMix'
 import OutcomeCompare from '../components/OutcomeCompare'
 import CycleTrend from '../components/CycleTrend'
@@ -74,7 +76,15 @@ export default function Program() {
     return <Shell><p className="text-slate">Couldn’t load program data. Try refreshing.</p></Shell>
   }
   if (!data) {
-    return <Shell><p className="text-slate">Loading…</p></Shell>
+    // Shaped like the page that replaces it. The bare "Loading…" line measured
+    // CLS 0.14 here — the chart panel and the two detail columns all arrived
+    // at once and pushed everything below them down.
+    return (
+      <Shell>
+        <LoadingNote>Loading this program…</LoadingNote>
+        <ProgramPageSkeleton />
+      </Shell>
+    )
   }
 
   if (!program) {
@@ -125,6 +135,7 @@ export default function Program() {
               </Tag>
             )}
             <Tag>{program.field.replace(/-/g, ' ')}</Tag>
+            <KeepButton programId={program.id} size="md" className="ml-1" />
           </div>
         </div>
       </motion.header>

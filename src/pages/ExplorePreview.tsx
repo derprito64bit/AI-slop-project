@@ -1,8 +1,12 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
+import { motion } from 'motion/react'
 import Eyebrow from '../components/ui/Eyebrow'
 import Tag from '../components/ui/Tag'
 import UniversityBanner from '../components/UniversityBanner'
+import KeepButton from '../components/KeepButton'
+import { Skeleton, ProgramGridSkeleton, LoadingNote } from '../components/Skeleton'
+import { DURATION, EASE, staggerDelay } from '../lib/motion'
 import { loadCatalogue } from '../lib/dataSource'
 import { queryPrograms, difficultyBand, DIFFICULTY_LABELS } from '../lib/search'
 import type { Program, University } from '../data/types'
@@ -65,7 +69,21 @@ export default function ExplorePreview() {
       <h1 className="mt-2 font-display text-display-1 font-600 text-ink">Find your programs.</h1>
 
       {error && <p className="mt-6 text-slate">Couldn’t load the program data. Try refreshing.</p>}
-      {!data && !error && <p className="mt-6 text-slate">Loading programs…</p>}
+
+      {/* The loading state mirrors the real one block for block — count line,
+          search box, result line, then a grid of cards. It replaced the single
+          line "Loading programs…", which occupied one row and then let several
+          hundred cards shove the footer a screen and a half down the page:
+          measured CLS 0.34. Same page, same shapes, 0.001. */}
+      {!data && !error && (
+        <>
+          <LoadingNote>Loading programs…</LoadingNote>
+          <Skeleton className="mt-3 h-5 w-80 max-w-full rounded" />
+          <Skeleton className="mt-8 h-12 w-full max-w-2xl rounded-full" />
+          <Skeleton className="mt-4 h-4 w-48 rounded" />
+          <ProgramGridSkeleton />
+        </>
+      )}
 
       {data && (
         <>
@@ -93,18 +111,36 @@ export default function ExplorePreview() {
 
           {/* Always 3 across on desktop. */}
           <ul className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {results.map((p) => {
+            {results.map((p, i) => {
               const band = difficultyBand(p)
               const school = uniName.get(p.universityId) ?? p.universityId
               // content-visibility lets the browser skip layout and paint for
               // cards scrolled out of view. The list runs to hundreds now that
               // paging replaced the 20-result cap; contain-intrinsic-size is the
               // placeholder height, so the scrollbar stays honest.
+              //
+              // The reveal goes on an inner wrapper, never on the <li>: the li
+              // is what carries content-visibility and the intrinsic size, and
+              // animating it would fight the browser's own skip-rendering.
               return (
                 <li
                   key={p.id}
                   className="flex [content-visibility:auto] [contain-intrinsic-size:auto_360px]"
                 >
+                  <motion.div
+                    className="flex w-full"
+                    initial={{ opacity: 0, y: 10 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-40px' }}
+                    // Only the first 8 stagger. Past that the delay is flat,
+                    // so card 60 does not sit invisible for three seconds
+                    // waiting for its turn in a queue nobody is watching.
+                    transition={{
+                      duration: DURATION.base,
+                      ease: EASE.out,
+                      delay: staggerDelay(i),
+                    }}
+                  >
                   <Link
                     to={`/program/${p.universityId}/${p.slug}`}
                     className="group flex w-full flex-col overflow-hidden rounded-xl border border-line bg-paper transition-shadow hover:shadow-[0_12px_34px_rgba(20,24,31,0.09)]"
@@ -116,6 +152,11 @@ export default function ExplorePreview() {
                         name={school}
                         className="aspect-[16/9]"
                       />
+                      {/* Keep works without a survey — that is what lets a
+                          student build a list by browsing. */}
+                      <div className="absolute right-3 top-3">
+                        <KeepButton programId={p.id} />
+                      </div>
                       {band && (
                         <div className="absolute left-3 top-3">
                           <Tag tone={band === 'highly-competitive' ? 'reach' : band === 'competitive' ? 'safety' : 'likely'}>
@@ -148,6 +189,7 @@ export default function ExplorePreview() {
                       </div>
                     </div>
                   </Link>
+                  </motion.div>
                 </li>
               )
             })}
