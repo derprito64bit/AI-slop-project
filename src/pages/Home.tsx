@@ -24,10 +24,16 @@ const STATS = [
   { end: SUMMARY.programsWithCharts, suffix: '', label: 'With enough data to chart' },
 ]
 
+// Step 03 used to read "Check your odds — realistic admission chances". It is
+// the one claim this site must never make: 94-97% of the source records are
+// offers, because students who get in are far likelier to report, so any
+// "chance" derived from them is reporting bias with a percent sign on it. What
+// the data does support is the distribution of averages admitted students
+// reported, which is what the step now describes.
 const STEPS = [
   { n: '01', title: 'Build your profile', body: 'Add your grades, interests, budget, and the kind of campus life you want.' },
   { n: '02', title: 'See your matches', body: 'Programs ranked by how well they fit you — not just generic rankings.' },
-  { n: '03', title: 'Check your odds', body: 'Realistic admission chances, grounded in what actual students reported.' },
+  { n: '03', title: 'See the real averages', body: 'What admitted students actually reported — medians, spread, and how many said so.' },
 ]
 
 // Real programs, real medians, real links — the four most-reported, one per
@@ -103,8 +109,8 @@ export default function Home() {
             transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
             className="mt-6 max-w-xl text-lead text-slate"
           >
-            Official sites give vague cutoffs. We use real admission data — personalized to
-            your grades and interests — so you know your true odds.
+            Official sites give vague cutoffs. We show what admitted students actually
+            reported — the real averages behind the programs you&rsquo;re considering.
           </motion.p>
 
           <motion.div
@@ -246,7 +252,7 @@ export default function Home() {
         <Reveal>
           <div className="overflow-hidden rounded-3xl bg-brand-700 px-8 py-16 text-center sm:px-16">
             <h2 className="mx-auto max-w-2xl font-display text-display-2 font-600 text-white">
-              Stop guessing. See your real odds.
+              Stop guessing. See the real numbers.
             </h2>
             <p className="mx-auto mt-4 max-w-lg text-white/80">
               Build a profile in a few minutes and get a shortlist that fits you.

@@ -6,25 +6,51 @@ import {
   useReducedMotion,
   type MotionValue,
 } from 'motion/react'
+import { EASE, SPRING } from '../lib/motion'
+
+/** Wait before the first pin lands, and the gap between pins. Seconds. */
+const PIN_LEAD = 0.18
+const PIN_GAP = 0.22
 
 export type RoadmapStep = { n: string; title: string; body: string }
 
 // Marker art — placeholders (dot / flag / check). Swap for real icons/flags later.
-function Marker({ kind }: { kind: 'dot' | 'flag' | 'check' }) {
+//
+// The flag is drawn in two pieces so it can plant like a real one: the pole is
+// there the moment the marker lands, and the cloth unfurls out of it a beat
+// later. One combined path would have to fade in whole, which is the thing it
+// is meant to stop looking like.
+function Marker({ kind, delay = 0 }: { kind: 'dot' | 'flag' | 'check'; delay?: number }) {
   if (kind === 'flag')
     return (
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M5 21V4M5 4l11 3-3 4 3 4-11 3" />
+        <path d="M5 21V4" />
+        <motion.path
+          d="M5 4l11 3-3 4 3 4-11 3"
+          initial={{ pathLength: 0 }}
+          whileInView={{ pathLength: 1 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ delay: delay + UNFURL_AFTER, duration: 0.35, ease: EASE.out }}
+        />
       </svg>
     )
   if (kind === 'check')
     return (
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M5 12l4 4 10-10" />
+        <motion.path
+          d="M5 12l4 4 10-10"
+          initial={{ pathLength: 0 }}
+          whileInView={{ pathLength: 1 }}
+          viewport={{ once: true, margin: '-60px' }}
+          transition={{ delay: delay + UNFURL_AFTER, duration: 0.3, ease: EASE.out }}
+        />
       </svg>
     )
   return <span className="block h-2.5 w-2.5 rounded-full bg-current" />
 }
+
+/** How long after a pin lands before its mark draws itself. */
+const UNFURL_AFTER = 0.16
 
 const KINDS: Array<'dot' | 'flag' | 'check'> = ['dot', 'flag', 'check']
 const PATH_D = 'M80,80 C 280,80 300,30 500,45 S 720,95 920,55'
@@ -187,19 +213,28 @@ function InlineRoadmap({ steps, reduced }: { steps: RoadmapStep[]; reduced: bool
             style={reduced ? undefined : { pathLength }}
           />
         </svg>
-        {xs.map((x, i) => (
-          <motion.div
-            key={i}
-            className="absolute flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-paper text-brand-600 shadow-sm"
-            style={{ left: `${x}%`, top: `${[67, 40, 52][i] ?? 55}%` }}
-            initial={reduced ? false : { scale: 0, opacity: 0 }}
-            whileInView={{ scale: 1, opacity: 1 }}
-            viewport={{ once: true, margin: '-60px' }}
-            transition={{ delay: 0.2 + i * 0.25, type: 'spring', stiffness: 260, damping: 18 }}
-          >
-            <Marker kind={KINDS[i % KINDS.length]} />
-          </motion.div>
-        ))}
+        {/* Pin-drop. Each marker falls the last few pixels onto the path and
+            overshoots slightly before settling, one after another as the line
+            draws beneath them — so the section reads as a route being marked
+            out rather than three icons fading in together. The drop is short
+            (14px) on purpose: from any higher it stops looking like a pin
+            landing and starts looking like a card sliding in. */}
+        {xs.map((x, i) => {
+          const delay = PIN_LEAD + i * PIN_GAP
+          return (
+            <motion.div
+              key={i}
+              className="absolute flex h-9 w-9 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-line bg-paper text-brand-600 shadow-sm"
+              style={{ left: `${x}%`, top: `${[67, 40, 52][i] ?? 55}%` }}
+              initial={reduced ? false : { scale: 0.3, opacity: 0, y: -14 }}
+              whileInView={{ scale: 1, opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: '-60px' }}
+              transition={{ delay, ...SPRING.pin }}
+            >
+              <Marker kind={KINDS[i % KINDS.length]} delay={delay} />
+            </motion.div>
+          )
+        })}
       </div>
 
       {/* Desktop: step cards under each node */}

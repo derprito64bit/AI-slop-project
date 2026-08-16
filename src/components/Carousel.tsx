@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { CarouselItem } from '../data/universities'
 
@@ -47,6 +47,27 @@ type CarouselProps = {
   className?: string
 }
 
+/**
+ * How many copies of the item list the track needs to loop without a gap.
+ *
+ * The track slides by exactly one copy and then snaps back, so the copies
+ * BEHIND the one that just left have to cover the whole container on their
+ * own — hence `+ 1`. Two copies is the floor: one copy sliding away with
+ * nothing following it is the original bug.
+ *
+ * Measured example: one copy of the logo band is 1,357px. At 1280px wide that
+ * gives 2 copies (the old hard-coded number, which is why it looked fine on a
+ * laptop); at 1920px it needs 3, and at 2560px, 3 — and with only 2 a gap
+ * trailed the last logo on every loop.
+ *
+ * Exported for the unit test; `copyWidth` includes the trailing gap, because
+ * each copy is padded so the whole track divides evenly.
+ */
+export function copiesNeeded(containerWidth: number, copyWidth: number): number {
+  if (!Number.isFinite(containerWidth) || !Number.isFinite(copyWidth) || copyWidth <= 0) return 2
+  return Math.max(2, Math.ceil(containerWidth / copyWidth) + 1)
+}
+
 export default function Carousel({
   items,
   speed = 40,
@@ -64,10 +85,36 @@ export default function Carousel({
   imgFit = 'cover',
   className = '',
 }: CarouselProps) {
-  if (!items.length) return null
+  // How many copies of the list are on the track. Starts at 2 — the old
+  // hard-coded number — and is corrected as soon as the first copy has been
+  // measured, so the band is never empty on the first frame.
+  const [copies, setCopies] = useState(2)
+  const containerRef = useRef<HTMLDivElement | null>(null)
+  const copyRef = useRef<HTMLUListElement | null>(null)
 
-  // Duplicate the list so the -50% slide loops seamlessly.
-  const loop = [...items, ...items]
+  // Re-measure whenever the container OR a copy changes size. The copy is the
+  // one that actually moves: logo tiles resize themselves once their image
+  // loads (see fitLogo below), so measuring only on mount would size the track
+  // against placeholder text and come up short.
+  useEffect(() => {
+    const container = containerRef.current
+    const copy = copyRef.current
+    if (!container || !copy) return
+
+    const measure = () => {
+      const copyWidth = copy.offsetWidth
+      if (!copyWidth) return
+      setCopies(copiesNeeded(container.offsetWidth, copyWidth))
+    }
+
+    measure()
+    const observer = new ResizeObserver(measure)
+    observer.observe(container)
+    observer.observe(copy)
+    return () => observer.disconnect()
+  }, [items])
+
+  if (!items.length) return null
 
   // A negative animation-delay begins the loop partway through, so tiles are
   // already spread across the band at load instead of entering from an edge.
@@ -75,6 +122,7 @@ export default function Carousel({
 
   return (
     <div
+      ref={containerRef}
       className={`relative w-full overflow-hidden ${pauseOnHover ? 'marquee-paused' : ''} ${className}`}
       style={
         fade
@@ -87,30 +135,47 @@ export default function Carousel({
           : undefined
       }
     >
-      <ul
-        className="marquee-track flex w-max list-none"
+      {/* The track holds `copies` identical blocks and slides by exactly one of
+          them. Each block carries the gap as its own right padding rather than
+          the track using `gap`, so every block is the same width and the shift
+          is a clean -100/copies% — with a flex gap the last block would be
+          narrower and the loop would drift by one gap per cycle. */}
+      <div
+        className="marquee-track flex w-max"
         data-direction={direction}
         style={{
-          gap: `${gap}px`,
           ['--marquee-duration' as string]: `${speed}s`,
+          ['--marquee-shift' as string]: `-${100 / copies}%`,
           animationDelay: `${delay}s`,
         }}
       >
-        {loop.map((item, i) => (
-          <Tile
-            key={`${item.id}-${i}`}
-            item={item}
-            width={tileWidth}
-            aspect={aspect}
-            rounded={rounded}
-            showCaption={showCaptions}
-            ariaHidden={i >= items.length}
-            variant={variant}
-            logoHeight={logoHeight}
-            imgFit={imgFit}
-          />
+        {Array.from({ length: copies }, (_, copy) => (
+          <ul
+            key={copy}
+            // Only the first copy is real content; the rest are visual filler
+            // and must not be read out or tabbed into.
+            ref={copy === 0 ? copyRef : undefined}
+            aria-hidden={copy > 0}
+            className="flex list-none"
+            style={{ gap: `${gap}px`, paddingRight: `${gap}px` }}
+          >
+            {items.map((item, i) => (
+              <Tile
+                key={`${item.id}-${i}`}
+                item={item}
+                width={tileWidth}
+                aspect={aspect}
+                rounded={rounded}
+                showCaption={showCaptions}
+                ariaHidden={copy > 0}
+                variant={variant}
+                logoHeight={logoHeight}
+                imgFit={imgFit}
+              />
+            ))}
+          </ul>
         ))}
-      </ul>
+      </div>
     </div>
   )
 }
