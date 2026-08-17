@@ -54,6 +54,7 @@ export async function submitSurvey(answers: SurveyTelemetry): Promise<unknown> {
       body: JSON.stringify({ ...answers, submittedAt: new Date().toISOString() }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     })
+    console.log("Sent data");
   } catch (cause) {
     // fetch only rejects on network failure, abort, or CORS — never on a 4xx/5xx.
     const timedOut = cause instanceof DOMException && cause.name === 'TimeoutError'
