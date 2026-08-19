@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Acceptiversity">
+  <rect width="64" height="64" rx="14" fill="#3f5bd9"/>
+  <!-- upward path with a marker at the top: "finding your way in" -->
+  <path d="M12 46 C 24 46, 26 30, 38 26 S 50 20, 52 18"
+        fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" opacity="0.95"/>
+  <circle cx="52" cy="18" r="6" fill="#e5a13a"/>
+</svg>

@@ -1,0 +1,335 @@
+@import "tailwindcss";
+
+/* ============================================================
+   DESIGN TOKENS — "modern but educational"
+   Calm, trustworthy, legible. Deep academic blue as the anchor,
+   a warm amber accent for highlights, generous neutrals.
+
+   Theme-reactive: raw palette vars live in :root (light) and are
+   overridden under [data-theme="dark"]. The Tailwind color tokens
+   alias them via `@theme inline`, so bg-paper / text-ink / etc.
+   switch automatically — no per-element dark: variants needed.
+   ============================================================ */
+
+/* Light palette (default) */
+:root {
+  color-scheme: light;
+  --p-ink: #14181f;         /* near-black text */
+  --p-slate: #566072;       /* muted text */
+  /* Warm, paper-like neutrals rather than clinical white — the flat-white
+     version read cold for a site aimed at stressed teenagers. */
+  --p-paper: #fdfcf8;       /* page background */
+  --p-surface: #f7f5ee;     /* mid band, for alternating sections */
+  --p-cloud: #f0eee4;       /* deepest band */
+  --p-line: #e2dfd3;        /* hairlines / borders */
+
+  --p-brand-50:  #eef2ff;
+  --p-brand-100: #dde5ff;
+  --p-brand-300: #9fb2f5;
+  --p-brand-500: #3f5bd9;   /* primary academic blue */
+  --p-brand-600: #3149b3;
+  --p-brand-700: #26398c;   /* deep CTA block */
+
+  --p-accent: #e5a13a;      /* warm amber highlight */
+  --p-success: #2f9e6b;
+
+  /* Chart fill. Separate from the UI brand step because charts are validated
+     against the surface: this value passes the lightness-band, chroma-floor
+     and contrast checks on the light surface. Don't swap it for a UI token
+     without re-running the palette validator. */
+  --p-chart: #3f5bd9;
+}
+
+/* Dark palette */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --p-ink: #eceef0;         /* light text */
+  --p-slate: #99a3b2;       /* muted text */
+  --p-paper: #0f1216;       /* near-black background */
+  --p-surface: #141920;     /* mid band */
+  --p-cloud: #171b22;       /* deepest band */
+  --p-line: #2a2f38;        /* hairlines / borders */
+
+  --p-brand-50:  #141a28;   /* dark wash surface (replaces light tint) */
+  --p-brand-100: #1c2740;   /* dark blue surface */
+  --p-brand-300: #6b7fce;   /* visible mid tone */
+  --p-brand-500: #7d93f2;   /* brighter primary for dark bg */
+  --p-brand-600: #97a9f7;   /* hover = lighter */
+  --p-brand-700: #2c3fa0;   /* rich CTA block, white text still reads */
+
+  --p-accent: #f0b558;
+  --p-success: #46b784;
+
+  /* Dark mode has a narrower, lower lightness band (0.48–0.67) than light
+     (0.43–0.77). The UI brand-500 step sits at 0.688 — just above it — so the
+     chart uses its own validated value rather than flipping the UI colour. */
+  --p-chart: #6b82ee;
+}
+
+@theme inline {
+  --color-ink: var(--p-ink);
+  --color-slate: var(--p-slate);
+  --color-paper: var(--p-paper);
+  --color-surface: var(--p-surface);
+  --color-cloud: var(--p-cloud);
+  --color-line: var(--p-line);
+
+  --color-brand-50:  var(--p-brand-50);
+  --color-brand-100: var(--p-brand-100);
+  --color-brand-300: var(--p-brand-300);
+  --color-brand-500: var(--p-brand-500);
+  --color-brand-600: var(--p-brand-600);
+  --color-brand-700: var(--p-brand-700);
+
+  --color-accent: var(--p-accent);
+  --color-success: var(--p-success);
+  --color-chart: var(--p-chart);
+
+  /* Type */
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Fraunces", "Inter", ui-serif, Georgia, serif;
+
+  /* Motion */
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* Breakpoints beyond Tailwind's 2xl (1536px), for large desktop monitors. */
+  --breakpoint-3xl: 120rem; /* 1920px */
+}
+
+/* ============================================================
+   Page container.
+   One definition for every section's width, so large screens are
+   handled in a single place. Capping at 1152px left ~700px of dead
+   margin on each side of a 2560px monitor — fine on a laptop, far
+   too narrow on a 27".
+   ============================================================ */
+.container-page {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+  max-width: 72rem; /* 1152px — unchanged on laptops */
+}
+@media (min-width: 1536px) {
+  .container-page { max-width: 84rem; padding-inline: 2rem; } /* 1344px */
+}
+@media (min-width: 1920px) {
+  .container-page { max-width: 96rem; padding-inline: 2.5rem; } /* 1536px */
+}
+@media (min-width: 2400px) {
+  .container-page { max-width: 108rem; } /* 1728px */
+}
+
+/* ============================================================
+   Fluid display type. Fixed heading sizes look correct on a laptop
+   and undersized on a large monitor, so these scale with the
+   viewport between sensible floors and ceilings.
+   ============================================================ */
+.text-display-1 {
+  font-size: clamp(2.75rem, 1.5rem + 3.2vw, 5.25rem);
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+.text-display-2 {
+  font-size: clamp(1.875rem, 1.2rem + 1.6vw, 3rem);
+  line-height: 1.15;
+}
+.text-display-3 {
+  font-size: clamp(1.5rem, 1.1rem + 1vw, 2.25rem);
+  line-height: 1.2;
+}
+/* Body copy that should also grow a little on very wide screens. */
+.text-lead {
+  font-size: clamp(1rem, 0.94rem + 0.28vw, 1.25rem);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* ============================================================
+   Marquee / carousel keyframes.
+
+   The track holds N copies of the items and slides by exactly
+   one copy's width, so the frame it wraps on is identical to
+   the frame it started from.
+
+   --marquee-shift is that distance as a percentage of the whole
+   track: 2 copies -> -50%, 3 -> -33.333%, and so on. It used to
+   be hard-coded at -50%, which silently assumed two copies were
+   always enough. They are not: one copy of the logo band is
+   1,357px, so on a 1920px or 2560px monitor the track ran out
+   of items and a gap trailed the last logo before it snapped
+   back. Carousel.tsx now measures a copy and repeats until the
+   track is wider than the container, then sets this variable.
+   ============================================================ */
+@keyframes marquee-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(var(--marquee-shift, -50%)); }
+}
+@keyframes marquee-right {
+  from { transform: translateX(var(--marquee-shift, -50%)); }
+  to   { transform: translateX(0); }
+}
+.marquee-track {
+  animation-name: marquee-left;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  animation-duration: var(--marquee-duration, 40s);
+}
+.marquee-track[data-direction="right"] {
+  animation-name: marquee-right;
+}
+.marquee-paused:hover .marquee-track {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track { animation: none; }
+}
+
+/* ============================================================
+   Skeletons — see components/Skeleton.tsx for why these exist
+   (layout shift, not decoration).
+
+   The sheen is a moving highlight over the theme's surface
+   colour, so it works in both themes without a second palette.
+   ============================================================ */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: color-mix(in oklab, var(--color-slate) 12%, transparent);
+  border-radius: 0.375rem;
+}
+.skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklab, var(--color-paper) 55%, transparent),
+    transparent
+  );
+  animation: skeleton-sheen 1.4s ease-in-out infinite;
+}
+@keyframes skeleton-sheen {
+  to { transform: translateX(100%); }
+}
+/* Reduced motion keeps the reserved space — which is the whole
+   point — and drops only the moving highlight. */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after { animation: none; opacity: 0; }
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ============================================================
+   Monogram tiles — the fallback mark for a university with no
+   square logo yet. Built from the theme tokens via color-mix, so
+   they adapt to light/dark automatically instead of needing a
+   second hard-coded palette.
+   ============================================================ */
+.mono-0 { background: color-mix(in oklab, var(--color-brand-500) 15%, transparent); color: var(--color-brand-600); }
+.mono-1 { background: color-mix(in oklab, var(--color-accent)   18%, transparent); color: var(--color-accent); }
+.mono-2 { background: color-mix(in oklab, var(--color-success)  16%, transparent); color: var(--color-success); }
+.mono-3 { background: color-mix(in oklab, var(--color-slate)    16%, transparent); color: var(--color-slate); }
+
+/* ============================================================
+   Paper textures. Pure CSS gradients — no image files, and they
+   inherit --color-line so they follow the theme. Decorative only:
+   these sit behind content, never under body text.
+   ============================================================ */
+.bg-grid,
+.bg-ruled,
+.bg-dots {
+  --pattern-ink: color-mix(in oklab, var(--color-line) 85%, transparent);
+}
+
+/* graph paper */
+.bg-grid {
+  background-image:
+    repeating-linear-gradient(to right, var(--pattern-ink) 0 1px, transparent 1px 100%),
+    repeating-linear-gradient(to bottom, var(--pattern-ink) 0 1px, transparent 1px 100%);
+  background-size: 28px 28px;
+}
+
+/* notebook rules */
+.bg-ruled {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 31px,
+    var(--pattern-ink) 31px 32px
+  );
+}
+
+/* dot grid */
+.bg-dots {
+  background-image: radial-gradient(var(--pattern-ink) 1.2px, transparent 1.2px);
+  background-size: 22px 22px;
+}
+
+/* Texture should fade out rather than stop at a hard edge. */
+.pattern-fade {
+  mask-image: radial-gradient(ellipse 100% 80% at 50% 40%, black 35%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 100% 80% at 50% 40%, black 35%, transparent 100%);
+}
+
+/* Dark mode: the same lines read as noise at full strength. */
+:root[data-theme='dark'] .bg-grid,
+:root[data-theme='dark'] .bg-ruled,
+:root[data-theme='dark'] .bg-dots {
+  --pattern-ink: color-mix(in oklab, var(--color-line) 55%, transparent);
+}
+
+/* University wordmarks. Most are dark-on-transparent, so in dark mode they'd
+   disappear against the near-black background — render them white instead. */
+:root[data-theme="dark"] .logo-mark {
+  filter: brightness(0) invert(1);
+  opacity: 0.72;
+}
+:root[data-theme="dark"] .logo-mark:hover {
+  opacity: 1;
+}
+
+/* Visible keyboard focus everywhere. Mouse clicks don't trigger it
+   (:focus-visible), so this only shows for keyboard/AT users. */
+:focus-visible {
+  outline: 2px solid var(--color-brand-500);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Skip link — hidden until focused, then pinned to the top-left. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+}
+.skip-link:focus {
+  left: 0.75rem;
+  top: 0.75rem;
+  padding: 0.6rem 1rem;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  border: 1px solid var(--color-line);
+  border-radius: 0.5rem;
+  box-shadow: 0 6px 24px rgb(0 0 0 / 0.12);
+}
+
+/* Respect users who prefer no motion — disable transitions/animations */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
