@@ -11,13 +11,32 @@
 //     average at or below X"), never a chance of getting in. `search.ts` carries
 //     the same rule for difficulty bands.
 //  2. NO personal data. Nothing here identifies a student — no name, no age, no
-//     school. Answers live in localStorage on their own device (the "no
-//     accounts" decision in HANDOFF §4) and only the coarse band leaves it.
+//     school. An account (see `auth.ts`) is a username the student invents and a
+//     password, which does not change that rule: the username is asked for as a
+//     label, never as a real name.
+//
+//     What DID change on 2026-08-18: for a signed-in student this record is
+//     uploaded, exact average included, so their list follows them to another
+//     device. It used to stay on the device entirely. `api.ts` documents exactly
+//     what goes over the wire, and the anonymous telemetry still sends a coarse
+//     band rather than the average. Signed out, nothing is uploaded at all.
+//
+// WHOSE PROFILE. Which record these functions read and write depends on who is
+// signed in, and `session.ts` owns that decision. A signed-out visitor keeps
+// using the original key, so adding accounts did not strand anyone's existing
+// shortlist behind a sign-in prompt.
+//
+// STILL SYNCHRONOUS, and this is the load-bearing decision. Every reader here is
+// a component rendering now — a Keep button, a course tick, a sidebar badge — so
+// storage stays the working copy and `sync.ts` pushes to the server behind the
+// UI. Turning these into promises would put a loading state in every one of them
+// and make the site unusable while a free-tier server wakes up.
 
 import { queryPrograms, type ProgramFilters } from './search'
+import { activeProfileKey, isGuest } from './session'
+import { queueProfilePush } from './sync'
 import type { Program, University } from '../data/types'
 
-const STORAGE_KEY = 'acceptiversity.profile.v2'
 const LEGACY_KEY = 'acceptiversity.profile.v1'
 
 export type Ambition = 'safe' | 'balanced' | 'reach'
@@ -181,7 +200,7 @@ export function averageBand(average: number | null): string {
  */
 export function loadProfile(): SavedProfile | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY) ?? migrateLegacy()
+    const raw = localStorage.getItem(activeProfileKey()) ?? migrateLegacy()
     if (!raw) return null
     const parsed = JSON.parse(raw) as Partial<SavedProfile>
     // Fill in anything a hand-edited or older record is missing, so every
@@ -210,8 +229,16 @@ function isAnswers(a: unknown): a is SurveyAnswers {
   return (average === null || typeof average === 'number') && typeof ambition === 'string'
 }
 
-/** v1 stored only { answers, shortlist }. Carry it forward once, then leave it. */
+/**
+ * v1 stored only { answers, shortlist }. Carry it forward once, then leave it.
+ *
+ * Guests only. A v1 record predates accounts by definition, so it belongs to
+ * whoever was using the browser, not to whichever account happens to be signed
+ * in when the page loads — importing it into an account would hand one student's
+ * old answers to another.
+ */
 function migrateLegacy(): string | null {
+  if (!isGuest()) return null
   try {
     const old = localStorage.getItem(LEGACY_KEY)
     if (!old) return null
@@ -222,7 +249,7 @@ function migrateLegacy(): string | null {
       shortlist: parsed.shortlist ?? [],
       savedAt: new Date().toISOString(),
     })
-    localStorage.setItem(STORAGE_KEY, migrated)
+    localStorage.setItem(activeProfileKey(), migrated)
     localStorage.removeItem(LEGACY_KEY)
     return migrated
   } catch {
@@ -230,14 +257,25 @@ function migrateLegacy(): string | null {
   }
 }
 
-/** Write a whole profile. Callers usually go through `updateProfile`. */
+/**
+ * Write a whole profile. Callers usually go through `updateProfile`.
+ *
+ * The single funnel every mutation passes through, which is why the sync queue is
+ * poked from here and from nowhere else: one line covers the Keep button, the
+ * course checklist, notes, tags and the survey, and no future caller can add a
+ * write that silently fails to reach the server.
+ *
+ * The queue call cannot throw and does not await — it sets a flag and moves a
+ * timer. A student's click is never waiting on a request.
+ */
 export function saveProfile(profile: Omit<SavedProfile, 'savedAt'>): SavedProfile {
   const next: SavedProfile = { ...profile, savedAt: new Date().toISOString() }
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    localStorage.setItem(activeProfileKey(), JSON.stringify(next))
   } catch {
     /* storage unavailable — the profile still works for this session */
   }
+  queueProfilePush()
   return next
 }
 
@@ -252,13 +290,30 @@ export function updateProfile(patch: Partial<Omit<SavedProfile, 'savedAt'>>): Sa
   return saveProfile({ ...current, ...patch })
 }
 
+/**
+ * Wipe the current profile — the signed-in account's, or the guest one.
+ *
+ * Does not touch the account itself. "Delete my data" and "delete my account"
+ * are separate asks: a student may well want to start their list over without
+ * losing the username they told their friends.
+ *
+ * Signed in, this writes an EMPTY profile rather than deleting the record, and
+ * lets the normal push carry the emptiness to the server. Deleting the local key
+ * outright would leave the server holding the old list, and signing in on any
+ * device would bring back the data they just asked to be rid of — a delete that
+ * quietly undoes itself is worse than no delete button.
+ */
 export function clearProfile(): void {
   try {
-    localStorage.removeItem(STORAGE_KEY)
-    localStorage.removeItem(LEGACY_KEY)
+    if (isGuest()) {
+      localStorage.removeItem(activeProfileKey())
+      localStorage.removeItem(LEGACY_KEY)
+      return
+    }
   } catch {
-    /* nothing to do */
+    /* fall through: still attempt the signed-in path below */
   }
+  saveProfile({ ...EMPTY_PROFILE })
 }
 
 /** Add or remove a program from the shortlist, creating a profile if needed. */

@@ -9,7 +9,10 @@ import Placeholder from './pages/Placeholder'
 import ExplorePreview from './pages/ExplorePreview'
 import Program from './pages/Program'
 import Survey from './pages/Survey'
+import SignIn from './pages/SignIn'
+import SignUp from './pages/SignUp'
 import DashboardShell from './pages/dashboard/DashboardShell'
+import AccountView from './pages/dashboard/AccountView'
 import OverviewView from './pages/dashboard/OverviewView'
 import ListView from './pages/dashboard/ListView'
 import BalanceView from './pages/dashboard/BalanceView'
@@ -64,6 +67,12 @@ export default function App() {
                   during the test — reached from the "Build my profile" CTAs and
                   from the nudge card. */}
               <Route path="/survey" element={<Survey />} />
+              {/* Accounts are optional and always have been the second door:
+                  every route above works signed out, and nothing redirects here.
+                  An account decides *whose* profile the dashboard reads, not
+                  whether there is one. */}
+              <Route path="/signup" element={<SignUp />} />
+              <Route path="/signin" element={<SignIn />} />
               {/* Each dashboard tool is its own route, not a tab: it can be linked
                   to, and the back button steps between tools instead of leaving
                   the dashboard. The shell owns the profile and catalogue and
@@ -79,6 +88,7 @@ export default function App() {
                 <Route path="compare" element={<CompareView />} />
                 <Route path="programs" element={<ProgramsView />} />
                 <Route path="fields" element={<FieldsView />} />
+                <Route path="account" element={<AccountView />} />
                 {/* Not live yet: real layout, mock content, visible banner. */}
                 <Route path="applications" element={<ApplicationsView />} />
                 <Route path="deadlines" element={<DeadlinesView />} />

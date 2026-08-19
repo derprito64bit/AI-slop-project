@@ -7,6 +7,7 @@ import Button from '../components/ui/Button'
 import { STEP_VARIANTS } from '../lib/motion'
 import { loadCatalogue } from '../lib/dataSource'
 import { submitSurvey } from '../lib/api'
+import { useAuth } from '../lib/authContext'
 import {
   AMBITION_LABELS,
   FIELD_LABELS,
@@ -93,6 +94,10 @@ export function averageError(raw: string): string | undefined {
 
 export default function Survey() {
   const navigate = useNavigate()
+  // Only used to tell the truth about where the average goes — the survey itself
+  // behaves identically signed in or out.
+  const { user } = useAuth()
+  const signedIn = Boolean(user)
   const [answers, setAnswers] = useState<SurveyAnswers>(EMPTY)
   const [rawAverage, setRawAverage] = useState('')
   const [error, setError] = useState<string>()
@@ -269,7 +274,15 @@ export default function Survey() {
                   <Field
                     id="survey-average"
                     label="What's your current overall average?"
-                    hint="Stays on your device — it's never uploaded. Skip it if you'd rather not say."
+                    // This said "it's never uploaded" until profiles started
+                    // syncing, and then it was a false promise about the most
+                    // sensitive number on the site. Which sentence is true now
+                    // depends on whether they are signed in, so it is asked.
+                    hint={
+                      signedIn
+                        ? 'Saved to your account so your list works on any device. Skip it if you’d rather not say.'
+                        : 'Stays on this device — nothing is uploaded while you’re signed out. Skip it if you’d rather not say.'
+                    }
                     error={error}
                   >
                     <div className="flex items-center gap-3">

@@ -9,12 +9,14 @@ import { gapFor } from '../../lib/courses'
 import { getProgramInfo } from '../../data/program-info'
 import {
   AMBITION_LABELS,
+  EMPTY_PROFILE,
   FIELD_LABELS,
   PROVINCE_LABELS,
   clearProfile,
   loadProfile,
   type SavedProfile,
 } from '../../lib/profile'
+import { useAuth } from '../../lib/authContext'
 import type { DashboardContext } from './context'
 import type { Program, University } from '../../data/types'
 
@@ -51,13 +53,22 @@ type NavItem = {
 
 export default function DashboardShell() {
   const { pathname } = useLocation()
+  const { user, sync } = useAuth()
   const [profile, setProfile] = useState<SavedProfile | null>(null)
   const [data, setData] = useState<{ programs: Program[]; universities: University[] } | null>(null)
   const [compare, setCompare] = useState<string[]>([])
   const [collapsed, setCollapsed] = useState(false)
 
+  // Keyed on the account id, not just mount. `loadProfile()` reads whichever
+  // record the session points at, so signing in or out while the dashboard is
+  // open has to re-read — otherwise the previous account's shortlist stays on
+  // screen and the next edit writes it into the new account's record.
   useEffect(() => {
     setProfile(loadProfile())
+    setCompare([])
+  }, [user?.id])
+
+  useEffect(() => {
     loadCatalogue().then(setData).catch(() => {})
     try {
       setCollapsed(localStorage.getItem(COLLAPSE_KEY) === '1')
@@ -101,18 +112,31 @@ export default function DashboardShell() {
   }, [kept, profile])
 
   // Nothing stored at all — offer both doors rather than an empty chrome.
-  if (!profile) return <FirstRun />
+  //
+  // Account is the one exception. Somebody who has just created an account and
+  // kept nothing yet still needs a page to change their password or sign out on,
+  // and bouncing them to "answer four questions" instead is a dead end.
+  const isAccountRoute = pathname.endsWith('/account')
+  if (!profile && !isAccountRoute) return <FirstRun signedIn={Boolean(user)} />
 
-  const average = profile.answers?.average ?? null
+  // Empty rather than null for the account route, so every view can still assume
+  // the full shape. Nothing is written until the student changes something.
+  const shown: SavedProfile = profile ?? { ...EMPTY_PROFILE, savedAt: new Date().toISOString() }
+  const average = shown.answers?.average ?? null
 
   const context: DashboardContext = {
-    profile, setProfile, data, byId, uniName, kept, average, compare, toggleCompare, gapCount,
+    profile: shown, setProfile, data, byId, uniName, kept, average, compare, toggleCompare, gapCount,
   }
 
   const groups: Array<{ label: string; items: NavItem[] }> = [
     {
       label: 'Overview',
-      items: [{ to: '.', label: 'Dashboard', icon: '⌂' }],
+      items: [
+        { to: '.', label: 'Dashboard', icon: '⌂' },
+        // Sits in the nav signed out too, where it explains what an account
+        // would do. Hiding it until you have one is how a feature stays unfound.
+        { to: 'account', label: user ? 'Account' : 'Sign in', icon: '◉' },
+      ],
     },
     {
       label: 'Plan',
@@ -128,7 +152,7 @@ export default function DashboardShell() {
       items: [
         { to: 'programs', label: 'Programs', icon: '⌕' },
         { to: 'fields', label: 'Fields', icon: '◈' },
-        { to: '/survey', label: profile.answers ? 'Change answers' : 'Answer 4 questions', icon: '✎' },
+        { to: '/survey', label: shown.answers ? 'Change answers' : 'Answer 4 questions', icon: '✎' },
       ],
     },
     {
@@ -290,7 +314,7 @@ export default function DashboardShell() {
         <aside className="sticky top-24 hidden h-fit w-64 shrink-0 xl:block">
           <div className="rounded-xl border border-line bg-paper p-4">
             <Eyebrow>Your answers</Eyebrow>
-            {profile.answers ? (
+            {shown.answers ? (
               <>
                 {/* Every question can be skipped, so every row here has to
                     read properly when its answer is missing — "null%" was
@@ -299,24 +323,24 @@ export default function DashboardShell() {
                   <Row
                     label="Studying"
                     value={
-                      profile.answers.field
-                        ? FIELD_LABELS[profile.answers.field] ?? profile.answers.field
+                      shown.answers.field
+                        ? FIELD_LABELS[shown.answers.field] ?? shown.answers.field
                         : 'Anything'
                     }
                   />
                   <Row
                     label="Region"
-                    value={profile.answers.province ? PROVINCE_LABELS[profile.answers.province] : 'Anywhere'}
+                    value={shown.answers.province ? PROVINCE_LABELS[shown.answers.province] : 'Anywhere'}
                   />
                   <Row
                     label="Average"
                     value={
-                      typeof profile.answers.average === 'number'
-                        ? `${profile.answers.average}%`
+                      typeof shown.answers.average === 'number'
+                        ? `${shown.answers.average}%`
                         : 'Not given'
                     }
                   />
-                  <Row label="Net" value={AMBITION_LABELS[profile.answers.ambition].label} />
+                  <Row label="Net" value={AMBITION_LABELS[shown.answers.ambition].label} />
                 </dl>
                 <Link
                   to="/survey"
@@ -339,19 +363,48 @@ export default function DashboardShell() {
           </div>
 
           <div className="mt-4 rounded-xl border border-line bg-surface p-4">
+            {/* This once read "no account, nothing uploaded". Both halves have
+                since stopped being true for a signed-in student, and where their
+                data is sitting is not something they should have to discover for
+                themselves. */}
             <p className="text-sm leading-relaxed text-slate">
-              Everything here is stored on this device only — no account, nothing uploaded.
+              {user ? (
+                <>
+                  Saved to <span className="font-600 text-ink">@{user.username}</span>
+                  {sync === 'error' ? (
+                    <>
+                      {' '}
+                      on this device. We can&rsquo;t reach the server, so today&rsquo;s changes
+                      aren&rsquo;t backed up yet.
+                    </>
+                  ) : sync === 'pending' || sync === 'pushing' ? (
+                    <> and backing up now.</>
+                  ) : (
+                    <> and backed up to our server.</>
+                  )}
+                </>
+              ) : (
+                'Stored on this device, against this browser rather than an account. Nothing is uploaded.'
+              )}
             </p>
-            <button
-              type="button"
-              onClick={() => {
-                clearProfile()
-                setProfile(null)
-              }}
-              className="mt-3 text-sm text-slate underline-offset-2 hover:text-ink hover:underline"
-            >
-              Delete my data
-            </button>
+            <div className="mt-3 flex flex-col items-start gap-2">
+              <Link
+                to="/profile/account"
+                className="text-sm text-slate underline-offset-2 hover:text-ink hover:underline"
+              >
+                {user ? 'Manage my account' : 'Save this to an account'}
+              </Link>
+              <button
+                type="button"
+                onClick={() => {
+                  clearProfile()
+                  setProfile(null)
+                }}
+                className="text-sm text-slate underline-offset-2 hover:text-ink hover:underline"
+              >
+                Delete my data
+              </button>
+            </div>
           </div>
         </aside>
       </div>
@@ -368,7 +421,15 @@ function Row({ label, value }: { label: string; value: string }) {
   )
 }
 
-function FirstRun() {
+/**
+ * Nothing stored yet.
+ *
+ * The survey stays the primary door even for a signed-in student — an empty
+ * account is still an empty list, and four questions is the fastest way to make
+ * it not be. Sign-in is offered only to someone who isn't, and only third, so
+ * the page never reads as a login wall.
+ */
+function FirstRun({ signedIn }: { signedIn: boolean }) {
   return (
     <section className="container-page max-w-2xl py-24">
       <Eyebrow>My profile</Eyebrow>
@@ -377,7 +438,10 @@ function FirstRun() {
       </h1>
       <p className="mt-3 text-lead text-slate">
         Keep programs as you browse, tick off the courses you&rsquo;re taking, and see how your list
-        actually stacks up. Everything stays on this device.
+        actually stacks up.{' '}
+        {signedIn
+          ? 'Saved to your account, so it’s there on any device.'
+          : 'Everything stays on this device unless you make an account.'}
       </p>
       <div className="mt-8 flex flex-wrap gap-3">
         <Button to="/survey">Answer four questions</Button>
@@ -385,6 +449,15 @@ function FirstRun() {
           Just let me browse
         </Button>
       </div>
+      {!signedIn && (
+        <p className="mt-6 text-sm text-slate">
+          Already made an account?{' '}
+          <Link to="/signin" className="font-600 text-brand-600 hover:text-brand-700">
+            Sign in
+          </Link>{' '}
+          to pick your list back up.
+        </p>
+      )}
     </section>
   )
 }

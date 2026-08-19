@@ -25,3 +25,12 @@ dist-ssr
 
 # Local screenshots from npm run shots
 .shots
+
+# Local secrets. The backend's own .env lives in its repo (TheKeems/UniServer),
+# not here.
+.env
+.env.local
+
+# Per-machine Claude settings. Ignored globally on some machines and not others,
+# which is how one of these ended up committed.
+.claude/settings.local.json

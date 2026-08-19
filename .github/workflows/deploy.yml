@@ -29,7 +29,13 @@ jobs:
 
       - run: npm ci
 
+      # The account API host, set here rather than left to the fallback in
+      # src/lib/api.ts, so the endpoint a deploy talks to is visible in the
+      # workflow instead of buried in a default. Change it here to point a
+      # deploy at a different backend.
       - run: npm run build
+        env:
+          VITE_API_BASE_URL: https://uniserver-632q.onrender.com
 
       # SPA fallback: serve index.html for unknown routes (deep links / refresh)
       - run: cp dist/index.html dist/404.html

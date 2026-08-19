@@ -34,8 +34,11 @@ export default function CourseChecklist({
   return (
     <section>
       <h3 className="font-display text-display-3 font-600 text-ink">Courses you&rsquo;re taking</h3>
+      {/* Used to end "Saved on this device only", which stopped being true for a
+          signed-in student when profiles started syncing. The account page is
+          where the full answer lives; this just does not claim otherwise. */}
       <p className="mt-2 max-w-2xl text-sm text-slate">
-        Tick your Grade 12 U courses. Saved on this device only.
+        Tick your Grade 12 U courses. Saved automatically.
       </p>
 
       <div className="mt-5 flex flex-wrap gap-2">

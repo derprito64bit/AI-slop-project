@@ -116,10 +116,70 @@ produces half-transparent elements.
 
 ## 4. Architecture decisions worth not re-litigating
 
-**No backend, deliberately.** The team moderates submissions by hand, so the
-spreadsheet *is* the database and admin panel. A build step turns it into JSON.
-A write-backend is only needed if submissions ever happen directly on the site.
-`src/lib/dataSource.ts` is the single seam if that changes.
+**The catalogue has no backend, deliberately.** The team moderates submissions by
+hand, so the spreadsheet *is* the database and admin panel. A build step turns it
+into JSON. A write-backend is only needed if submissions ever happen directly on
+the site. `src/lib/dataSource.ts` is the single seam if that changes. This is
+unaffected by accounts: program data still ships as static JSON, and the account
+server knows nothing about it.
+
+### Accounts (added 2026-08-18)
+
+Username and password, against a service in **its own repository**:
+<https://github.com/TheKeems/UniServer> — Express + Mongoose + JWT, with its own
+test suite, deployed to Render at `uniserver-632q.onrender.com`. It is not
+vendored into this repo, so nothing here builds or tests it; treat it the way you
+would any other external API.
+
+The client points at that host by default (`API_BASE`, `src/lib/api.ts`) and
+`VITE_API_BASE_URL` overrides it at build time — the deploy workflow sets it
+explicitly so the endpoint is visible there rather than buried in a fallback.
+
+**Check the service before assuming sign-up is broken**:
+`curl https://uniserver-632q.onrender.com/api/health`. A 404 means the account
+routes are not deployed, and the app says exactly that rather than showing a
+password error. A slow first response is the free tier waking up, which every
+call site treats as "waking up" rather than as a failure.
+
+Two things that live outside this repo and are worth knowing:
+`ALLOWED_ORIGINS` on the service narrows CORS (it falls back to `*` when unset),
+and the accounts sit in a MongoDB Atlas cluster — so who holds those credentials
+is a question about the backend repo, not this one.
+
+What was decided, and why, in the order you will want it:
+
+- **An account is optional, not a gate.** Every route works signed out and nothing
+  redirects to a sign-in page. Signed-out visitors keep the original localStorage
+  key, so adding accounts stranded nobody's existing shortlist.
+- **localStorage is the working copy; the server is the durable copy.**
+  `src/lib/sync.ts`. The dashboard reads the profile synchronously in dozens of
+  places, so making reads remote would have meant a loading state in every Keep
+  button and an unusable site while a free-tier server wakes up. Writes land
+  locally, then push on a 1.5s debounce. Sign-in pulls. **Conflict rule: last write
+  wins, per whole profile** — two devices editing between sign-ins do not merge, and
+  the account page says so.
+- **The password is hashed on the server, never in the browser.** It was hashed
+  client-side for a few hours when accounts were local; that code was deleted
+  rather than ported, because a server that accepts a client-computed digest has
+  made the digest the password. scrypt, in `passwords.js` in the backend repo.
+- **The exact average is now uploaded**, for a signed-in student. It used to be the
+  one number the site promised never to send. That trade is the point of an account
+  — a profile that follows you to another device — but the promise was load-bearing,
+  so every piece of copy claiming "never uploaded" or "stays on your device" was
+  rewritten (Survey, dashboard rail, OverviewView, CourseChecklist, both auth
+  pages). **If you add a "your data stays private" line anywhere, check it is true
+  for the signed-in case first.**
+- **Still no email, no real name, no age, no school.** The rule that killed the
+  original survey's name and age fields did not move. No email also means no
+  password reset, which is stated on the sign-up page rather than discovered later.
+- **`POST /api/data` stayed anonymous.** No account id, no username, a five-point
+  band rather than an exact average, and the server drops those fields if a client
+  ever sends them. It is telemetry about whether the funnel works, not a record of
+  who answered what — keep it that way, and see the header of `src/lib/api.ts`,
+  which is the one file listing everything that leaves the device.
+- **Offline is not signed out.** A failed token check leaves the student signed in;
+  only an outright 401 signs them out. A failed push keeps the data and a dirty
+  flag, and retries on the next edit, on `online`, and when the tab is shown.
 
 **Data is lazy-loaded.** `programs.json` (95kB gzipped) and `stats.json` (63kB)
 load via dynamic import, so they're separate chunks and never touch the Home
@@ -291,10 +351,14 @@ and pastes the requirements text. Structuring and citing it takes seconds.
 2. **Finish the ≥20-report research tier** — 36 left, of which ~20 sit at the
    blocked schools (McMaster 12, Western, uOttawa). Needs pasted page text.
 3. **Profile page + alignment engine.** The core differentiator and still a stub.
-   Survey (grades, interests, budget), stored in `localStorage` (no accounts —
-   decided), then "how you compare" against a program's accepted-average
-   distribution. Keep the engine as pure functions in `src/lib/` so it's
-   testable. **Must not output a probability of admission.**
+   Survey (grades, interests, budget), stored in `localStorage`, then "how you
+   compare" against a program's accepted-average distribution. Keep the engine as
+   pure functions in `src/lib/` so it's testable. **Must not output a probability
+   of admission.**
+
+   The "no accounts — decided" note that used to be on this line is out of date:
+   accounts were added on 2026-08-18 and moved to the server the same day. See
+   **§ Accounts** below before touching any of it.
 
 ### Assets the user is sourcing
 
