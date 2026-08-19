@@ -10,7 +10,7 @@
 // security boundary and the file said so. It is gone — deleted rather than ported,
 // because a server that trusts a digest computed in the browser has made the
 // digest the password. The password now travels over TLS and is hashed with
-// scrypt on arrival (server/passwords.js).
+// scrypt on arrival (passwords.js in the backend repo, TheKeems/UniServer).
 //
 // WHAT THAT BUYS, and what it costs:
 //
@@ -119,7 +119,8 @@ function asAuthError(cause: unknown, fallbackField?: AuthError['field']): AuthEr
 /* ---------------------------------------------------------- validation --- */
 // Pure, exported, and tested: the forms call these so a student is told what is
 // wrong before a request goes anywhere. The server enforces the same rules in
-// server/validate.js and is the copy that decides — this one is a courtesy, and
+// validate.js in TheKeems/UniServer and is the copy that decides — this one is a
+// courtesy, and
 // if you change a number here change it there too.
 
 export const USERNAME_MIN = 3

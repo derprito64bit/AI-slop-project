@@ -125,12 +125,26 @@ server knows nothing about it.
 
 ### Accounts (added 2026-08-18)
 
-Username and password, on the Render service. `server/` holds the Express +
-Mongoose code and `server/README.md` is the deployment guide. **The live service
-did not have these routes when they were written** — check
-`curl https://uniserver-632q.onrender.com/api/health` before assuming sign-up
-works; a 404 means `server/` has not been deployed, and the app says so specifically
-rather than showing a password error.
+Username and password, against a service in **its own repository**:
+<https://github.com/TheKeems/UniServer> — Express + Mongoose + JWT, with its own
+test suite, deployed to Render at `uniserver-632q.onrender.com`. It is not
+vendored into this repo, so nothing here builds or tests it; treat it the way you
+would any other external API.
+
+The client points at that host by default (`API_BASE`, `src/lib/api.ts`) and
+`VITE_API_BASE_URL` overrides it at build time — the deploy workflow sets it
+explicitly so the endpoint is visible there rather than buried in a fallback.
+
+**Check the service before assuming sign-up is broken**:
+`curl https://uniserver-632q.onrender.com/api/health`. A 404 means the account
+routes are not deployed, and the app says exactly that rather than showing a
+password error. A slow first response is the free tier waking up, which every
+call site treats as "waking up" rather than as a failure.
+
+Two things that live outside this repo and are worth knowing:
+`ALLOWED_ORIGINS` on the service narrows CORS (it falls back to `*` when unset),
+and the accounts sit in a MongoDB Atlas cluster — so who holds those credentials
+is a question about the backend repo, not this one.
 
 What was decided, and why, in the order you will want it:
 
@@ -147,7 +161,7 @@ What was decided, and why, in the order you will want it:
 - **The password is hashed on the server, never in the browser.** It was hashed
   client-side for a few hours when accounts were local; that code was deleted
   rather than ported, because a server that accepts a client-computed digest has
-  made the digest the password. scrypt, in `server/passwords.js`.
+  made the digest the password. scrypt, in `passwords.js` in the backend repo.
 - **The exact average is now uploaded**, for a signed-in student. It used to be the
   one number the site promised never to send. That trade is the point of an account
   — a profile that follows you to another device — but the promise was load-bearing,

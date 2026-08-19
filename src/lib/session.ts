@@ -105,7 +105,7 @@ export function activeAccountId(): string | null {
  * read it. The alternative — an httpOnly cookie — needs a same-site backend, and
  * this is a static site on GitHub Pages talking to a Render service on another
  * domain. The mitigations that do apply: the token carries no personal data
- * (server/tokens.js), it expires, and the API it opens holds a self-chosen
+ * (tokens.js in TheKeems/UniServer), it expires, and the API it opens holds a self-chosen
  * username and a shortlist rather than anything that spends money.
  */
 export function activeToken(): string | null {

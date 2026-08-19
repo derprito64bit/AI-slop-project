@@ -12,9 +12,9 @@ export default defineConfig(({ command }) => ({
   base: command === 'build' ? '/AI-slop-project/' : '/',
   plugins: [react(), tailwindcss()],
   test: {
-    // The backend has its own suite, written against node:test and run with
-    // `npm test` inside server/ — vitest cannot execute those and reports them as
-    // empty files if it tries.
-    exclude: ['**/node_modules/**', '**/dist/**', 'server/**'],
+    // The backend and its suite live in their own repo (TheKeems/UniServer), so
+    // there is nothing server-side for vitest to pick up here. Kept explicit
+    // because the defaults are otherwise invisible.
+    exclude: ['**/node_modules/**', '**/dist/**'],
   },
 }))

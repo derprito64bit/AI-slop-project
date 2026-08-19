@@ -204,6 +204,19 @@ function Created({ username, adopted }: { username: string; adopted: boolean }) 
           : 'Your account is ready. Anything you keep from here on is saved to it.'
       }
     >
+      {/* Said once, at the only moment it can still be acted on.
+          There is no email, which is the right call for an audience that is
+          mostly under 18 — but it means there is no reset link either, and a
+          student who assumes there is one will find out at the worst possible
+          moment. The mitigation is boring and real: write the password down,
+          and know that the list itself is still on this device either way. */}
+      <p className="mb-5 rounded-lg border border-line bg-surface p-4 text-sm leading-relaxed text-slate">
+        <strong className="font-600 text-ink">There’s no password reset.</strong> We don’t ask for
+        an email, so there’s nothing to send one to — write your password down somewhere you’ll
+        find it. If you do lose it, what you’ve saved is still on this device; it’s the account
+        and your other devices you’d lose.
+      </p>
+
       <div className="flex flex-col gap-3">
         {hasAnswers ? (
           <>

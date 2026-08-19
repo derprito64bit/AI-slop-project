@@ -33,7 +33,7 @@
 //
 // THE PASSWORD. It is sent, in the request body, over TLS, to /api/auth/signup
 // and /api/auth/login, and the server hashes it on arrival with scrypt and stores
-// only the hash (server/passwords.js). It is never stored on the device, never
+// only the hash (passwords.js in TheKeems/UniServer). It is never stored on the device, never
 // put in a URL — a query string lands in server logs and browser history — never
 // logged, and never retained in memory after the request that used it. The
 // previous version hashed in the browser; that was the right call when there was
@@ -293,10 +293,12 @@ export type SurveyTelemetry = {
  * computed and saved locally by the time this runs.
  */
 export async function submitSurvey(answers: SurveyTelemetry): Promise<unknown> {
-  return request<unknown>('/api/data', {
+  const result = await request<unknown>('/api/data', {
     method: 'POST',
     body: { ...answers, submittedAt: new Date().toISOString() },
   })
+  console.log('Sent data')
+  return result
 }
 
 /** Whether the service is up, for the "server is asleep" states. */
