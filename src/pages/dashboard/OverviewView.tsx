@@ -55,7 +55,6 @@ export default function OverviewView() {
         <h1 className="font-display text-display-2 font-600 text-ink">Your dashboard</h1>
         <p className="mt-2 max-w-2xl text-slate">
           Everything you&rsquo;ve kept, checked and compared — and what&rsquo;s worth doing next.
-          All of it stored on this device.
         </p>
       </header>
 

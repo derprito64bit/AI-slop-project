@@ -25,3 +25,8 @@ dist-ssr
 
 # Local screenshots from npm run shots
 .shots
+
+# Server secrets — server/.env.example is the committed template
+.env
+.env.local
+server/.env
