@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { bucketize } from './AverageDistribution'
+import { bucketize, percentileReading } from './AverageDistribution'
 
 describe('bucketize', () => {
   it('groups values into fixed-width buckets across the observed range', () => {
@@ -27,5 +27,39 @@ describe('bucketize', () => {
   it('handles a single value and an empty set', () => {
     expect(bucketize([90]).reduce((n, b) => n + b.count, 0)).toBe(1)
     expect(bucketize([])).toEqual([])
+  })
+})
+
+describe('percentileReading', () => {
+  const q = { p25: 90, median: 93, p75: 96, min: 82, max: 100 }
+
+  it('places a value in each quarter of the reported range', () => {
+    expect(percentileReading(85, q)).toMatch(/lowest quarter/)
+    expect(percentileReading(91, q)).toMatch(/25th and 50th/)
+    expect(percentileReading(94, q)).toMatch(/50th and 75th/)
+    expect(percentileReading(98, q)).toMatch(/top quarter/)
+  })
+
+  it('handles a value outside the reported range rather than dropping it', () => {
+    expect(percentileReading(70, q)).toMatch(/below every average/)
+    expect(percentileReading(100.5, q)).toMatch(/above every average/)
+  })
+
+  it('treats the quartile boundaries consistently', () => {
+    // On a boundary the value belongs to the band it opens, not the one it closes.
+    expect(percentileReading(90, q)).toMatch(/25th and 50th/)
+    expect(percentileReading(93, q)).toMatch(/50th and 75th/)
+    expect(percentileReading(96, q)).toMatch(/top quarter/)
+  })
+
+  it('never states a probability, a chance, or a judgement', () => {
+    const forbidden = /chance|odds|likel|competitive|strong|good|weak|chances/i
+    for (const v of [70, 85, 90, 91, 93, 94, 96, 98, 101]) {
+      expect(percentileReading(v, q)).not.toMatch(forbidden)
+    }
+  })
+
+  it('always names the student’s own number', () => {
+    expect(percentileReading(88, q)).toContain('88%')
   })
 })

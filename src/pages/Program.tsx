@@ -9,6 +9,7 @@ import UniversityMark from '../components/UniversityMark'
 import KeepButton from '../components/KeepButton'
 import Reveal from '../components/Reveal'
 import AverageDistribution from '../components/AverageDistribution'
+import { loadProfile } from '../lib/profile'
 import { ProgramPageSkeleton, LoadingNote } from '../components/Skeleton'
 import DecisionMix from '../components/DecisionMix'
 import OutcomeCompare from '../components/OutcomeCompare'
@@ -287,7 +288,16 @@ function AnalyticsTab({
         <span className="text-slate">median of {program.sampleSize} reported offers</span>
       </div>
 
-      <AverageDistribution values={offerAverages} median={a.median} p25={a.p25} p75={a.p75} />
+      {/* The student's own average, if they have given one. Read from storage
+          rather than passed down: this page is reachable without a profile, and
+          the chart is unchanged when there is nothing to mark. */}
+      <AverageDistribution
+        values={offerAverages}
+        median={a.median}
+        p25={a.p25}
+        p75={a.p75}
+        you={loadProfile()?.answers?.average ?? null}
+      />
 
       <Reveal delay={0.05}>
       <h3 className="mt-10 font-display text-display-3 font-600 text-ink">The range</h3>
