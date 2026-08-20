@@ -6,11 +6,11 @@ import {
   useReducedMotion,
   type MotionValue,
 } from 'motion/react'
-import { EASE, SPRING } from '../lib/motion'
+import { DURATION, EASE, SPRING } from '../lib/motion'
 
 /** Wait before the first pin lands, and the gap between pins. Seconds. */
-const PIN_LEAD = 0.18
-const PIN_GAP = 0.22
+const PIN_LEAD = 0.24
+const PIN_GAP = 0.3
 
 export type RoadmapStep = { n: string; title: string; body: string }
 
@@ -30,7 +30,7 @@ function Marker({ kind, delay = 0 }: { kind: 'dot' | 'flag' | 'check'; delay?: n
           initial={{ pathLength: 0 }}
           whileInView={{ pathLength: 1 }}
           viewport={{ once: true, margin: '-60px' }}
-          transition={{ delay: delay + UNFURL_AFTER, duration: 0.35, ease: EASE.out }}
+          transition={{ delay: delay + UNFURL_AFTER, duration: 0.46, ease: EASE.out }}
         />
       </svg>
     )
@@ -42,7 +42,7 @@ function Marker({ kind, delay = 0 }: { kind: 'dot' | 'flag' | 'check'; delay?: n
           initial={{ pathLength: 0 }}
           whileInView={{ pathLength: 1 }}
           viewport={{ once: true, margin: '-60px' }}
-          transition={{ delay: delay + UNFURL_AFTER, duration: 0.3, ease: EASE.out }}
+          transition={{ delay: delay + UNFURL_AFTER, duration: 0.4, ease: EASE.out }}
         />
       </svg>
     )
@@ -50,7 +50,7 @@ function Marker({ kind, delay = 0 }: { kind: 'dot' | 'flag' | 'check'; delay?: n
 }
 
 /** How long after a pin lands before its mark draws itself. */
-const UNFURL_AFTER = 0.16
+const UNFURL_AFTER = 0.2
 
 const KINDS: Array<'dot' | 'flag' | 'check'> = ['dot', 'flag', 'check']
 const PATH_D = 'M80,80 C 280,80 300,30 500,45 S 720,95 920,55'
@@ -246,7 +246,7 @@ function InlineRoadmap({ steps, reduced }: { steps: RoadmapStep[]; reduced: bool
             initial={reduced ? false : { opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-60px' }}
-            transition={{ delay: 0.3 + i * 0.25, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ delay: 0.4 + i * 0.32, duration: DURATION.slow, ease: EASE.out }}
           >
             <div className="font-display text-4xl font-500 text-brand-300">{s.n}</div>
             <h3 className="mt-3 text-lg font-600 text-ink">{s.title}</h3>

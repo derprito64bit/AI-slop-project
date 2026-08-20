@@ -1,6 +1,7 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
+import { DURATION, EASE } from '../lib/motion'
 import { loadCatalogue } from '../lib/dataSource'
 import { queryPrograms } from '../lib/search'
 import type { Program, University } from '../data/types'
@@ -137,7 +138,7 @@ export default function HeroSearch() {
         />
         <button
           type="submit"
-          className="shrink-0 rounded-full bg-brand-500 px-5 py-2 text-sm font-600 text-white transition-colors duration-200 hover:bg-brand-600"
+          className="shrink-0 rounded-full bg-brand-500 px-5 py-2 text-sm font-600 text-white transition-colors duration-300 hover:bg-brand-600"
         >
           Search
         </button>
@@ -151,7 +152,7 @@ export default function HeroSearch() {
             exit={reduced ? { opacity: 0 } : { opacity: 0, y: -6, scale: 0.985 }}
             // 180ms sits in the motion table's micro-interaction band. The panel
             // is a response to typing, so anything slower feels laggy.
-            transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: DURATION.quick, ease: EASE.out }}
             className="absolute left-0 right-0 top-full z-30 mt-2 overflow-hidden rounded-2xl border border-line bg-paper shadow-[0_18px_50px_rgba(20,24,31,0.14)]"
           >
             {!data ? (
@@ -170,13 +171,13 @@ export default function HeroSearch() {
                       // 0.03s/item over <=6 rows: the motion table warns against
                       // more than 0.1s per item, and the whole list should be in
                       // place before the next keystroke lands.
-                      transition={{ duration: 0.18, delay: reduced ? 0 : i * 0.03 }}
+                      transition={{ duration: DURATION.quick, delay: reduced ? 0 : i * 0.04 }}
                       onPointerEnter={() => setActive(i)}
                       onPointerDown={(e) => {
                         e.preventDefault() // keep focus so blur doesn't close first
                         goToProgram(p)
                       }}
-                      className={`cursor-pointer px-4 py-2.5 transition-colors duration-150 ${
+                      className={`cursor-pointer px-4 py-2.5 transition-colors duration-200 ${
                         i === active ? 'bg-cloud' : ''
                       }`}
                     >
@@ -200,7 +201,7 @@ export default function HeroSearch() {
                     e.preventDefault()
                     goToSearch()
                   }}
-                  className="block w-full border-t border-line px-4 py-2.5 text-left text-xs font-600 text-brand-600 transition-colors duration-150 hover:bg-cloud"
+                  className="block w-full border-t border-line px-4 py-2.5 text-left text-xs font-600 text-brand-600 transition-colors duration-200 hover:bg-cloud"
                 >
                   See all results for “{query.trim()}” →
                 </button>

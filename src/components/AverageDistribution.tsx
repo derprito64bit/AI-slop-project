@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
+import { DURATION, EASE } from '../lib/motion'
 
 // Distribution of reported accepted averages for one program.
 //
@@ -219,7 +220,7 @@ export default function AverageDistribution({ values, median, p25, p75, you }: P
                 reduced
                   ? { duration: 0 }
                   : // Stagger caps out so a 20-bucket chart still finishes fast.
-                    { duration: 0.45, delay: Math.min(i * 0.025, 0.4), ease: [0.22, 1, 0.36, 1] }
+                    { duration: DURATION.slow, delay: Math.min(i * 0.035, 0.5), ease: EASE.out }
               }
             />
           )

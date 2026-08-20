@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { DURATION, EASE } from '../lib/motion'
 import { motion, useReducedMotion } from 'motion/react'
 import type { CyclePoint } from '../lib/analytics'
 
@@ -48,7 +49,7 @@ export default function CycleTrend({ points }: { points: CyclePoint[] }) {
                 transition={
                   reduced
                     ? { duration: 0 }
-                    : { duration: 0.5, delay: i * 0.06, ease: [0.22, 1, 0.36, 1] }
+                    : { duration: DURATION.slow, delay: i * 0.08, ease: EASE.out }
                 }
                 title={`${p.cycle}: median ${p.median}% from ${p.n} reports`}
               />

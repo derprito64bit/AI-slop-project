@@ -10,6 +10,7 @@ import KeepButton from '../components/KeepButton'
 import Reveal from '../components/Reveal'
 import AverageDistribution from '../components/AverageDistribution'
 import { loadProfile } from '../lib/profile'
+import { DURATION, EASE } from '../lib/motion'
 import { ProgramPageSkeleton, LoadingNote } from '../components/Skeleton'
 import DecisionMix from '../components/DecisionMix'
 import OutcomeCompare from '../components/OutcomeCompare'
@@ -122,7 +123,7 @@ export default function Program() {
       <motion.header
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: DURATION.reveal, ease: EASE.out }}
         className="mt-5 flex flex-wrap items-start gap-5"
       >
         <UniversityMark id={program.universityId} name={school} size={72} />
@@ -192,7 +193,7 @@ export default function Program() {
                 <Reveal as="li" key={p.id} delay={i * 0.04}>
                   <Link
                     to={`/program/${p.universityId}/${p.slug}`}
-                    className="flex items-center gap-3 rounded-lg border border-line bg-paper p-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(20,24,31,0.07)]"
+                    className="flex items-center gap-3 rounded-lg border border-line bg-paper p-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(20,24,31,0.07)]"
                   >
                     <UniversityMark id={p.universityId} name={u?.name ?? p.universityId} size={36} />
                     <span className="min-w-0 flex-1">

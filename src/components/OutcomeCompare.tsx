@@ -1,3 +1,4 @@
+import { DURATION, EASE } from '../lib/motion'
 import { motion, useReducedMotion } from 'motion/react'
 import type { Summary } from '../lib/analytics'
 
@@ -76,7 +77,7 @@ export default function OutcomeCompare({ offers, rejections }: Props) {
                   transition={
                     reduced
                       ? { duration: 0 }
-                      : { duration: 0.5, delay: row.key === 'offers' ? 0.05 : 0.15, ease: [0.22, 1, 0.36, 1] }
+                      : { duration: DURATION.slow, delay: row.key === 'offers' ? 0.07 : 0.2, ease: EASE.out }
                   }
                 />
                 {/* median — the one direct marker */}
@@ -85,7 +86,7 @@ export default function OutcomeCompare({ offers, rejections }: Props) {
                   style={{ left: `${pos(s.median)}%` }}
                   initial={reduced ? false : { scaleY: 0, opacity: 0 }}
                   animate={{ scaleY: 1, opacity: 1 }}
-                  transition={reduced ? { duration: 0 } : { duration: 0.3, delay: 0.25 }}
+                  transition={reduced ? { duration: 0 } : { duration: DURATION.base, delay: 0.34 }}
                 />
               </div>
             </li>

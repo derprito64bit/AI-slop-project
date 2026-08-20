@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { DURATION, EASE } from '../lib/motion'
 import { motion, useReducedMotion } from 'motion/react'
 import type { DecisionSlice } from '../lib/analytics'
 
@@ -48,7 +49,7 @@ export default function DecisionMix({ slices }: { slices: DecisionSlice[] }) {
             transition={
               reduced
                 ? { duration: 0 }
-                : { duration: 0.55, delay: i * 0.07, ease: [0.22, 1, 0.36, 1] }
+                : { duration: DURATION.slow + 0.1, delay: i * 0.09, ease: EASE.out }
             }
             onPointerEnter={() => setHover(s.key)}
             onPointerLeave={() => setHover((k) => (k === s.key ? null : k))}
