@@ -195,6 +195,52 @@ html {
 }
 
 /* ============================================================
+   Scroll reveal, in CSS, for LONG LISTS.
+
+   One-off elements use <Reveal>, which drives opacity and
+   transform from JavaScript — fine for a heading, and measurably
+   not fine for a grid. Explore renders hundreds of cards, and a
+   JS-driven reveal writes inline styles to every animating card
+   every frame: measured over one scripted scroll of Explore,
+   style recalculation was 565ms with those reveals and 18ms
+   without, and total main-thread work 1,104ms against 329ms.
+
+   A CSS transition on opacity and transform is composited, so
+   the same movement costs the main thread nothing per frame.
+   The look is unchanged — same distance, same curve, same
+   stagger — because the timing comes from the same tokens.
+
+   --reveal-delay carries the per-card stagger. `will-change` is
+   set from JS for the duration of the transition and cleared
+   afterwards: without it the browser does not give the card its
+   own layer and the transition costs style recalculation on the
+   main thread anyway (147ms across a scroll with promotion,
+   402ms without). Leaving it set permanently would hold a layer
+   per card for the life of the page, which is the opposite
+   problem.
+   ============================================================ */
+.reveal-item {
+  opacity: 0;
+  transform: translateY(var(--reveal-rise, 10px));
+  transition:
+    opacity var(--reveal-duration, 0.85s) var(--ease-out-soft) var(--reveal-delay, 0s),
+    transform var(--reveal-duration, 0.85s) var(--ease-out-soft) var(--reveal-delay, 0s);
+}
+.reveal-item.is-revealed {
+  opacity: 1;
+  transform: none;
+}
+/* Reduced motion: content is present immediately, with no transition
+   to sit through. It must never depend on the observer firing. */
+@media (prefers-reduced-motion: reduce) {
+  .reveal-item {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ============================================================
    Skeletons — see components/Skeleton.tsx for why these exist
    (layout shift, not decoration).
 
