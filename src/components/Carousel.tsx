@@ -232,7 +232,7 @@ function Tile({
             loading="lazy"
             onError={() => setFailed(true)}
             onLoad={(e) => fitLogo(e.currentTarget)}
-            className="logo-mark w-auto max-w-[180px] object-contain opacity-80 transition-opacity duration-400 hover:opacity-100"
+            className="logo-mark w-auto max-w-[180px] object-contain opacity-80 transition-opacity duration-700 hover:opacity-100"
             style={{ height: fittedHeight }}
           />
         ) : (
@@ -242,7 +242,7 @@ function Tile({
       </div>
     ) : (
       <div
-        className={`group relative shrink-0 overflow-hidden border border-line ${rounded} ${imgFit === 'contain' ? 'bg-white' : 'bg-cloud'} transition-transform duration-400 hover:-translate-y-1`}
+        className={`group relative shrink-0 overflow-hidden border border-line ${rounded} ${imgFit === 'contain' ? 'bg-white' : 'bg-cloud'} transition-transform duration-700 hover:-translate-y-1`}
         style={{ width, aspectRatio: aspect }}
       >
         {hasImg ? (
@@ -253,7 +253,7 @@ function Tile({
             onError={() => setFailed(true)}
             // Contain tiles reserve room at the bottom so the caption bar sits
             // beside the logo rather than clipping it.
-            className={`h-full w-full transition-transform duration-700 group-hover:scale-105 ${
+            className={`h-full w-full transition-transform duration-1000 group-hover:scale-105 ${
               imgFit === 'contain'
                 ? `object-contain px-4 pt-4 ${showCaption ? 'pb-16' : 'pb-4'}`
                 : 'object-cover'

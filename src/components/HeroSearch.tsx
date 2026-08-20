@@ -138,7 +138,7 @@ export default function HeroSearch() {
         />
         <button
           type="submit"
-          className="shrink-0 rounded-full bg-brand-500 px-5 py-2 text-sm font-600 text-white transition-colors duration-300 hover:bg-brand-600"
+          className="shrink-0 rounded-full bg-brand-500 px-5 py-2 text-sm font-600 text-white transition-colors duration-500 hover:bg-brand-600"
         >
           Search
         </button>
@@ -177,7 +177,7 @@ export default function HeroSearch() {
                         e.preventDefault() // keep focus so blur doesn't close first
                         goToProgram(p)
                       }}
-                      className={`cursor-pointer px-4 py-2.5 transition-colors duration-200 ${
+                      className={`cursor-pointer px-4 py-2.5 transition-colors duration-300 ${
                         i === active ? 'bg-cloud' : ''
                       }`}
                     >
@@ -201,7 +201,7 @@ export default function HeroSearch() {
                     e.preventDefault()
                     goToSearch()
                   }}
-                  className="block w-full border-t border-line px-4 py-2.5 text-left text-xs font-600 text-brand-600 transition-colors duration-200 hover:bg-cloud"
+                  className="block w-full border-t border-line px-4 py-2.5 text-left text-xs font-600 text-brand-600 transition-colors duration-300 hover:bg-cloud"
                 >
                   See all results for “{query.trim()}” →
                 </button>

@@ -65,7 +65,7 @@ export default function Tabs({
               aria-controls={`${base}-panel-${t.id}`}
               tabIndex={selected ? 0 : -1}
               onClick={() => setActive(t.id)}
-              className={`relative -mb-px shrink-0 px-4 py-2.5 text-sm font-600 transition-colors duration-200 ${
+              className={`relative -mb-px shrink-0 px-4 py-2.5 text-sm font-600 transition-colors duration-300 ${
                 selected ? 'text-ink' : 'text-slate hover:text-ink'
               }`}
             >

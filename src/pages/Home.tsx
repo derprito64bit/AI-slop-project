@@ -152,7 +152,7 @@ export default function Home() {
           items={CAMPUS_ITEMS}
           variant="logo"
           logoHeight={40}
-          speed={58}
+          speed={78}
           direction="left"
           gap={0}
         />
@@ -212,7 +212,7 @@ export default function Home() {
         <div className="pb-16">
           <Carousel
             items={POPULAR_ITEMS}
-            speed={50}
+            speed={66}
             direction="right"
             tileWidth={260}
             aspect="4 / 3"

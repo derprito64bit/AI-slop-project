@@ -9,8 +9,8 @@ import {
 import { DURATION, EASE, SPRING } from '../lib/motion'
 
 /** Wait before the first pin lands, and the gap between pins. Seconds. */
-const PIN_LEAD = 0.24
-const PIN_GAP = 0.3
+const PIN_LEAD = 0.3
+const PIN_GAP = 0.42
 
 export type RoadmapStep = { n: string; title: string; body: string }
 
@@ -30,7 +30,7 @@ function Marker({ kind, delay = 0 }: { kind: 'dot' | 'flag' | 'check'; delay?: n
           initial={{ pathLength: 0 }}
           whileInView={{ pathLength: 1 }}
           viewport={{ once: true, margin: '-60px' }}
-          transition={{ delay: delay + UNFURL_AFTER, duration: 0.46, ease: EASE.out }}
+          transition={{ delay: delay + UNFURL_AFTER, duration: 0.6, ease: EASE.out }}
         />
       </svg>
     )
@@ -42,7 +42,7 @@ function Marker({ kind, delay = 0 }: { kind: 'dot' | 'flag' | 'check'; delay?: n
           initial={{ pathLength: 0 }}
           whileInView={{ pathLength: 1 }}
           viewport={{ once: true, margin: '-60px' }}
-          transition={{ delay: delay + UNFURL_AFTER, duration: 0.4, ease: EASE.out }}
+          transition={{ delay: delay + UNFURL_AFTER, duration: 0.55, ease: EASE.out }}
         />
       </svg>
     )
@@ -50,7 +50,7 @@ function Marker({ kind, delay = 0 }: { kind: 'dot' | 'flag' | 'check'; delay?: n
 }
 
 /** How long after a pin lands before its mark draws itself. */
-const UNFURL_AFTER = 0.2
+const UNFURL_AFTER = 0.26
 
 const KINDS: Array<'dot' | 'flag' | 'check'> = ['dot', 'flag', 'check']
 const PATH_D = 'M80,80 C 280,80 300,30 500,45 S 720,95 920,55'
@@ -246,7 +246,7 @@ function InlineRoadmap({ steps, reduced }: { steps: RoadmapStep[]; reduced: bool
             initial={reduced ? false : { opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-60px' }}
-            transition={{ delay: 0.4 + i * 0.32, duration: DURATION.slow, ease: EASE.out }}
+            transition={{ delay: 0.5 + i * 0.42, duration: DURATION.slow, ease: EASE.out }}
           >
             <div className="font-display text-4xl font-500 text-brand-300">{s.n}</div>
             <h3 className="mt-3 text-lg font-600 text-ink">{s.title}</h3>
