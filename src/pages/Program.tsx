@@ -9,6 +9,8 @@ import UniversityMark from '../components/UniversityMark'
 import KeepButton from '../components/KeepButton'
 import Reveal from '../components/Reveal'
 import AverageDistribution from '../components/AverageDistribution'
+import { loadProfile } from '../lib/profile'
+import { DURATION, EASE } from '../lib/motion'
 import { ProgramPageSkeleton, LoadingNote } from '../components/Skeleton'
 import DecisionMix from '../components/DecisionMix'
 import OutcomeCompare from '../components/OutcomeCompare'
@@ -121,7 +123,7 @@ export default function Program() {
       <motion.header
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: DURATION.reveal, ease: EASE.out }}
         className="mt-5 flex flex-wrap items-start gap-5"
       >
         <UniversityMark id={program.universityId} name={school} size={72} />
@@ -191,7 +193,7 @@ export default function Program() {
                 <Reveal as="li" key={p.id} delay={i * 0.04}>
                   <Link
                     to={`/program/${p.universityId}/${p.slug}`}
-                    className="flex items-center gap-3 rounded-lg border border-line bg-paper p-3 transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(20,24,31,0.07)]"
+                    className="flex items-center gap-3 rounded-lg border border-line bg-paper p-3 transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_rgba(20,24,31,0.07)]"
                   >
                     <UniversityMark id={p.universityId} name={u?.name ?? p.universityId} size={36} />
                     <span className="min-w-0 flex-1">
@@ -287,7 +289,16 @@ function AnalyticsTab({
         <span className="text-slate">median of {program.sampleSize} reported offers</span>
       </div>
 
-      <AverageDistribution values={offerAverages} median={a.median} p25={a.p25} p75={a.p75} />
+      {/* The student's own average, if they have given one. Read from storage
+          rather than passed down: this page is reachable without a profile, and
+          the chart is unchanged when there is nothing to mark. */}
+      <AverageDistribution
+        values={offerAverages}
+        median={a.median}
+        p25={a.p25}
+        p75={a.p75}
+        you={loadProfile()?.answers?.average ?? null}
+      />
 
       <Reveal delay={0.05}>
       <h3 className="mt-10 font-display text-display-3 font-600 text-ink">The range</h3>

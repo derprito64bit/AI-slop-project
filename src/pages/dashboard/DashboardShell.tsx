@@ -152,6 +152,7 @@ export default function DashboardShell() {
       items: [
         { to: 'programs', label: 'Programs', icon: '⌕' },
         { to: 'fields', label: 'Fields', icon: '◈' },
+        { to: 'map', label: 'Map', icon: '◎' },
         { to: '/survey', label: shown.answers ? 'Change answers' : 'Answer 4 questions', icon: '✎' },
       ],
     },

@@ -2,16 +2,23 @@ import { useState } from 'react'
 
 // Square university mark for program listings.
 //
-// Renders public/images/universities/square/<id>.svg, then .png, and finally
+// Renders public/images/universities/square/<id>.png, then .svg, and finally
 // falls back to a monogram tile. That means all 39 schools have a usable mark
 // today, and real logos replace monograms one file at a time as they land —
 // no code change needed.
+//
+// PNG IS TRIED FIRST because every file in that directory is a .png. With svg
+// first, each of the eight real marks cost a guaranteed 404 before the browser
+// asked for the file that exists — about ten failed requests per page, which is
+// console noise on every screen and a wasted round trip on a phone. Nothing
+// breaks either way; the fallback always caught it. If a .svg is ever added,
+// put it first for that school by renaming the .png away.
 //
 // Note this is deliberately separate from the wide wordmarks in
 // public/images/universities/, which the Home logo band uses. Wordmarks are
 // unreadable at this size.
 
-const EXTENSIONS = ['svg', 'png'] as const
+const EXTENSIONS = ['png', 'svg'] as const
 
 /** Words that carry no identity in a school name. */
 const STOP = /^(university|universite|college|of|the|at|de)$/i

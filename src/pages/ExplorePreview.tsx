@@ -1,12 +1,11 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { motion } from 'motion/react'
 import Eyebrow from '../components/ui/Eyebrow'
 import Tag from '../components/ui/Tag'
 import UniversityBanner from '../components/UniversityBanner'
 import KeepButton from '../components/KeepButton'
 import { Skeleton, ProgramGridSkeleton, LoadingNote } from '../components/Skeleton'
-import { DURATION, EASE, staggerDelay } from '../lib/motion'
+import { useRevealOnScroll } from '../lib/revealOnScroll'
 import { loadCatalogue } from '../lib/dataSource'
 import { queryPrograms, difficultyBand, DIFFICULTY_LABELS } from '../lib/search'
 import type { Program, University } from '../data/types'
@@ -33,6 +32,7 @@ export default function ExplorePreview() {
   // hard .slice(0, 20) did.
   const PAGE = 30
   const [shown, setShown] = useState(PAGE)
+  const revealRef = useRevealOnScroll()
 
   useEffect(() => {
     loadCatalogue().then(setData).catch(() => setError(true))
@@ -127,20 +127,14 @@ export default function ExplorePreview() {
                   key={p.id}
                   className="flex [content-visibility:auto] [contain-intrinsic-size:auto_360px]"
                 >
-                  <motion.div
-                    className="flex w-full"
-                    initial={{ opacity: 0, y: 10 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true, margin: '-40px' }}
-                    // Only the first 8 stagger. Past that the delay is flat,
-                    // so card 60 does not sit invisible for three seconds
-                    // waiting for its turn in a queue nobody is watching.
-                    transition={{
-                      duration: DURATION.base,
-                      ease: EASE.out,
-                      delay: staggerDelay(i),
-                    }}
-                  >
+                  {/* CSS-driven, not motion-driven, and this is the one list
+                      where that distinction is worth the inconsistency: a JS
+                      reveal writes inline styles to every animating card every
+                      frame, which measured 565ms of style recalculation over
+                      one scroll of this page against 18ms without. See
+                      lib/revealOnScroll.ts. Same rise, same curve, same
+                      stagger — the tokens are shared. */}
+                  <div ref={revealRef(i)} className="reveal-item flex w-full">
                   <Link
                     to={`/program/${p.universityId}/${p.slug}`}
                     className="group flex w-full flex-col overflow-hidden rounded-xl border border-line bg-paper transition-shadow hover:shadow-[0_12px_34px_rgba(20,24,31,0.09)]"
@@ -189,7 +183,7 @@ export default function ExplorePreview() {
                       </div>
                     </div>
                   </Link>
-                  </motion.div>
+                  </div>
                 </li>
               )
             })}

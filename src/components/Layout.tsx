@@ -2,6 +2,7 @@ import { type ReactNode } from 'react'
 import Navbar from './Navbar'
 import Footer from './Footer'
 import SurveyNudge from './SurveyNudge'
+import DemoBanner from './DemoBanner'
 
 // Page shell: shared nav and footer.
 //
@@ -15,6 +16,8 @@ export default function Layout({ children }: { children: ReactNode }) {
       <a href="#main" className="skip-link">
         Skip to content
       </a>
+      {/* Above the nav, so nobody can screenshot a view without it. */}
+      <DemoBanner />
       <Navbar />
       <main id="main" className="flex-1">
         {children}

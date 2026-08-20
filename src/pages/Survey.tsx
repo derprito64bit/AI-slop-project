@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import Eyebrow from '../components/ui/Eyebrow'
 import Button from '../components/ui/Button'
-import { STEP_VARIANTS } from '../lib/motion'
+import { DURATION, STEP_VARIANTS } from '../lib/motion'
 import { loadCatalogue } from '../lib/dataSource'
 import { submitSurvey } from '../lib/api'
 import { useAuth } from '../lib/authContext'
@@ -421,7 +421,7 @@ function Progress({ step, total }: { step: number; total: number }) {
             key={i}
             className="h-1 flex-1 rounded-full bg-surface"
             animate={{ backgroundColor: i <= step ? 'var(--color-brand-500)' : 'var(--color-line)' }}
-            transition={{ duration: 0.25 }}
+            transition={{ duration: DURATION.base }}
           />
         ))}
       </div>

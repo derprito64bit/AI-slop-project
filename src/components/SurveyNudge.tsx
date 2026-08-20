@@ -24,7 +24,9 @@ import { loadProfile } from '../lib/profile'
 //    are already on
 
 const DISMISSED_KEY = 'acceptiversity.nudge.dismissed'
-const SEEN_PROGRAMS_KEY = 'acceptiversity.nudge.programs'
+// v2: holds the program paths seen, pipe-separated. v1 held a bare count,
+// which double-counted under React's development double-invoke.
+const SEEN_PROGRAMS_KEY = 'acceptiversity.nudge.programs.v2'
 
 /** Program pages viewed before the card is offered. */
 export const PROGRAMS_BEFORE = 2
@@ -88,9 +90,20 @@ export default function SurveyNudge() {
   // and comes back is exactly who this is for.
   useEffect(() => {
     if (!pathname.startsWith('/program/')) return
-    const programsSeen = Number(read(SEEN_PROGRAMS_KEY) ?? 0) + 1
-    write(SEEN_PROGRAMS_KEY, String(programsSeen))
-    if (shouldOffer({ ...suppressions(), programsSeen, dwellReached: false, scrolledPx: 0 })) {
+
+    // DISTINCT programs, not page views. Two reasons, and the second is the one
+    // that bites: "looked at two programs" should mean two different ones —
+    // reloading Waterloo CS twice is not comparing options — and counting views
+    // made the effect non-idempotent, so React's development double-invoke
+    // counted every page twice and the card appeared after one.
+    const seen = new Set((read(SEEN_PROGRAMS_KEY) ?? '').split('|').filter(Boolean))
+    seen.add(pathname)
+    // Bounded: this is a threshold check, and an unbounded list of every
+    // program a student ever opened would grow forever for no gain.
+    const trimmed = [...seen].slice(-PROGRAMS_BEFORE * 2)
+    write(SEEN_PROGRAMS_KEY, trimmed.join('|'))
+
+    if (shouldOffer({ ...suppressions(), programsSeen: seen.size, dwellReached: false, scrolledPx: 0 })) {
       setVisible(true)
     }
   }, [pathname])
