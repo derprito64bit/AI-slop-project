@@ -2,6 +2,7 @@ import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useScroll, useTransform, useReducedMotion } from 'motion/react'
 import Reveal from '../components/Reveal'
+import { DURATION, EASE } from '../lib/motion'
 import Parallax from '../components/Parallax'
 import CountUp from '../components/CountUp'
 import Carousel from '../components/Carousel'
@@ -88,7 +89,7 @@ export default function Home() {
           <motion.p
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: DURATION.reveal, ease: EASE.out }}
             className="text-sm font-500 uppercase tracking-wider text-brand-500"
           >
             For Ontario high schoolers
@@ -97,7 +98,7 @@ export default function Home() {
           <motion.h1
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.04, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: DURATION.reveal, delay: 0.055, ease: EASE.out }}
             className="mt-4 max-w-3xl font-display text-display-1 font-600 text-ink"
           >
             Find where you <span className="text-brand-500">actually</span> get in.
@@ -106,7 +107,7 @@ export default function Home() {
           <motion.p
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: DURATION.reveal, delay: 0.11, ease: EASE.out }}
             className="mt-6 max-w-xl text-lead text-slate"
           >
             Official sites give vague cutoffs. We show what admitted students actually
@@ -116,7 +117,7 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: DURATION.reveal, delay: 0.16, ease: EASE.out }}
             className="mt-9 flex flex-wrap items-center gap-3"
           >
             <Button to="/profile">Build my profile</Button>
@@ -130,7 +131,7 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.45, delay: 0.16, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: DURATION.reveal, delay: 0.22, ease: EASE.out }}
           >
             <HeroSearch />
           </motion.div>
@@ -151,7 +152,7 @@ export default function Home() {
           items={CAMPUS_ITEMS}
           variant="logo"
           logoHeight={40}
-          speed={45}
+          speed={78}
           direction="left"
           gap={0}
         />
@@ -211,7 +212,7 @@ export default function Home() {
         <div className="pb-16">
           <Carousel
             items={POPULAR_ITEMS}
-            speed={38}
+            speed={66}
             direction="right"
             tileWidth={260}
             aspect="4 / 3"

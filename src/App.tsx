@@ -20,6 +20,7 @@ import CoursesView from './pages/dashboard/CoursesView'
 import CompareView from './pages/dashboard/CompareView'
 import ProgramsView from './pages/dashboard/ProgramsView'
 import FieldsView from './pages/dashboard/FieldsView'
+import MapView from './pages/dashboard/MapView'
 import ApplicationsView from './pages/dashboard/ApplicationsView'
 import DeadlinesView from './pages/dashboard/DeadlinesView'
 import PostsView from './pages/dashboard/PostsView'
@@ -88,6 +89,7 @@ export default function App() {
                 <Route path="compare" element={<CompareView />} />
                 <Route path="programs" element={<ProgramsView />} />
                 <Route path="fields" element={<FieldsView />} />
+                <Route path="map" element={<MapView />} />
                 <Route path="account" element={<AccountView />} />
                 {/* Not live yet: real layout, mock content, visible banner. */}
                 <Route path="applications" element={<ApplicationsView />} />

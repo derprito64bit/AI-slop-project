@@ -15,17 +15,24 @@
 import type { Transition, Variants } from 'motion/react'
 
 /** Seconds. Named for what they are used on, not their length. */
+// Everything here was lengthened by about a third on 2026-08-19: the site was
+// technically correct and felt clipped, because motion that finishes before the
+// eye has followed it reads as a jump rather than a movement. These are the
+// numbers to change if it ever needs to go further either way — the components
+// import them rather than carrying their own.
 export const DURATION = {
   /** hovers, chips, colour changes */
-  instant: 0.15,
+  instant: 0.3,
   /** a card, a tooltip, a nudge */
-  quick: 0.2,
+  quick: 0.45,
   /** the standard: reveals, tab changes */
-  base: 0.26,
+  base: 0.6,
   /** page entrance */
-  page: 0.26,
+  page: 0.6,
   /** the scroll reveal already in use */
-  reveal: 0.4,
+  reveal: 0.85,
+  /** a chart drawing itself — the one place a longer take is the point */
+  slow: 1.0,
 } as const
 
 /**
@@ -37,17 +44,36 @@ export const DURATION = {
  * — the roadmap pins and the nudge card — never for text blocks, where
  * overshoot reads as a wobble.
  */
+// THE CURVE MATTERS AS MUCH AS THE DURATION, and it is the part that was
+// actually making this feel snappy. The old `out` was [0.22, 1, 0.36, 1] — a
+// quintic ease-out, which spends most of its travel in the first fifth of the
+// time and then creeps. Lengthening it did not help much: the movement still
+// happened in a burst, it just took longer to finish creeping afterwards.
+//
+// These are gentler curves. They start slower and distribute the movement more
+// evenly, which is what "smooth" actually describes — the eye can follow the
+// whole thing rather than catching the end of it.
 export const EASE = {
-  out: [0.22, 1, 0.36, 1],
-  inOut: [0.65, 0, 0.35, 1],
-  in: [0.55, 0, 1, 0.45],
+  /** easeOutCubic — gentle onset, long even settle */
+  out: [0.33, 1, 0.68, 1],
+  /** easeInOutSine — both ends soft, for things that leave and arrive */
+  inOut: [0.37, 0, 0.63, 1],
+  in: [0.5, 0, 0.75, 0],
 } as const
 
+/**
+ * Springs are softened rather than slowed — a spring has no duration to raise.
+ * Lower stiffness with the damping roughly held gives a longer, looser settle
+ * and keeps the overshoot that makes a pin read as landing rather than
+ * appearing.
+ */
 export const SPRING = {
-  /** a pin planting itself: visible overshoot, settles fast */
-  pin: { type: 'spring', stiffness: 420, damping: 18, mass: 0.7 },
+  /** a pin planting itself: visible overshoot, then settles */
+  pin: { type: 'spring', stiffness: 170, damping: 17, mass: 1 },
   /** a panel arriving: barely any overshoot */
-  panel: { type: 'spring', stiffness: 300, damping: 26 },
+  panel: { type: 'spring', stiffness: 130, damping: 22 },
+  /** the tab underline sliding between tabs */
+  tab: { type: 'spring', stiffness: 190, damping: 26 },
 } as const satisfies Record<string, Transition>
 
 /* --------------------------------------------------------------- page --- */
@@ -138,7 +164,7 @@ export const VIEW_ENTER: Variants = {
 export const STAGGER_LIMIT = 8
 
 /** Per-child delay, seconds. */
-export const STAGGER_STEP = 0.05
+export const STAGGER_STEP = 0.09
 
 /** Delay for the nth item in a staggered list, flattening past the cap. */
 export function staggerDelay(index: number): number {

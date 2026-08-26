@@ -1,5 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
+import { DURATION, EASE } from '../lib/motion'
 
 // Distribution of reported accepted averages for one program.
 //
@@ -52,15 +53,40 @@ export function bucketize(values: number[], width?: number): Bucket[] {
   return buckets
 }
 
+/**
+ * Where one student's average sits within the reported distribution, in words.
+ *
+ * This is a statement about OTHER PEOPLE'S NUMBERS and must stay one. It says
+ * where a value falls among reported averages; it never says what that means
+ * for an application. No "competitive", no "strong", no "likely" — those are
+ * all probability by another name, and the dataset cannot support any of them.
+ *
+ * Exported and tested because the wording is the part that would drift.
+ */
+export function percentileReading(
+  you: number,
+  q: { p25: number; median: number; p75: number; min: number; max: number },
+): string {
+  const y = `Your ${you}%`
+  if (you < q.min) return `${y} is below every average reported for this program.`
+  if (you < q.p25) return `${y} sits in the lowest quarter of the averages reported here.`
+  if (you < q.median) return `${y} sits between the 25th and 50th percentile of the averages reported here.`
+  if (you < q.p75) return `${y} sits between the 50th and 75th percentile of the averages reported here.`
+  if (you <= q.max) return `${y} sits in the top quarter of the averages reported here.`
+  return `${y} is above every average reported for this program.`
+}
+
 type Props = {
   /** reported averages of students who received an offer */
   values: number[]
   median: number
   p25: number
   p75: number
+  /** the student's own average, marked on the chart. null = not given */
+  you?: number | null
 }
 
-export default function AverageDistribution({ values, median, p25, p75 }: Props) {
+export default function AverageDistribution({ values, median, p25, p75, you }: Props) {
   const [showTable, setShowTable] = useState(false)
   const [hover, setHover] = useState<number | null>(null)
   const reduced = useReducedMotion()
@@ -194,7 +220,7 @@ export default function AverageDistribution({ values, median, p25, p75 }: Props)
                 reduced
                   ? { duration: 0 }
                   : // Stagger caps out so a 20-bucket chart still finishes fast.
-                    { duration: 0.45, delay: Math.min(i * 0.025, 0.4), ease: [0.22, 1, 0.36, 1] }
+                    { duration: DURATION.slow, delay: Math.min(i * 0.035, 0.5), ease: EASE.out }
               }
             />
           )
@@ -261,6 +287,49 @@ export default function AverageDistribution({ values, median, p25, p75 }: Props)
           )
         })()}
 
+        {/* The student's own average.
+            Deliberately styled the same wherever it lands: a colour that changed
+            with position would be scoring them, and this chart reports what
+            other people wrote down rather than judging anyone. Dashed, so it
+            reads as "you" against the solid median rather than as a second
+            statistic. */}
+        {typeof you === 'number' && (() => {
+          // An average outside the reported range still has to be shown, pinned
+          // to the edge — silently dropping it would be the one case where the
+          // marker matters most.
+          const clamped = Math.min(hi, Math.max(lo, you))
+          const x = xFor(clamped)
+          const label = `you ${you}%`
+          const est = label.length * 5.8 + 4
+          // The median label already owns the band above the plot. When the two
+          // are close, drop to a second row rather than overprinting it.
+          const near = Math.abs(x - xFor(median)) < est + 16
+          const flip = x + 6 + est > W - PAD.right
+          return (
+            <g>
+              <line
+                x1={x}
+                x2={x}
+                y1={near ? PAD.top - 2 : PAD.top - 10}
+                y2={PAD.top + plotH}
+                stroke="var(--color-accent)"
+                strokeWidth="2"
+                strokeDasharray="4 3"
+              />
+              <text
+                x={flip ? x - 6 : x + 6}
+                y={near ? PAD.top - 26 : PAD.top - 14}
+                textAnchor={flip ? 'end' : 'start'}
+                fontSize="11"
+                fill="var(--color-accent)"
+                style={{ fontWeight: 600 }}
+              >
+                {label}
+              </text>
+            </g>
+          )
+        })()}
+
         {/* x axis. Interior ticks as well as the ends — two labels alone made it
             hard to read a bar's value off the axis. Spaced by width so they
             never collide on a narrow container. */}
@@ -302,6 +371,26 @@ export default function AverageDistribution({ values, median, p25, p75 }: Props)
         })()}
       </svg>
       </div>
+
+      {/* The reading, in words. The marker alone invites the viewer to supply
+          their own interpretation, and the interpretation people reach for is
+          "am I good enough" — so the sentence states the only thing the data
+          actually says, and stops there. */}
+      {typeof you === 'number' && (
+        <p className="mt-3 rounded-lg border border-line bg-surface p-3 text-sm leading-relaxed text-ink">
+          {percentileReading(you, {
+            p25,
+            median,
+            p75,
+            min: Math.min(...values),
+            max: Math.max(...values),
+          })}{' '}
+          <span className="text-slate">
+            That describes the averages students reported after they were admitted — it is not a
+            measure of whether you would be.
+          </span>
+        </p>
+      )}
 
       {/* Table view — the chart's WCAG-clean twin, so no value is tooltip-only. */}
       <button
