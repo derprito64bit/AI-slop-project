@@ -4,8 +4,26 @@
     {
       "name": "vite-dev",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev"],
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
       "port": 5173,
+      "autoPort": true
+    },
+    {
+      "name": "vite-preview",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": [
+        "vite",
+        "preview",
+        "--port",
+        "4200",
+        "--base",
+        "/AI-slop-project/"
+      ],
+      "port": 4200,
+      "url": "http://localhost:4200",
       "autoPort": true
     }
   ]

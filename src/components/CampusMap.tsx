@@ -87,16 +87,6 @@ export default function CampusMap({
     }
   }, [groups])
 
-  if (!groups.length) return null
-
-  const maxPrograms = Math.max(...groups.map((g) => g.programs))
-  // Area-proportional, not radius-proportional: sizing the radius by the value
-  // makes Toronto look four times bigger than it is.
-  const radiusFor = (n: number) => 5 + Math.sqrt(n / maxPrograms) * 17
-
-  const homePoint = home ? CITY_POINTS[home] ?? null : null
-  const shown = groups.find((g) => g.city === active) ?? null
-
   // Which cities get a permanent label.
   //
   // Southern Ontario is the problem: Toronto, Mississauga, Scarborough,
@@ -117,6 +107,20 @@ export default function CampusMap({
     }
     return keep
   }, [groups, bounds])
+
+  // Every hook above this line, without exception: an early return placed
+  // before one changes the hook order between renders, and React throws
+  // "rendered more hooks than during the previous render" the moment the list
+  // goes from empty to populated.
+  if (!groups.length) return null
+
+  const maxPrograms = Math.max(...groups.map((g) => g.programs))
+  // Area-proportional, not radius-proportional: sizing the radius by the value
+  // makes Toronto look four times bigger than it is.
+  const radiusFor = (n: number) => 5 + Math.sqrt(n / maxPrograms) * 17
+
+  const homePoint = home ? CITY_POINTS[home] ?? null : null
+  const shown = groups.find((g) => g.city === active) ?? null
 
   return (
     <div>

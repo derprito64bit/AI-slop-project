@@ -4,6 +4,18 @@ import { AnimatePresence, motion } from 'motion/react'
 import { DURATION, EASE, SPRING } from '../lib/motion'
 import { clearDemo, isDemoActive, maybeSeedDemo, type DemoResult } from '../lib/demo'
 
+/**
+ * A full-page URL for a router path.
+ *
+ * `useLocation().pathname` has the router basename stripped off, so reloading
+ * with it drops `/AI-slop-project` and lands on a 404 — invisible in dev, where
+ * the base is `/`, and broken on the deployed site. This is the one place that
+ * matters, because it is the only full-page navigation in the app.
+ */
+function withBase(pathname: string): string {
+  return import.meta.env.BASE_URL.replace(/\/$/, '') + pathname
+}
+
 // Says, on screen, that the data is made up.
 //
 // A demo that looks exactly like the real thing is how a screenshot of invented
@@ -25,7 +37,7 @@ export default function DemoBanner() {
       // afterwards would show an empty dashboard until something forced a
       // re-read. Reloading once is cruder than threading state through the
       // whole tree, and it is the only moment it happens.
-      window.location.replace(pathname)
+      window.location.replace(withBase(pathname))
       return
     }
     setResult(outcome)
@@ -61,7 +73,7 @@ export default function DemoBanner() {
               type="button"
               onClick={() => {
                 clearDemo()
-                window.location.replace(pathname)
+                window.location.replace(withBase(pathname))
               }}
               className="font-600 text-brand-600 underline-offset-2 hover:underline"
             >
