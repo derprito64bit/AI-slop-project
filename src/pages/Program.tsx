@@ -179,7 +179,6 @@ export default function Program() {
             label: 'Requirements',
             content: <RequirementsTab program={program} info={info} />,
           },
-          { id: 'extras', label: 'Extras', content: <ExtrasTab /> },
         ]}
       />
 
@@ -418,15 +417,6 @@ function RequirementsTab({ program, info }: { program: ProgramType; info: Progra
 
       <Provenance sources={info.sources} verified={info.verified} />
     </>
-  )
-}
-
-function ExtrasTab() {
-  return (
-    <Unverified
-      what="extracurriculars"
-      detail="Recommended activities, competitions and supplementary-application tips will live here. We’re holding this back until we can base it on what admitted students actually reported, rather than generic advice."
-    />
   )
 }
 

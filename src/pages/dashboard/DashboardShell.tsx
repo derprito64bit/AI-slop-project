@@ -33,12 +33,13 @@ import type { Program, University } from '../../data/types'
 //   Overview   where am I
 //   Plan       the list I am building          (built)
 //   Discover   how I find more to put on it    (built)
-//   Track      what I have to actually do      (not live yet)
+//   Track      what I have to actually do      (built)
 //   Community  what everyone else found        (not live yet)
 //
-// The last two are placeholders on purpose — real layout, mock content, and a
-// banner saying so — so the shape of the finished product is visible and
-// judgeable before the parts that need a backend or a research pass exist.
+// Global posts is still a placeholder on purpose — real layout, mock content,
+// and a banner saying so — because it needs a server and moderation before a
+// single real post can appear. Track became real once its blocker turned out
+// to be a design question rather than missing infrastructure: see lib/tracker.ts.
 
 const COLLAPSE_KEY = 'acceptiversity.dash.collapsed'
 
@@ -159,8 +160,8 @@ export default function DashboardShell() {
     {
       label: 'Track',
       items: [
-        { to: 'applications', label: 'Applications', icon: '↗', soon: true },
-        { to: 'deadlines', label: 'Deadlines', icon: '◷', soon: true },
+        { to: 'applications', label: 'Applications', icon: '↗' },
+        { to: 'deadlines', label: 'Deadlines', icon: '◷' },
       ],
     },
     {
