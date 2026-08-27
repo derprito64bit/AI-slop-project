@@ -15,7 +15,13 @@ import UniversityMark from './UniversityMark'
 // Falls back to the original gradient-plus-monogram tile for the ~31 schools
 // with no artwork yet, so nothing looks broken while files trickle in.
 
-const EXTENSIONS = ['svg', 'png'] as const
+// PNG FIRST, for the same reason as UniversityMark: every file in that
+// directory is a .png, so probing .svg first cost a guaranteed 404 per logo
+// before the browser asked for the file that exists. UniversityMark was fixed
+// on its own and this was missed — the check that proved it ran on /profile,
+// which uses the mark, not the banner. If a .svg is ever added for a school,
+// rename its .png away.
+const EXTENSIONS = ['png', 'svg'] as const
 
 // Placeholder banner tints, drawn from the theme tokens so they follow
 // light/dark, and picked deterministically so a school always looks the same.
