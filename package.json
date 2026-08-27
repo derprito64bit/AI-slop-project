@@ -11,7 +11,10 @@
     "data:build": "node scripts/build-data.mjs",
     "test": "vitest run",
     "data:check": "node scripts/build-data.mjs --check",
-    "shots": "node scripts/shots.mjs"
+    "shots": "node scripts/shots.mjs",
+    "sweep": "node scripts/sweep.mjs",
+    "sweep:sections": "node scripts/sweep-sections.mjs",
+    "probe:motion": "node scripts/motion-probe.mjs"
   },
   "dependencies": {
     "lenis": "^1.3.26",

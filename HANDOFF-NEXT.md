@@ -1,9 +1,10 @@
 # Handoff — pick up here
 
 Read `HANDOFF.md` first for the project as a whole (rules, data pipeline,
-architecture). This file is only about **work in flight**.
+architecture). This file is only about **where things stand now**.
 
-Written 2026-08-14. Worktree: `.claude/worktrees/project-handoff-review-2266a1`.
+Written 2026-08-27. Everything below is **merged and deployed** unless it says
+otherwise.
 
 ---
 
@@ -11,119 +12,128 @@ Written 2026-08-14. Worktree: `.claude/worktrees/project-handoff-review-2266a1`.
 
 | | |
 |---|---|
-| `origin/main` | `1a1a296` — deployed, live at https://derprito64bit.github.io/AI-slop-project/ |
-| Current branch | **`feature/survey-matching`** — 3 commits ahead of main, **pushed, not merged, no PR opened yet** |
+| `origin/main` | deployed and live at https://derprito64bit.github.io/AI-slop-project/ |
+| Working state | **no open PRs, no unmerged work** |
 
-Commits on the branch, oldest first:
+Everything from the last three sessions is on `main`: the survey funnel,
+accounts, the motion pass, the profile build-out, the map, demo mode, and the
+six empty sections. `origin/account` is the only unmerged branch — an obsolete
+orphan whose content already landed via PR #24. Twenty-odd merged branches are
+safe to prune.
 
-1. `1fed62c` Survey that narrows 2,436 programs into a shortlist
-2. `ab394a2` Turn the profile into a planning dashboard
-3. `ee957a7` Rebuild the dashboard as a sidebar shell
+**Baseline, all measured against the live site:**
 
-**121 tests green, build clean, `programs-*.js` / `stats-*.js` still separate
-chunks.** Working tree is clean.
+```
+npm test              226 tests
+npm run lint          0 errors
+npm run sweep         108 checks   (functional, every route)
+npm run sweep:sections 27 checks   (/about, /community, tracker, deadlines)
+npm run probe:motion               (transition smoothness — see §4)
+```
 
-Other branches worth knowing:
-- `claude/glass-demo` — a *demo only* of frosted-glass surfaces on 4 home-page
-  elements. Deliberately never merged. The user's verdict: chrome yes, data no.
-- `claude/project-handoff-review-2266a1` — the old working branch, merged.
+Those three suites were promoted out of a scratch directory into `scripts/` in
+this session **specifically so they survive the chat that wrote them**. They
+need `puppeteer-core`, which is a declared devDependency but was not installed
+in this worktree — `npm i` first.
 
-## 2. What's on the branch
+## 2. What each empty section became
 
-A survey → dashboard flow, built on top of a contributor's fork
-(`TheKeems/AI-slop-project-survey`, by James Zeng).
+Every blank surface now has a resolution, and the reasoning matters more than
+the result:
 
-- `/survey` — 4 questions that map **one-to-one** onto filters already tested in
-  `src/lib/search.ts` (field, province, `medianAtMost`, plus an ambition setting
-  that shifts the median ceiling −2/+3/+8). No second matching engine.
-- `/profile/*` — a sidebar dashboard with four tools: **My list** (notes,
-  student-invented labels), **Balance** (ambitious/in-range/comfortable vs the
-  student's own average), **Courses** (prerequisite gap finder), **Compare**
-  (up to 4 side by side). Each is its own route, so deep links and Back work.
-- `KeepButton` on Explore cards and program pages, so **the survey is optional** —
-  keeping a program creates a profile on demand.
+- **`/about`** — real methodology page. Every figure reads from the dataset at
+  render time. Do not hand-type a statistic here; that is how the home page once
+  claimed "120+ programs" against a real 2,436.
+- **`/community`** — the reporting-bias page. 93% of reports are offers, which
+  is who answered rather than who got in. It deliberately draws **no trend line**
+  through the per-cycle averages: they are flat (92.6 → 93.0) while volume grew
+  six-fold, and charting that would invent a trend the data does not contain.
+- **Applications** — a real tracker. **Deadlines** — the student records dates
+  they found, each with a link to the page they read it on. The site publishes
+  no dates of its own and should not start.
+- **Global posts** — still a mock, genuinely blocked on a backend and on
+  moderation for an audience that is mostly minors.
+- **The Extras tab** — deleted. It was empty on all 2,436 program pages.
 
-### What changed from James's fork, and why
-His request handling in `api.ts` was kept wholesale (base-URL override,
-trailing-slash strip, 45s timeout for Render's cold start, the note that `fetch`
-doesn't reject on 4xx/5xx), as were his `Field`/`inputClass` helpers and
-validation.
+## 3. The constraint that shapes anything per-program you build next
 
-**The payload changed.** His version posted a student's **name and age** from an
-audience that is mostly minors, with no consent copy — a direct breach of the
-project's no-PII rule. It now posts only
-`{field, province, averageBand, ambition, matchCount}`; the exact average never
-leaves the device. Verified by intercepting the request.
+**`sync.ts` whitelists profile fields in BOTH directions.** A new field on
+`SavedProfile` would not merely fail to upload: `applyRemoteProfile` rebuilds
+the local record from that whitelist on every pull, so the first sign-in on
+another device would **erase it silently**.
 
-## 3. The approved plan — start here
+That is why `src/lib/tracker.ts` lives in its own localStorage key, outside the
+profile, and why both Track pages say on screen that they stay on the device.
+There is a test asserting a profile rewrite cannot touch tracker data — keep it.
 
-Full plan: `C:\Users\Aaron\.claude\plans\merge-it-into-main-dreamy-adleman.md`
+To make the tracker sync, the field has to be added to the backend
+(`TheKeems/UniServer`) **and** to both maps in `sync.ts`. Until then, do not move
+it into the profile.
 
-Three PRs, approved, **none started**:
+## 4. Motion, and why it is set the way it is
 
-- **PR 1 — motion foundation + carousel fix.** Revive `src/lib/motion.ts` and
-  `MotionConfig reducedMotion="user"`; route transitions (~260ms in / ~180ms
-  out); first-load loader (session-gated, ~800ms cap) then skeletons; Explore
-  cards stagger on scroll (first 8 only); Roadmap flag pin-drop; **fix the
-  carousel**.
-- **PR 2 — survey as a sequential form + nudge card.** One question per step in
-  a compact centred card, progress indicator, Back, **Skip per question and Skip
-  all**. Plus a dismissible card mounted in `Layout.tsx`, triggered by
-  *engagement* (≈2 program pages, or ~45s + scroll), never shown if a profile
-  exists or after dismissal.
-- **PR 3 — profile build-out.** Sidebar groups: **Plan** (built) · **Discover**
-  (Programs with full filters, Fields) · **Track** (Applications tracker,
-  Deadlines*) · **Community** (Global posts*). Plus a "what if my average
-  changes" slider and share/export via URL param. `*` = clickable placeholder
-  with real layout, mock content and a visible "not live yet" banner.
+Two findings, both measured, both easy to undo by accident:
 
-## 4. Measured facts — don't re-derive these
+- **Nothing animates from `opacity: 0`.** Arrivals start at `ENTER_FROM = 0.55`
+  (`src/lib/motion.ts`). Measured with `npm run probe:motion`: with a zero start
+  there were 5–7 consecutive frames of blank page per navigation. The probe
+  reports `minVisible` and `darkFrames` — **0.55 and 0 is the passing state**.
+- **Scroll reveals are CSS, not JavaScript.** `Reveal` and the Explore grid go
+  through `lib/revealOnScroll.ts` and a CSS transition, with `will-change` armed
+  200px early and released on `transitionend`. A JS-driven reveal cost 565ms of
+  style recalculation per scroll of Explore against 18ms without; paired runs put
+  total main-thread work at ~1,567ms (JS) versus ~951–1,242ms (CSS). If reveals
+  are ever moved back into `motion`, that cost comes back.
 
-- **Carousel bug is real and width-dependent.** `Carousel.tsx` duplicates the
-  list once and slides `-50%`, which only loops if one copy exceeds the
-  viewport. One copy is **1,357px** (logo band) / **1,668px** (trending). Fine
-  at 1280px; **gap trails the last item at 1920px and 2560px**. Fix: repeat
-  until wider than the container, animate `-100/copies %`.
-- **Skeletons are a layout-shift fix, not decoration.** They took Explore's CLS
-  from **0.34 → 0.001** and Program's **0.14 → 0**. The reserved height must go
-  on the **wrapper, outside the delay gate** — inside, it doesn't exist during
-  the 300ms wait and the footer still jumps (that mistake measured 0.25).
-- **Requirements coverage**: 67 programs verified — 18% overall, but **~66% of
-  the top 50 most-reported**, which is what a shortlist surfaces.
-- **Course requirement text**: 69 distinct strings for ~10 courses. `courses.ts`
-  normalises them; anything unresolved becomes a note shown verbatim and is
-  **never counted as a gap**.
-- **Research is blocked, not incomplete.** 36 programs remain in the ≥20-report
-  tier; **25 sit at McMaster (JS-only requirements tool), U of T Arts & Science
-  (bot check), Western (JS-rendered) and uOttawa**. Re-tested 2026-08-14, all
-  still blocked. Needs pasted page text from the user.
+Durations and easings all live in `src/lib/motion.ts`. "Make it slower" is a
+one-file change; that is the point of the file.
 
-## 5. Gotchas that cost real time
+## 5. Open items, roughly by value
 
-- **`npx vite preview` does not serve at the deploy base.** `vite.config.ts`
-  only applies `base: '/AI-slop-project/'` when `command === 'build'`, so
-  preview serves at `/` while `dist/index.html` requests `/AI-slop-project/...`
-  — every asset 404s and you get a **blank page that looks like a broken
-  build**. Use:
-  `MSYS_NO_PATHCONV=1 npx vite preview --port 4200 --base /AI-slop-project/`
-  (the MSYS var stops Git Bash rewriting the base into a Windows path).
-  It also **caches its file list at startup** — restart after every rebuild.
-- **The in-app Browser pane doesn't composite.** Screenshots time out and lazy
-  images never load. Use `npm run shots` (headless Chrome via `puppeteer-core`),
-  or drive Chrome inline with
-  `node --input-type=module -e '...'` using **forward slashes** in the Chrome
-  path — backslashes get mangled through Bash.
-- **React state in rapid handlers.** Toggles that derive the next value from
-  React state lose all but the last click when fired in one frame. `toggleCourse`
-  reads from storage for exactly this reason; follow that pattern.
-- `git checkout main` fails in this worktree — `main` is checked out in the
-  primary repo. Reverts/merges must go through the remote.
+- **`/community` is in the navbar and `Global posts` duplicates its idea.**
+  Worth deciding whether the dashboard tab survives at all.
+- **31 of 39 universities have no square logo**, so they render a monogram.
+  Cosmetic. Carleton (173 programs), Laurier (156) and TMU (136) are the ones
+  worth adding.
+- **`console.log('Sent data')` is still live** in `submitSurvey`
+  (`src/lib/api.ts`). It came from commit 652b6c9 and was deliberately restored
+  rather than silently dropped during a merge. It is debug output on a
+  production path and probably wants removing.
+- **The backend repo has no licence** — `TheKeems/UniServer`, which holds the
+  accounts, is all-rights-reserved by default. Settle that while the
+  collaboration is active.
+- **`ALLOWED_ORIGINS` is unset on Render**, so the API's CORS falls back to `*`.
+  One env var; auth travels in an `Authorization` header rather than a cookie,
+  so this is defence in depth.
+- **Deadlines research** is no longer blocking anything, because the site no
+  longer intends to publish dates.
+- **Coverage**: 75 of 2,436 programs have verified requirements (33 of the 50
+  most-reported); 369 have enough reports to chart. Both are stated honestly in
+  the UI and on `/about`.
 
-## 6. Open items the user has flagged
+## 6. Traps that cost real time in this session
 
-- `/about` blurb still says *"how we calculate your odds"* — contradicts the
-  no-probability rule. One-line fix, user has been told twice.
-- Deadlines need their own **sourced research** pass (official pages, cited,
-  dated) before shipping — a wrong deadline is the worst failure mode here.
-- Nothing on `feature/survey-matching` has been merged or deployed. `main` is
-  unaffected by all of it.
+- **`vite preview` does not serve at the deploy base.** `vite.config.ts` only
+  applies `base: '/AI-slop-project/'` when `command === 'build'`, so preview
+  serves at `/` while `dist/index.html` requests `/AI-slop-project/...` and every
+  asset 404s into a blank page that looks exactly like a broken build. Use the
+  **`vite-preview`** entry in `.claude/launch.json`, and restart it after every
+  rebuild — it caches its file list at startup.
+- **Verify against the built bundle at the deploy base, not the dev server.**
+  Two real bugs shipped past a dev-server check and were caught only in preview:
+  a redirect that dropped the base path and landed on a 404, and a
+  rules-of-hooks violation `oxlint` had been reporting all along. **Run
+  `npm run lint`.**
+- **`page.evaluateOnNewDocument` re-runs on every navigation.** Seeding
+  localStorage through it means a test that clears storage gets it written back
+  underneath, which reads exactly like an app bug. It cost a false "sign-out
+  leaks your data" report in this session. `scripts/sweep.mjs` has a `seedOnce`
+  option for this.
+- **Frame-delta timing on this machine is too noisy to tune on** — identical
+  builds measured 17% dropped frames and 0% minutes apart. Use CPU accounting
+  (`Performance.getMetrics`) for anything performance-related.
+- **On GitHub Pages every deep link returns HTTP 404** with the right content,
+  because `index.html` is copied to `404.html`. Both sweeps filter the document
+  out of their error checks; do not "fix" that.
+- **A console error carries no resource type.** Asset failures have to be caught
+  on the `response` event if you want to tell them apart from the fallback above.
