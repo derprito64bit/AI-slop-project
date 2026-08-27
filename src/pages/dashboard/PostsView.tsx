@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom'
 import NotLiveYet, { MockLabel } from '../../components/NotLiveYet'
 
 // Global posts — the layout, not the posts.
@@ -53,7 +54,15 @@ export default function PostsView() {
       <NotLiveYet
         what="This will be a shared feed of anonymous outcomes and questions."
         blocker="It needs two things this site does not have: somewhere on a server for posts to live, and moderation — the audience is mostly under 18, so nothing that could identify a student can ever be published here."
-      />
+      >
+        <p className="mt-2 text-sm leading-relaxed text-slate">
+          What the community has already reported <em>is</em> live, in aggregate:{' '}
+          <Link to="/community" className="text-brand-600 hover:text-brand-700">
+            10,372 reports, and what they do and don&rsquo;t tell you
+          </Link>
+          .
+        </p>
+      </NotLiveYet>
 
       <div className="mb-3">
         <MockLabel>Example posts — written by nobody</MockLabel>

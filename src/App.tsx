@@ -8,6 +8,8 @@ import Home from './pages/Home'
 import Placeholder from './pages/Placeholder'
 import ExplorePreview from './pages/ExplorePreview'
 import Program from './pages/Program'
+import About from './pages/About'
+import Community from './pages/Community'
 import Survey from './pages/Survey'
 import SignIn from './pages/SignIn'
 import SignUp from './pages/SignUp'
@@ -96,19 +98,10 @@ export default function App() {
                 <Route path="deadlines" element={<DeadlinesView />} />
                 <Route path="posts" element={<PostsView />} />
               </Route>
-              <Route
-                path="/community"
-                element={<Placeholder title="Community stats" blurb="See real admitted-student stats and share your own results." />}
-              />
-              {/* "How we calculate your odds" used to live here. We never
-                  calculate odds — 94-97% of the source records are offers,
-                  because admitted students are far likelier to report, so any
-                  rate computed from them would be reporting bias dressed up as
-                  a probability. */}
-              <Route
-                path="/about"
-                element={<Placeholder title="About & methodology" blurb="Where our data comes from, how it's checked, and what it can and can't tell you." />}
-              />
+              <Route path="/community" element={<Community />} />
+              {/* Both of these were the shared Placeholder page until they had
+                  something to say. `Placeholder` now serves the 404 alone. */}
+              <Route path="/about" element={<About />} />
               <Route
                 path="*"
                 element={<Placeholder title="Page not found" blurb="That page doesn’t exist yet. Head back home to keep exploring." />}
