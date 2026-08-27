@@ -24,12 +24,19 @@ safe to prune.
 **Baseline, all measured against the live site:**
 
 ```
-npm test              226 tests
-npm run lint          0 errors
-npm run sweep         108 checks   (functional, every route)
-npm run sweep:sections 27 checks   (/about, /community, tracker, deadlines)
-npm run probe:motion               (transition smoothness — see §4)
+npm test               226 pass
+npm run lint           0 errors
+npm run sweep          116 of 118        <- see the note below
+npm run sweep:sections 27 of 27
+npm run probe:motion   minVisible 0.55, 0 dark frames
 ```
+
+**The sweep is expected to fail exactly two checks**, both `no failed requests`,
+both the missing square logos for Laurier and TMU (§5). They are the only two
+universities with no logo file at all, so the browser tries `.png`, tries
+`.svg`, then falls back to a monogram — which looks right, but does cost two
+404s per page. Add those two files and the suite goes green. **Anything else
+failing is new.**
 
 Those three suites were promoted out of a scratch directory into `scripts/` in
 this session **specifically so they survive the chat that wrote them**. They
