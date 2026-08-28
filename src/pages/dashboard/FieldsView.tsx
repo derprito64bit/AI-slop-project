@@ -113,7 +113,14 @@ export default function FieldsView() {
                       whole row taller. */}
                   <ul className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
                     {f.schools.slice(0, MAX_MARKS).map((s) => (
-                      <li key={s.id} title={`${s.name} — ${s.reports.toLocaleString()} reports`}>
+                      // shrink-0: the row is meant to SCROLL past MAX_MARKS, and
+                      // without it the flex items compress instead, which is
+                      // half of why the marks were rendering tiny.
+                      <li
+                        key={s.id}
+                        title={`${s.name} — ${s.reports.toLocaleString()} reports`}
+                        className="shrink-0"
+                      >
                         <Link to={`/profile/programs?field=${f.key}&uni=${s.id}`}>
                           <UniversityMark id={s.id} name={s.name} size={28} />
                           <span className="sr-only">{s.name}</span>

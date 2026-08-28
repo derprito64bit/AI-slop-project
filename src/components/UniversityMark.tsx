@@ -158,7 +158,14 @@ export default function UniversityMark({
           return next
         })
       }
-      className={`${box} border border-line bg-paper object-contain p-1`}
+      // max-w-none is load-bearing. Tailwind's preflight sets
+      // `img { max-width: 100% }`, so inside a SHRINKING flex item the image is
+      // capped at the shrunken parent rather than at `size` — the Fields marks
+      // row squeezed 28px marks down to 10px and they read as blank tiles. The
+      // monogram branch is a <div> and was never affected, so the bug only
+      // showed on schools that actually had artwork, which for a long time was
+      // just Laurier.
+      className={`${box} max-w-none border border-line bg-paper object-contain p-1`}
       style={style}
     />
   )
