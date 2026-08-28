@@ -20,6 +20,40 @@ import { useState } from 'react'
 
 const EXTENSIONS = ['png', 'svg'] as const
 
+/**
+ * Schools whose square file is CREST OR ICON art rather than a wordmark lockup.
+ *
+ * This replaced a blanket `size < 48` rule, which existed because all eight
+ * files in that directory were lockups — "University of Waterloo" set in three
+ * lines is an unreadable grey smudge at 36px, so every listing on the site drew
+ * a monogram instead and the logos only ever appeared on program pages.
+ *
+ * The rule was right about the files and wrong about the reason: a crest is
+ * legible at 24px. So the threshold is per school now. An id in this set draws
+ * its artwork at any size; everything else keeps the 48px floor.
+ *
+ * ADD AN ID HERE ONLY WHEN THAT SCHOOL'S FILE IS ACTUALLY SQUARE ART. Look at
+ * it at 32px first. Getting this wrong does not break anything — it just puts
+ * an illegible smudge in every program row, which is the state this replaced.
+ */
+const CREST_MARKS = new Set<string>([
+  // Wilfrid Laurier — circular crest, reads down to about 20px.
+  'laurier',
+])
+
+/**
+ * What we know about each school's file, remembered for the session.
+ *
+ * Without this every instance probes independently: a program list is dozens of
+ * rows, and a school with no file costs two failed requests PER ROW rather than
+ * two per page. The cache is seeded on mount and written on error, so the first
+ * row pays for the discovery and the rest read the answer.
+ *
+ * Deliberately not persisted. A logo file that lands between two visits should
+ * show up on the second one, not after a cache is manually cleared.
+ */
+const resolved = new Map<string, number>()
+
 /** Words that carry no identity in a school name. */
 const STOP = /^(university|universite|college|of|the|at|de)$/i
 
@@ -56,13 +90,15 @@ export default function UniversityMark({
   size?: number
   className?: string
 }) {
-  const [attempt, setAttempt] = useState(0)
+  // Seeded from the session cache: a school already known to have no file
+  // starts exhausted and never asks for it again.
+  const [attempt, setAttempt] = useState(() => resolved.get(id) ?? 0)
 
-  // Below ~48px a wordmark lockup is an unreadable smudge — at 36px in "Similar
-  // programs" the marks read as blank white squares. A two-letter monogram is
-  // legible at any size, so prefer it there. Crest-only artwork could raise
-  // this threshold; today's files are lockups.
-  const tooSmallForArt = size < 48
+  // A wordmark lockup below ~48px is an unreadable smudge — at 36px in "Similar
+  // programs" those marks read as blank white squares. Crest art does not have
+  // that problem, so the floor applies only to the schools whose file is a
+  // lockup. See CREST_MARKS above.
+  const tooSmallForArt = size < 48 && !CREST_MARKS.has(id)
   const exhausted = tooSmallForArt || attempt >= EXTENSIONS.length
 
   const box = `shrink-0 overflow-hidden rounded-md ${className}`
@@ -88,7 +124,15 @@ export default function UniversityMark({
       alt=""
       aria-hidden="true"
       loading="lazy"
-      onError={() => setAttempt((a) => a + 1)}
+      onError={() =>
+        setAttempt((a) => {
+          const next = a + 1
+          // Record the miss so the other rows on this page skip straight past
+          // an extension we already know is not there.
+          resolved.set(id, next)
+          return next
+        })
+      }
       className={`${box} border border-line bg-paper object-contain p-1`}
       style={style}
     />
