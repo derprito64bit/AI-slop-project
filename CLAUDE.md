@@ -111,6 +111,13 @@ The backend has its own suite: `cd ../UniServer && npm test` — 133 pass.
   check.
 - **`{x.length && <div/>}` renders a literal `0`.** It shipped once. Use an
   explicit comparison.
+- **The sweep's `accounts` area creates a real account on the live server every
+  run**, and UniServer rate limits signup to 10/hour per IP. Run the sweep more
+  than that in an hour and the accounts checks fail with things like "deleted
+  account no longer authenticates — login returned 200", which reads exactly
+  like a sync regression and is not one. Re-run `npm run sweep -- accounts` on
+  its own before believing it; `SWEEP_BASE` only redirects the site, never the
+  API.
 - **On GitHub Pages every deep link returns HTTP 404** with the right content,
   because `index.html` is copied to `404.html`. Both sweeps filter the document
   out of their error checks. Do not "fix" that.
