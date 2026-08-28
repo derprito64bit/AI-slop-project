@@ -120,7 +120,10 @@ function PinnedRoadmap({ steps }: { steps: RoadmapStep[] }) {
         <div className="container-page">
           <div className="text-center">
             <p className="text-sm font-500 uppercase tracking-wider text-brand-500">How it works</p>
-            <h2 className="mt-2 font-display text-display-1 font-600 text-ink">
+            {/* display-2, not display-1. A section heading at display-1 ties the
+                page h1 exactly, so the page had two things claiming to be its
+                title and the hierarchy read flat. */}
+            <h2 className="mt-2 font-display text-display-2 font-600 text-ink">
               Three steps from “I have no idea” to a real shortlist.
             </h2>
           </div>

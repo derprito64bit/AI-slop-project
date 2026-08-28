@@ -13,6 +13,7 @@ import Button from '../components/ui/Button'
 import Eyebrow from '../components/ui/Eyebrow'
 import { CAMPUS_ITEMS, POPULAR_ITEMS } from '../data/universities'
 import SUMMARY from '../data/generated/summary.json'
+import Section from '../components/ui/Section'
 
 // Every figure below comes from src/data/generated/summary.json, which the ETL
 // writes from the dataset. It is ~1kB, so unlike programs.json it can be
@@ -155,7 +156,12 @@ export default function Home() {
       {/* ============ CAMPUS CAROUSEL (above How it works) ============ */}
       {/* Rotating band of university images. Placeholders for now — set
           `img` on each item in src/data/universities.ts to use real photos. */}
-      <section className="py-10">
+      {/* A band, not bare page. This sat on paper immediately above the pinned
+          roadmap, which is also paper and carries no padding of its own, so
+          there was nothing at all marking where one section ended and the next
+          began. Banding it also restores the alternation the rest of the page
+          has. */}
+      <section className="border-y border-line bg-surface py-14">
         <Reveal className="container-page mb-6">
           <Eyebrow>Universities on the platform</Eyebrow>
         </Reveal>
@@ -211,7 +217,7 @@ export default function Home() {
                   {/* Same logo band as the Explore cards — fills the top edge to edge. */}
                   <UniversityBanner id={f.universityId} name={f.school} className="aspect-[16/9]" />
                   <div className="p-5">
-                    <h3 className="font-600 text-ink group-hover:text-brand-600">{f.name}</h3>
+                    <h3 className="text-display-4 font-600 text-ink group-hover:text-brand-600">{f.name}</h3>
                     <p className="text-sm text-slate">{f.school}</p>
                     {/* Median with its sample size — a median without an n is the
                         kind of number this site exists to replace. */}
@@ -246,7 +252,7 @@ export default function Home() {
       </section>
 
       {/* ================= VALUES ================= */}
-      <section className="container-page py-20">
+      <Section>
         <Reveal>
           <h2 className="max-w-2xl font-display text-display-2 font-600 text-ink">
             Built to be honest — the part other sites skip.
@@ -256,13 +262,13 @@ export default function Home() {
           {VALUES.map((v, i) => (
             <Reveal key={v.title} delay={i * 0.04}>
               <div className="border-t-2 border-brand-500 pt-5">
-                <h3 className="text-lg font-600 text-ink">{v.title}</h3>
+                <h3 className="text-display-4 font-600 text-ink">{v.title}</h3>
                 <p className="mt-2 text-sm leading-relaxed text-slate">{v.body}</p>
               </div>
             </Reveal>
           ))}
         </div>
-      </section>
+      </Section>
 
       {/* A testimonials section lived here with three invented students
           ("Priya, Grade 12 · Mississauga"). Removed 2026-08-08: fabricated
@@ -271,22 +277,25 @@ export default function Home() {
           produces real, consented submissions. */}
 
       {/* ================= CTA ================= */}
-      <section className="container-page pb-8 pt-20">
-        <Reveal>
-          <div className="overflow-hidden rounded-3xl bg-brand-700 px-8 py-16 text-center sm:px-16">
-            <h2 className="mx-auto max-w-2xl font-display text-display-2 font-600 text-white">
-              Stop guessing. See the real numbers.
-            </h2>
-            <p className="mx-auto mt-4 max-w-lg text-white/80">
-              Answer eight questions — all of them skippable — and see what students actually
-              reported.
-            </p>
-            <Button to="/profile" variant="inverse" className="mt-8 px-7 py-3">
-              Get started — it’s free
-            </Button>
-          </div>
-        </Reveal>
-      </section>
+      {/* Was paper on paper against the values section above, with py-20 meeting
+          pt-20 — about 160px of empty page between the last column and the blue
+          block, which read as the page having ended. */}
+      <Section tone="surface">
+          <Reveal>
+            <div className="overflow-hidden rounded-3xl bg-brand-700 px-8 py-16 text-center sm:px-16">
+              <h2 className="mx-auto max-w-2xl font-display text-display-2 font-600 text-white">
+                Stop guessing. See the real numbers.
+              </h2>
+              <p className="mx-auto mt-4 max-w-lg text-white/80">
+                Answer eight questions — all of them skippable — and see what students actually
+                reported.
+              </p>
+              <Button to="/profile" variant="inverse" className="mt-8 px-7 py-3">
+                Get started — it’s free
+              </Button>
+            </div>
+          </Reveal>
+      </Section>
     </>
   )
 }
@@ -354,7 +363,10 @@ function StatsBand() {
           <p className="text-sm font-500 uppercase tracking-wider text-brand-500">
             What we provide to you
           </p>
-          <h2 className="mt-2 font-display text-display-3 font-600 text-ink">
+          {/* Was display-3 — the smallest h2 on the page — directly above the
+              display-1 numerals it introduces, so the label read as a caption
+              for figures rather than a heading over them. */}
+          <h2 className="mt-2 font-display text-display-2 font-600 text-ink">
             Everything you need, in one place.
           </h2>
         </Reveal>

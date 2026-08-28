@@ -29,6 +29,7 @@ import { findProgram, similarPrograms, difficultyBand, DIFFICULTY_LABELS } from 
 import { getProgramInfo, getUniversityInfo, type ProgramInfo, type Source } from '../data/program-info'
 import type { UniversityContent } from '../lib/api'
 import type { CommunityStat, Program as ProgramType, University } from '../data/types'
+import Section from '../components/ui/Section'
 
 export default function Program() {
   const { universityId = '', slug = '' } = useParams()
@@ -524,7 +525,7 @@ function Shell({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative">
       <div className="bg-grid pattern-fade pointer-events-none absolute inset-0 -z-10" aria-hidden="true" />
-      <section className="container-page py-16">{children}</section>
+      <Section>{children}</Section>
     </div>
   )
 }
