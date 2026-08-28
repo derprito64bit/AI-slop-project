@@ -187,7 +187,7 @@ export default function SignUp() {
 /**
  * The confirmation step, and the reason this page does not just navigate away.
  *
- * A student who answered four questions as a guest and then signed up needs to
+ * A student who answered the questions as a guest and then signed up needs to
  * be told their answers came with them; a student who signed up first needs to
  * be pointed at the survey. Same screen, two different next steps.
  */
@@ -222,7 +222,7 @@ function Created({ username, adopted }: { username: string; adopted: boolean }) 
           <>
             <Button to="/profile">Go to my dashboard</Button>
             <Button to="/survey" variant="secondary">
-              Change my four answers
+              Change my answers
             </Button>
           </>
         ) : (

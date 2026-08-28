@@ -153,7 +153,7 @@ export default function ExplorePreview() {
                       </div>
                       {band && (
                         <div className="absolute left-3 top-3">
-                          <Tag tone={band === 'highly-competitive' ? 'reach' : band === 'competitive' ? 'safety' : 'likely'}>
+                          <Tag tone={band === 'highly-competitive' ? 'high' : band === 'competitive' ? 'medium' : 'low'}>
                             {DIFFICULTY_LABELS[band]}
                           </Tag>
                         </div>

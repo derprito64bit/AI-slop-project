@@ -263,7 +263,7 @@ describe('signUp', () => {
   })
 
   it('carries guest survey data into the new account and pushes it up', async () => {
-    // The common path: four questions as a guest, then decide to make an account.
+    // The common path: answering as a guest, then deciding to make an account.
     saveProfile({ ...EMPTY_PROFILE, answers: answers(), shortlist: ['waterloo::se'] })
 
     willReply({ status: 201, body: { token: 'tok_abc', account, profile: null } }, { status: 200, body: { profile: null } })

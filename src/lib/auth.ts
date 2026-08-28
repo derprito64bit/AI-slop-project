@@ -50,6 +50,7 @@ import {
   type SessionAccount,
 } from './session'
 import { applyRemoteProfile, flushProfile, forgetPending, pullProfile } from './sync'
+import { clearTracker } from './tracker'
 
 /** What the rest of the app sees. */
 export type Account = SessionAccount
@@ -387,6 +388,17 @@ export async function deleteAccount(): Promise<void> {
   // Before ending the session, so the queue stops pointing at an account that no
   // longer exists — otherwise a pending push would sit in storage forever.
   forgetPending(account.id)
+
+  // The tracker lives OUTSIDE the profile, in its own localStorage key, which is
+  // why removeProfileFor does not reach it — and that is deliberate everywhere
+  // except here. The button says "Delete everything" and the student typed
+  // DELETE to confirm; leaving their application statuses and the deadline dates
+  // they typed sitting on the device is not what either of those means.
+  //
+  // This is the ONLY place the tracker should be cleared. It stays out of the
+  // profile the rest of the time — see the header of lib/tracker.ts.
+  clearTracker()
+
   endSession()
 }
 

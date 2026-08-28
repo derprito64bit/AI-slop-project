@@ -209,8 +209,11 @@ export function matchPrograms(
 /**
  * Coarse band for the anonymous telemetry payload.
  *
- * The exact average stays on the device; only the band is ever sent, so a
- * submission can never be traced back to one student's transcript.
+ * Only the band is ever sent TO THIS ENDPOINT, so a submission can never be
+ * traced back to one student's transcript. That is a statement about
+ * /api/data and nothing else: since profiles started syncing, a signed-in
+ * student's exact average does go to the server, on the profile route, joined
+ * to their account. It is still never joined to a name, an email or a school.
  */
 export function averageBand(average: number | null): string {
   // A skipped average is reported as skipped, not bucketed as a low one.

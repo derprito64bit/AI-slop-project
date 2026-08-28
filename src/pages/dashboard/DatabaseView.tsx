@@ -106,8 +106,11 @@ export default function DatabaseView() {
       <section className="rounded-xl border border-line bg-paper p-6">
         <h2 className="font-600 text-ink">What the data is</h2>
         <p className="mt-3 leading-relaxed text-slate">
-          {SUMMARY.reports.toLocaleString()} anonymous reports from students across four
-          application cycles, covering {SUMMARY.programs.toLocaleString()} programs at{' '}
+          {/* No typed cycle count here: summary.json carries no cycle total and
+              stats.json gains one every year. The exact number is stated in the
+              cycles section below, where it is computed. */}
+          {SUMMARY.reports.toLocaleString()} anonymous reports from students across every
+          application cycle we hold, covering {SUMMARY.programs.toLocaleString()} programs at{' '}
           {SUMMARY.universities} universities. Each record is one student saying what they applied
           to, what they heard back, and — usually — the average they applied with.
         </p>
@@ -154,9 +157,9 @@ export default function DatabaseView() {
             </h2>
             <p className="mt-3 leading-relaxed text-slate">
               Reports per cycle, and the mean average reported in each. The volume grows sharply.
-              The averages barely move — which is why there is no trend line here: four cycles of a
-              flat number is not a story, and drawing it as one would invent a trend the data does
-              not contain.
+              The averages barely move — which is why there is no trend line here:{' '}
+              {summary.cycles.length} cycles of a flat number is not a story, and drawing it as one
+              would invent a trend the data does not contain.
             </p>
             <ul className="mt-6 space-y-2">
               {summary.cycles.map((c) => {
@@ -212,8 +215,16 @@ export default function DatabaseView() {
       <div className="mt-5 rounded-xl border border-line bg-paper p-6">
         <h3 className="font-600 text-ink">1. We never tell you your chances.</h3>
         <p className="mt-2 leading-relaxed text-slate">
-          Around 93% of the reports we hold are offers. That is not because almost everyone gets in
-          — it is because students who get in are far more likely to come back and say so. Any
+          {/* Was "Around 93%", typed by hand, in the file whose own banner says
+              every figure is read from the dataset at render time. It had
+              already drifted — the real share is 92.6%. Not interpolated
+              unconditionally because `summary` is null until stats.json
+              resolves, and this section sits outside that gate. */}
+          {summary
+            ? `${summary.offerShare}% of the reports we hold are offers.`
+            : 'The overwhelming majority of the reports we hold are offers.'}{' '}
+          That is not because almost everyone gets in — it is because students who get in are far
+          more likely to come back and say so. Any
           &ldquo;acceptance rate&rdquo; calculated from this data would be measuring who answers a
           survey, and dressing it up as a probability. The chart above is that bias, drawn.
         </p>
@@ -231,9 +242,13 @@ export default function DatabaseView() {
           only — no names, no schools, no ages.
         </p>
         <p className="mt-3 leading-relaxed text-slate">
-          The same applies to you. Your answers, your list and your notes live in your browser. An
-          account stores them so they follow you to another device; it asks for a username and a
-          password and nothing else.{' '}
+          {/* Led with "live in your browser" flatly, which is the sentence a
+              skimmer takes away and is not true once signed in — the exact
+              average included. The account clause now comes first so the
+              stronger claim is never the standalone one. */}
+          The same applies to you. Signed out, your answers, your list and your notes stay in this
+          browser; an account stores them so they follow you to another device, and asks for a
+          username and a password and nothing else.{' '}
           <Link to="/profile/account" className="text-brand-600 hover:text-brand-700">
             Your account page
           </Link>{' '}

@@ -41,7 +41,22 @@ export default function CompareTable({
 }) {
   const shown = programs.slice(0, MAX)
 
-  if (shown.length < 2) {
+  // Two empty states, not one. This used to be a single `< 2` branch, so a
+  // student who had deliberately staged one program was shown the same sentence
+  // as someone who had staged none — no count, no acknowledgement, and the
+  // staged program invisible on the page. It reads as "that did nothing", and
+  // the obvious response is to stage the program you already staged.
+  if (shown.length === 1) {
+    return (
+      <p className="rounded-xl border border-line bg-surface p-5 text-sm leading-relaxed text-slate">
+        <span className="font-600 text-ink">{shown[0].name}</span> is staged. Add one more from
+        your list and they appear side by side — up to {MAX} at once, after which the columns stop
+        being readable.
+      </p>
+    )
+  }
+
+  if (shown.length === 0) {
     return (
       <p className="rounded-xl border border-line bg-surface p-5 text-sm leading-relaxed text-slate">
         Pick at least two programs from your list to compare them side by side. Up to {MAX} at once
@@ -70,7 +85,16 @@ export default function CompareTable({
       label: 'Full range',
       render: (p) => (p.accepted ? `${p.accepted.min}% – ${p.accepted.max}%` : '—'),
     },
-    { label: 'Reports', render: (p) => `${p.sampleSize} of ${p.totalReports}` },
+    // Two labelled numbers, NOT a fraction. This row read "210 of 240" under a
+    // bare "Reports" label, which is an acceptance rate to anyone who glances
+    // at it — 210 of 240 got in. The two numbers do not divide: sampleSize is
+    // offers that came with a usable average, totalReports is every report of
+    // any outcome, and the offers without an average are in neither.
+    {
+      label: 'Offers with an average',
+      render: (p) => p.sampleSize.toLocaleString(),
+    },
+    { label: 'Reports of any outcome', render: (p) => p.totalReports.toLocaleString() },
     { label: 'Cycles', render: (p) => p.cycles.join(', ') },
     {
       label: 'Required courses',

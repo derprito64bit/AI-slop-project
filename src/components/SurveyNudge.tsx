@@ -3,13 +3,16 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import { SPRING, DURATION, EASE } from '../lib/motion'
 import { loadProfile } from '../lib/profile'
+import { useAuth } from '../lib/authContext'
+import { STEPS } from '../pages/Survey'
+import SUMMARY from '../data/generated/summary.json'
 
 // The card that offers the survey once a student is actually looking around.
 //
 // It is not a redirect and not a modal. A first-time visitor who is dropped
 // straight into a questionnaire has been asked to invest before being shown
 // anything worth investing in; they leave. So the site opens normally and this
-// arrives later, offering both doors — take the four questions, or carry on.
+// arrives later, offering both doors — take the questions, or carry on.
 //
 // TRIGGERED BY ENGAGEMENT, NOT A TIMER. Two program pages is a student
 // comparing options; 45 seconds plus real scrolling is a student reading. A
@@ -83,6 +86,8 @@ function suppressions() {
 export default function SurveyNudge() {
   const navigate = useNavigate()
   const { pathname } = useLocation()
+  const { user } = useAuth()
+  const signedIn = Boolean(user)
   const [visible, setVisible] = useState(false)
 
   // Count program pages across the visit. Stored rather than held in state so
@@ -165,8 +170,15 @@ export default function SurveyNudge() {
             Want this narrowed down?
           </p>
           <p className="mt-2 text-sm leading-relaxed text-slate">
-            Four quick questions — every one skippable — and we&rsquo;ll cut 2,436 programs down
-            to a shortlist worth your time. Nothing leaves your device.
+            {STEPS.length} quick questions — every one skippable — and we&rsquo;ll cut{' '}
+            {SUMMARY.programs.toLocaleString()} programs down to a shortlist worth your time.{' '}
+            {/* This said "Nothing leaves your device" unconditionally, and
+                shouldOffer never consults sign-in — so the one reader most
+                likely to see it, a signed-in student on a new device with no
+                local profile yet, was told the opposite of what happens. */}
+            {signedIn
+              ? 'Your answers save to your account, so they follow you to another device.'
+              : 'Nothing leaves your device while you’re signed out.'}
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <button

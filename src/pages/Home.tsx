@@ -26,14 +26,22 @@ const STATS = [
 ]
 
 // Step 03 used to read "Check your odds — realistic admission chances". It is
-// the one claim this site must never make: 94-97% of the source records are
+// the one claim this site must never make: most of the source records are
 // offers, because students who get in are far likelier to report, so any
 // "chance" derived from them is reporting bias with a percent sign on it. What
 // the data does support is the distribution of averages admitted students
-// reported, which is what the step now describes.
+// reported, which is what the step now describes. The headline above these
+// steps carried the same claim in bigger type for a while — "Find where you
+// actually get in" — which is why it now describes the data instead.
+//
+// Steps 01 and 02 described a product that does not exist: a budget question, a
+// campus-life question, and a fit ranking. The survey asks eight things and none
+// of them is budget or lifestyle, and `matchPrograms` filters by the answers and
+// then sorts by report volume — a popularity sort, which is precisely what step
+// 02 used to disclaim.
 const STEPS = [
-  { n: '01', title: 'Build your profile', body: 'Add your grades, interests, budget, and the kind of campus life you want.' },
-  { n: '02', title: 'See your matches', body: 'Programs ranked by how well they fit you — not just generic rankings.' },
+  { n: '01', title: 'Answer what you want to', body: 'Eight questions — subject, average, courses, where you want to be. Every one is skippable.' },
+  { n: '02', title: 'Narrow the list', body: 'Programs filtered to your answers, ordered by how much students have reported on each.' },
   { n: '03', title: 'See the real averages', body: 'What admitted students actually reported — medians, spread, and how many said so.' },
 ]
 
@@ -44,7 +52,10 @@ const FEATURED = SUMMARY.featured.slice(0, 4)
 
 const VALUES = [
   { title: 'Real accepted averages', body: 'Not the vague cutoffs on official sites — the numbers students actually got in with.' },
-  { title: 'Community-sourced stats', body: 'Admitted students share grades and results, so you see the full picture.' },
+  // NOT "the full picture". Students who get in are far likelier to report, so
+  // the picture is tilted by construction — that is the whole subject of
+  // /profile/database, and claiming completeness here contradicts it.
+  { title: 'Community-sourced stats', body: 'Students report their averages once decisions are out — and we always say how many did.' },
   { title: 'Transparent methodology', body: 'We show where every number comes from. No black-box guessing.' },
 ]
 
@@ -101,7 +112,7 @@ export default function Home() {
             transition={{ duration: DURATION.reveal, delay: 0.055, ease: EASE.out }}
             className="mt-4 max-w-3xl font-display text-display-1 font-600 text-ink"
           >
-            Find where you <span className="text-brand-500">actually</span> get in.
+            Find what it <span className="text-brand-500">actually</span> took to get in.
           </motion.h1>
 
           <motion.p
@@ -172,8 +183,17 @@ export default function Home() {
           <Reveal>
             <div className="flex items-end justify-between gap-4">
               <div>
-                <h2 className="font-display text-display-2 font-600 text-ink">Popular right now</h2>
-                <p className="mt-2 text-slate">A peek at programs students are comparing.</p>
+                {/* NOT "Popular right now", and not "programs students are
+                    comparing". This is SUMMARY.featured: the most-reported
+                    programs across four cycles back to 2022, one per school.
+                    Nothing here is live, and no telemetry records what anyone
+                    compares — the staging never leaves the device. */}
+                <h2 className="font-display text-display-2 font-600 text-ink">
+                  Where the data runs deepest
+                </h2>
+                <p className="mt-2 text-slate">
+                  The programs the most students have told us about — one from each school.
+                </p>
               </div>
               <Link to="/explore" className="hidden text-sm font-600 text-brand-600 hover:text-brand-700 sm:block">
                 Browse all →
@@ -205,9 +225,11 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Rotating carousel of popular programs — placeholder images for now. */}
+        {/* The same six as the grid above, moving. Labelled "Trending programs"
+            until someone noticed it is a static list — POPULAR_ITEMS and
+            FEATURED are both SUMMARY.featured. */}
         <Reveal className="container-page pb-4">
-          <Eyebrow>Trending programs</Eyebrow>
+          <Eyebrow>Most reported</Eyebrow>
         </Reveal>
         <div className="pb-16">
           <Carousel
@@ -256,7 +278,8 @@ export default function Home() {
               Stop guessing. See the real numbers.
             </h2>
             <p className="mx-auto mt-4 max-w-lg text-white/80">
-              Build a profile in a few minutes and get a shortlist that fits you.
+              Answer eight questions — all of them skippable — and see what students actually
+              reported.
             </p>
             <Button to="/profile" variant="inverse" className="mt-8 px-7 py-3">
               Get started — it’s free

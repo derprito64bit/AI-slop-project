@@ -178,7 +178,9 @@ async function sweepHome() {
     check('home', `stat ${label} = ${n}`, body.includes(n), body.includes(n) ? '' : 'not rendered')
   }
 
-  for (const s of ['Build your profile', 'See your matches', 'See the real averages']) {
+  // Steps 01 and 02 were renamed: they described a budget question, a campus-life
+  // question and a fit ranking, none of which exist.
+  for (const s of ['Answer what you want to', 'Narrow the list', 'See the real averages']) {
     check('home', `roadmap step "${s.slice(0, 22)}"`, body.includes(s))
   }
 

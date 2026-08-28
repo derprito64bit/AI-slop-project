@@ -124,7 +124,7 @@ export default function DashboardShell() {
   //
   //   account   somebody who has just created an account and kept nothing yet
   //             still needs a page to change their password or sign out on,
-  //             and bouncing them to "answer four questions" is a dead end.
+  //             and bouncing them to "answer the questions" is a dead end.
   //   database  the methodology. It used to be /about, a public page reachable
   //             from the navbar; it is now a dashboard tool, and gating it
   //             behind a saved profile would mean a first-time visitor — or
@@ -337,7 +337,13 @@ export default function DashboardShell() {
             off-screen — everything here is reachable elsewhere. */}
         <aside className="sticky top-24 hidden h-fit w-64 shrink-0 xl:block">
           <div className="rounded-xl border border-line bg-paper p-4">
-            <Eyebrow>Your answers</Eyebrow>
+            {/* "Some of your answers", because it is four of the eight — co-op,
+                home city, graduating year and courses are stored and not shown
+                here. Claiming "Your answers" made the missing four look like
+                questions that were never asked, so the only way to find out
+                otherwise was to reopen the survey. Showing all eight is P3 in
+                DASHBOARD-NEXT.md; until then the heading should not overclaim. */}
+            <Eyebrow>Some of your answers</Eyebrow>
             {shown.answers ? (
               <>
                 {/* Every question can be skipped, so every row here has to
@@ -449,7 +455,7 @@ function Row({ label, value }: { label: string; value: string }) {
  * Nothing stored yet.
  *
  * The survey stays the primary door even for a signed-in student — an empty
- * account is still an empty list, and four questions is the fastest way to make
+ * account is still an empty list, and the questions are the fastest way to make
  * it not be. Sign-in is offered only to someone who isn't, and only third, so
  * the page never reads as a login wall.
  */
