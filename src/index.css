@@ -461,3 +461,65 @@ body {
 }
 
 .theme-map .leaflet-control-attribution a { color: var(--color-slate); }
+
+/* Place labels. Permanent, so the map reads as places rather than as a scatter
+   you have to hover to decode. The halo is what keeps them legible over both a
+   pale street map and a dark one without a box around every word. */
+.theme-map .map-label {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  font-weight: 600;
+  font-size: 0.75rem;
+  color: var(--color-ink);
+  text-shadow:
+    0 0 3px var(--color-paper),
+    0 0 3px var(--color-paper),
+    0 0 6px var(--color-paper);
+}
+
+.theme-map .map-label::before { display: none; }
+
+.theme-map .map-label--campus {
+  font-weight: 500;
+  font-size: 0.7rem;
+}
+
+/* The campus pin. A dot with a ring rather than Leaflet's default teardrop
+   image, which ships as a PNG from a CDN path that does not survive the build. */
+.theme-map .campus-pin {
+  display: block;
+  width: 14px;
+  height: 14px;
+  border-radius: 9999px;
+  background: var(--color-chart);
+  border: 2.5px solid var(--color-paper);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.35);
+}
+
+.theme-map .campus-pin-wrap { background: none; border: none; }
+
+.theme-map .tile-map-hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.7rem;
+  color: var(--color-slate);
+}
+
+/* Dark mode for the basemap itself.
+   OpenStreetMap publishes one rendering, and a bright street map under a dark
+   page is the single thing that makes an embedded map look bolted on. Inverting
+   and rotating the hue back gives a dark map from a light one: roads and water
+   keep their relative contrast, and text stays readable. Applied to the tile
+   pane only, so our own marks and labels above it are untouched — inverting
+   those too would turn the brand colour into its opposite. */
+.theme-map.is-dark .leaflet-tile-pane {
+  filter: invert(1) hue-rotate(180deg) brightness(0.92) contrast(0.9) saturate(0.85);
+}
+
+/* The scale bar, which Leaflet draws with hard-coded light colours. */
+.theme-map .leaflet-control-scale-line {
+  background: color-mix(in oklab, var(--color-paper) 85%, transparent);
+  border-color: var(--color-line);
+  color: var(--color-slate);
+}

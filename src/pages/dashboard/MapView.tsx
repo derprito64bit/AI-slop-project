@@ -4,6 +4,7 @@ import CampusMap, { groupByCity } from '../../components/CampusMap'
 import { ListSkeleton, FetchingNote } from '../../components/Skeleton'
 import { CITY_POINTS } from '../../data/campus-locations'
 import { fetchMapConfig, type MapConfig, type UniversityContent } from '../../lib/api'
+import { resolveTileSource } from '../../lib/mapTiles'
 import { loadUniversityContent } from '../../lib/dataSource'
 import { PROVINCE_LABELS, updateProfile } from '../../lib/profile'
 import { useDashboard } from './context'
@@ -118,6 +119,10 @@ export default function MapView() {
   const [mapConfig, setMapConfig] = useState<MapConfig | undefined>()
   const [content, setContent] = useState<Record<string, UniversityContent>>({})
 
+  // Whether there is ANY basemap to draw — through our proxy, or straight from
+  // a keyless source. `resolveTileSource` owns that cascade and the reasons.
+  const hasTiles = resolveTileSource(mapConfig) !== null
+
   useEffect(() => {
     let live = true
     fetchMapConfig()
@@ -173,21 +178,16 @@ export default function MapView() {
               <FetchingNote slow="Still checking — the server may be waking up.">
                 Checking for a map…
               </FetchingNote>
-              <div className="mt-3 h-[26rem] w-full rounded-xl border border-line bg-surface" />
+              <div className="mt-3 h-[30rem] w-full rounded-xl border border-line bg-surface" />
             </>
-          ) : mapConfig.available ? (
+          ) : hasTiles ? (
             // Suspense, because TileMap is a lazy chunk. The fallback reserves
             // the same height the map will take, so the page below it does not
             // jump when Leaflet arrives — the CLS lesson from Skeleton.tsx.
             <Suspense
-              fallback={<div className="h-[26rem] w-full rounded-xl border border-line bg-surface" />}
+              fallback={<div className="h-[30rem] w-full rounded-xl border border-line bg-surface" />}
             >
-              <TileMap
-                universities={ontario}
-                home={home}
-                attribution={mapConfig.attribution}
-                content={content}
-              />
+              <TileMap universities={ontario} home={home} config={mapConfig} content={content} />
             </Suspense>
           ) : (
             <CampusMap universities={ontario} home={home} />
