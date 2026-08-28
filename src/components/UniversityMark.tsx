@@ -52,13 +52,22 @@ const CREST_MARKS = new Set<string>([
   'laurentian', // blue and white shield with a gold sun. The cleanest of the set.
   'nipissing', // blue shield, strong white waves.
   'ubc-okanagan', // the UBC shield — see the note in fetch-logos.mjs.
+  'mount-allison', // gold escutcheon, three white books. Reads at 20.
+  'unb', // red shield. Strong at 24.
+  'smu', // maroon brand shield, not heraldry, but square and high-contrast.
+  'kings-college', // blue and white saltire shield.
+  'acadia', // blue and white shield, clean blocking.
+  'regina', // green shield — the only green in the set, which is half of why it works.
   // DELIBERATELY NOT HERE, having looked at every one of them at 24px:
-  //   brock, alberta, windsor, concordia, victoria, lakehead
+  //   brock, alberta, windsor, concordia, victoria, lakehead, rmc, stfx
   //     — full heraldic ACHIEVEMENTS: crest, helm, mantling, supporters and a
   //       motto scroll. Beautiful at 64 and an indistinct blob at 24, because
   //       the shield is only a third of the artwork.
-  //   ontario-tech
-  //     — fine blue linework on white; a smudge below 48.
+  //   ontario-tech, polytechnique
+  //     — fine linework; a smudge below 48.
+  //   ocad
+  //     — a lettering monogram. Square, but it is TEXT, and text at 24px is the
+  //       exact thing the 48px floor exists to stop.
   // Every one of those is correct square art and renders properly at 48 and up,
   // which is all the 48px floor asks. The monogram is genuinely more useful
   // than an illegible logo, and that is why this set is opt-in rather than

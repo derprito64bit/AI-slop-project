@@ -154,6 +154,57 @@ const SOURCES = {
   victoria: { url: `${W}/3/37/UVic_CoA.svg`, depicts: 'arms' },
   concordia: { url: `${W}/b/b6/Concordia_coa.png`, depicts: 'arms' },
 
+  ocad: {
+    url: 'https://www.ocadu.ca/themes/custom/ocad/img/favicons/web-app-manifest-512x512.png',
+    depicts: 'monogram',
+    background: '#fff',
+    // OCAD U has no arms. This is their own square icon mark; the Commons file
+    // carries the full "OCAD UNIVERSITY" wordmark and is worse small.
+  },
+  rmc: {
+    url: `${C}/3/3f/Royal_Military_College_Arms.svg/500px-Royal_Military_College_Arms.svg.png`,
+    depicts: 'arms',
+  },
+  unb: {
+    url: `${C}/8/80/Coat_of_Arms_of_the_University_of_New_Brunswick.png/500px-Coat_of_Arms_of_the_University_of_New_Brunswick.png`,
+    depicts: 'arms',
+    // The CC0 raster rather than the CC BY-SA vector of the same arms — same
+    // picture, no attribution string to carry.
+  },
+  stfx: {
+    url: `${C.replace('/commons/', '/en/')}/f/f7/StFXCoatofArms.svg/500px-StFXCoatofArms.svg.png`,
+    depicts: 'arms',
+  },
+  acadia: { url: `${W}/0/06/Acadia_University_Coat_of_Arms_2017.jpg`, depicts: 'arms' },
+  'mount-allison': {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/a/ad/Mount_Allison_University_Escutcheon.png',
+    depicts: 'arms',
+  },
+  polytechnique: {
+    url: `${C.replace('/commons/', '/en/')}/4/4f/%C3%89cole_Polytechnique_de_Montr%C3%A9al_Logo.svg/500px-%C3%89cole_Polytechnique_de_Montr%C3%A9al_Logo.svg.png`,
+    depicts: 'arms',
+    background: '#fff',
+    // Dark line-art on transparency: invisible on the dark surface without it.
+    // polymtl.ca sits behind bot protection, so nothing official could be
+    // fetched. This is the historic seal, which Polytechnique still uses as its
+    // protocol ecusson; every Commons alternative is a wide wordmark.
+  },
+  smu: {
+    url: 'https://www.smu.ca/favicons/android-chrome-384x384.png',
+    depicts: 'monogram',
+    // Saint Mary's HALIFAX, which has no arms on Commons. Not to be confused
+    // with the Canadian Heraldic Authority entry for St. Mary's University
+    // College, which is the Calgary institution.
+  },
+  'kings-college': {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/1/13/UKings_Crest.png',
+    depicts: 'arms',
+  },
+  regina: {
+    url: `${C}/c/cf/URegina_Coat_of_Arms.svg/500px-URegina_Coat_of_Arms.svg.png`,
+    depicts: 'arms',
+  },
+
   // Trent is deliberately absent. Its official crest is a WHITE KNOCKOUT on
   // transparency — invisible on the light tile these are drawn on — and Trent
   // is one of the few Canadian universities with no granted arms of its own
@@ -170,9 +221,14 @@ const pause = (ms) => new Promise((r) => setTimeout(r, ms))
 // step over 30 rows, so waiting is free.
 const THROTTLE_MS = 500
 
-async function download(url) {
-  await pause(THROTTLE_MS)
+async function download(url, attempt = 0) {
+  await pause(THROTTLE_MS * (attempt + 1))
   const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT } })
+  // A 429 says the server is busy, NOT that the URL is wrong. Treating one as a
+  // dead link is how a perfectly good file gets replaced with a worse one:
+  // three of these were nearly swapped out over a rate limit that cleared on
+  // the next try.
+  if (res.status === 429 && attempt < 4) return download(url, attempt + 1)
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const type = res.headers.get('content-type') ?? ''
   if (!/^image\//.test(type)) throw new Error(`not an image: ${type}`)
