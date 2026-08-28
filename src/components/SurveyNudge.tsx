@@ -164,7 +164,7 @@ export default function SurveyNudge() {
           initial={{ opacity: 0, y: 24, scale: 0.96 }}
           animate={{ opacity: 1, y: 0, scale: 1, transition: SPRING.panel }}
           exit={{ opacity: 0, y: 12, transition: { duration: DURATION.quick, ease: EASE.in } }}
-          className="fixed bottom-4 right-4 z-50 w-[min(22rem,calc(100vw-2rem))] rounded-2xl border border-line bg-paper p-5 shadow-[0_18px_50px_rgba(20,24,31,0.16)]"
+          className="fixed bottom-4 right-4 z-50 w-[min(22rem,calc(100vw-2rem))] rounded-2xl border border-line bg-paper p-5 shadow-lg"
         >
           <p className="font-display text-lg font-600 leading-snug text-ink">
             Want this narrowed down?

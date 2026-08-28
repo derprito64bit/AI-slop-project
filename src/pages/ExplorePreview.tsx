@@ -137,7 +137,7 @@ export default function ExplorePreview() {
                   <div ref={revealRef(i)} className="reveal-item flex w-full">
                   <Link
                     to={`/program/${p.universityId}/${p.slug}`}
-                    className="group flex w-full flex-col overflow-hidden rounded-xl border border-line bg-paper transition-shadow hover:shadow-[0_12px_34px_rgba(20,24,31,0.09)]"
+                    className="group flex w-full flex-col overflow-hidden rounded-xl border border-line bg-paper transition-shadow hover:shadow-md"
                   >
                     {/* --- image band: the logo fills it edge to edge --- */}
                     <div className="relative">

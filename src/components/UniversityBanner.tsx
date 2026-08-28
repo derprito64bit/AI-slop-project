@@ -55,7 +55,7 @@ export default function UniversityBanner({
       <div
         className={`flex items-center justify-center bg-gradient-to-br ${bannerFor(id)} ${className}`}
       >
-        <UniversityMark id={id} name={name} size={64} className="shadow-sm ring-1 ring-black/5" />
+        <UniversityMark id={id} name={name} size={64} className="shadow-sm ring-1 ring-line" />
       </div>
     )
   }

@@ -175,7 +175,7 @@ export default function Combobox({
         <ul
           id={listId}
           role="listbox"
-          className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border border-line bg-paper py-1 shadow-[0_10px_40px_rgba(20,24,31,0.12)]"
+          className="absolute z-20 mt-1 max-h-56 w-full overflow-y-auto rounded-xl border border-line bg-paper py-1 shadow-lg"
         >
           {matches.length === 0 ? (
             <li className="px-4 py-2.5 text-sm text-slate">

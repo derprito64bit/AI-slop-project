@@ -200,8 +200,24 @@ export default function DashboardShell() {
     <div className="container-page py-8">
       <div className="flex gap-8">
         {/* ---------------------------------------------------- sidebar --- */}
+        {/* One step up from the page, not two, and the same card idiom used
+            everywhere else rather than a bespoke treatment for the chrome.
+            It was fully transparent before — no background, no border, no
+            padding — so the only painted pixels in the whole column were the
+            active item and hover, and navigation and content shared a surface.
+
+            `surface` is DARKER than `paper` in light and LIGHTER in dark, which
+            is the conventional reading in each: chrome recedes on white, lifts
+            on black. One token, correct in both, no `dark:` variant.
+
+            The padding is inside the fixed width, because box-sizing is
+            border-box — so this cannot widen the flex row or trip the sweep's
+            horizontal-overflow check. Collapsed gets less of it, or the 40px
+            icon rows would not fit inside 56px. */}
         <aside
-          className={`sticky top-24 hidden h-fit shrink-0 md:block ${collapsed ? 'w-14' : 'w-56'}`}
+          className={`sticky top-24 hidden h-fit shrink-0 rounded-xl border border-line bg-surface md:block ${
+            collapsed ? 'w-14 p-1.5' : 'w-56 p-3'
+          }`}
         >
           <nav aria-label="Dashboard">
             {groups.map((group) => (
@@ -340,7 +356,11 @@ export default function DashboardShell() {
             it. Hidden below xl, where its content would just push the tool
             off-screen — everything here is reachable elsewhere. */}
         <aside className="sticky top-24 hidden h-fit w-64 shrink-0 xl:block">
-          <div className="rounded-xl border border-line bg-paper p-4">
+          {/* bg-surface, not bg-paper: paper is the page colour, so this card
+              was distinguished from its background by nothing but a hairline.
+              The rail itself stays transparent — giving it a surface too would
+              nest one panel inside another for no gain. */}
+          <div className="rounded-xl border border-line bg-surface p-4">
             {/* "Some of your answers", because it is four of the eight — co-op,
                 home city, graduating year and courses are stored and not shown
                 here. Claiming "Your answers" made the missing four look like
