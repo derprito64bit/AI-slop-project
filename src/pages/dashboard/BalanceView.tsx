@@ -1,12 +1,13 @@
 import { Link } from 'react-router-dom'
 import Button from '../../components/ui/Button'
 import BalanceCheck from '../../components/BalanceCheck'
+import { STEPS } from '../Survey'
 import { useDashboard } from './context'
 
 // "Is my list realistic?" — needs an average, so it asks for one rather than
 // rendering an empty chart.
 export default function BalanceView() {
-  const { average, kept } = useDashboard()
+  const { average, kept, profile } = useDashboard()
 
   return (
     <>
@@ -21,12 +22,19 @@ export default function BalanceView() {
       {average === null ? (
         <div className="rounded-xl border border-line bg-surface p-6">
           <p className="font-600 text-ink">This one needs your average.</p>
+          {/* Two different students land here and they were being told the same
+              thing. `average` is null both when the questions were never
+              answered AND when they were answered and the average was
+              deliberately skipped — a skip stores null, on purpose. The second
+              student had done everything asked of them and was told they had
+              answered nothing, then sent back to question one. */}
           <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate">
-            There is nothing to compare your list against yet. Four quick questions, and it stays
-            on this device.
+            {profile.answers === null
+              ? `There is nothing to compare your list against yet. ${STEPS.length} quick questions, every one skippable.`
+              : 'You skipped the average, which is a fine answer — it is just the one this tool needs. Adding it changes nothing else.'}
           </p>
           <Button to="/survey" className="mt-5">
-            Answer the questions
+            {profile.answers === null ? 'Answer the questions' : 'Add my average'}
           </Button>
         </div>
       ) : kept.length === 0 ? (

@@ -34,7 +34,7 @@ export const CAMPUS_ITEMS: CarouselItem[] = [
   { id: 'york', name: 'York University', caption: 'Toronto, ON', img: asset('images/universities/york.svg'), gradient: 'from-brand-100 to-brand-50' },
 ]
 
-// Popular programs band (the "Trending programs" carousel).
+// Most-reported programs band (the carousel under "Where the data runs deepest").
 //
 // Built from the generated summary rather than hand-written, so the names,
 // averages and links are real. The previous version listed invented averages

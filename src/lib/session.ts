@@ -176,7 +176,7 @@ export function isGuest(): boolean {
  * Move any guest profile into a newly created account.
  *
  * This is the point of tying accounts to survey data: the common path is
- * answering four questions, keeping a few programs, and *then* deciding to make
+ * answering the questions, keeping a few programs, and *then* deciding to make
  * an account so the work is not stranded in one browser. Signing up has to carry
  * that across, or the account starts empty and the survey was for nothing.
  *

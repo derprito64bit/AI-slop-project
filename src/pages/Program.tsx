@@ -140,7 +140,7 @@ export default function Program() {
           <h1 className="mt-1.5 font-display text-display-2 font-600 text-ink">{program.name}</h1>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             {band && (
-              <Tag tone={band === 'highly-competitive' ? 'reach' : band === 'competitive' ? 'safety' : 'likely'}>
+              <Tag tone={band === 'highly-competitive' ? 'high' : band === 'competitive' ? 'medium' : 'low'}>
                 {DIFFICULTY_LABELS[band]}
               </Tag>
             )}

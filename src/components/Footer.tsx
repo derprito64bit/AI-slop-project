@@ -5,7 +5,8 @@ import { NAV_LINKS, BRAND } from '../nav'
 export default function Footer() {
   return (
     <footer className="mt-24 border-t border-line bg-cloud">
-      <div className="container-page grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Three columns, not four — the dead "Get updates" one was removed. */}
+      <div className="container-page grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-3">
         <div>
           <div className="font-display text-lg font-600 text-ink">
             {BRAND}<span className="text-brand-500">.</span>
@@ -31,16 +32,19 @@ export default function Footer() {
         <div>
           <h4 className="text-xs font-600 uppercase tracking-wider text-slate">Sources</h4>
           <ul className="mt-3 space-y-2 text-sm text-ink/80">
+            {/* Two sources, not three. "Public admission datasets" was listed
+                here and nothing public feeds src/data/generated — the pipeline
+                is the community spreadsheets plus university pages read by
+                hand. */}
             <li>Official institution postings</li>
             <li>Community application data</li>
-            <li>Public admission datasets</li>
           </ul>
         </div>
 
-        <div>
-          <h4 className="text-xs font-600 uppercase tracking-wider text-slate">Get updates</h4>
-          <p className="mt-3 text-sm text-slate">Occasional notes as we add schools & data.</p>
-        </div>
+        {/* A "Get updates — occasional notes as we add schools & data" column
+            used to sit here, with no form, no input and no link under it. There
+            was never anything to sign up to, and the only mechanism for it would
+            be email, which this project does not collect from anyone. */}
       </div>
 
       <div className="border-t border-line">

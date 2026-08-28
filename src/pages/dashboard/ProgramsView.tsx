@@ -235,7 +235,7 @@ export default function ProgramsView() {
 
       <p className="mt-4 text-sm text-slate" role="status">
         {data
-          ? `${results.length.toLocaleString()} program${results.length === 1 ? '' : 's'} match`
+          ? `${results.length.toLocaleString()} program${results.length === 1 ? ' matches' : 's match'}`
           : ''}
       </p>
 
@@ -289,10 +289,10 @@ export default function ProgramsView() {
                       <Tag
                         tone={
                           band === 'highly-competitive'
-                            ? 'reach'
+                            ? 'high'
                             : band === 'competitive'
-                              ? 'safety'
-                              : 'likely'
+                              ? 'medium'
+                              : 'low'
                         }
                       >
                         {DIFFICULTY_LABELS[band]}

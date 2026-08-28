@@ -6,7 +6,7 @@ import UniversityMark from './UniversityMark'
 // This is the large sibling of UniversityMark: same files
 // (public/images/universities/square/<id>.svg|png), but filling the whole band
 // instead of sitting in a small tile. Used by the Explore result cards and the
-// Home "Popular right now" cards so the two stay visually identical.
+// Home "Where the data runs deepest" cards so the two stay visually identical.
 //
 // The band is white because the supplied logos have a white background baked
 // in — anything else would show as a box around the art. object-contain, never
