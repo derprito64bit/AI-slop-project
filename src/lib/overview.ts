@@ -71,7 +71,15 @@ export function startSteps(profile: SavedProfile): StartStep[] {
       key: 'courses',
       label: 'Tick your Grade 12 courses',
       done: ticked > 0,
-      value: `${ticked} of ${COURSES.length}`,
+      // A COUNT, NOT A FRACTION. This read "0 of 9", where 9 is the length of
+      // COURSES — a denominator nobody reaches, since a Grade 12 student takes
+      // six to eight and never all nine. It also disagreed with the tick beside
+      // it, which goes green at one. The real denominator is what the student's
+      // own list requires, and that is shown on the Courses tool and the
+      // "Courses ticked" tile, both of which have a list to measure against.
+      // This step only ever renders when the shortlist is empty, so here there
+      // is nothing to measure and a bare count is the honest form.
+      value: ticked === 0 ? 'none ticked yet' : `${ticked} ticked`,
       to: '/profile/courses',
     },
   ]

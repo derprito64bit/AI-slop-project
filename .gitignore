@@ -38,3 +38,4 @@ dist-ssr
 # Contact sheet from scripts/logo-check.mjs — regenerate, do not commit.
 .logo-check.png
 .crop.png
+.shot-*.png

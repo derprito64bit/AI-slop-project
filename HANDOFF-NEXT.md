@@ -26,8 +26,8 @@ Overview, and the Laurier crest).
 
 ```
 npm run lint            0 errors
-npm test                268 pass          (was 246)
-npm run sweep           132 of 132        (was 125 of 125)
+npm test                282 pass          (was 268)
+npm run sweep           135 of 135        (was 132 of 132)
 npm run sweep:sections  26 of 26
 npm run probe:motion    minVisible 0.55, 0 dark frames
 cd ../UniServer && npm test               133 pass

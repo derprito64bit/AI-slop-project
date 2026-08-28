@@ -5,8 +5,8 @@ import Button from '../../components/ui/Button'
 import { KeepControl } from '../../components/KeepButton'
 import { FetchingNote, ListSkeleton } from '../../components/Skeleton'
 import { FitLegend, ListSpread, StackedBar, type Segment } from '../../components/ListCharts'
-import { gapFor, type Gap } from '../../lib/courses'
-import { getProgramInfo } from '../../data/program-info'
+import { COURSE_NAMES } from '../../lib/courses'
+import { bestNextCourse } from '../../lib/courseNeeds'
 import { fieldSummaryFor, summarise } from '../../lib/fields'
 import { catalogueTotals, featuredCards, startSteps, type StartStep } from '../../lib/overview'
 import {
@@ -31,7 +31,7 @@ import { useDashboard } from './context'
 // with the picture thrown away. A list that clusters two points above the
 // student's average and one that spreads twenty read identically in words and
 // look nothing alike. Every chart here is built from something already tested
-// (`balanceOf`, `gapFor`, the program records themselves); none of them is a
+// (`balanceOf`, `listNeeds`, the program records themselves); none of them is a
 // new claim about the data, and none is a probability.
 //
 // The charting vocabulary is the site's existing one on purpose: stacked bars
@@ -45,21 +45,9 @@ import { useDashboard } from './context'
 
 const ORDER: Fit[] = ['ambitious', 'in-range', 'comfortable']
 
-/**
- * What is outstanding, in words.
- *
- * A gap can be named courses, an unmet choice group ("two of SCH4U/SPH4U/SBI4U"),
- * or both — `missing` alone would print an empty sentence for a program whose
- * only shortfall is a choice.
- */
-function gapPhrase(gap: Gap): string {
-  const bits = [...gap.missing]
-  for (const c of gap.choices) bits.push(`${c.count} of ${c.codes.join(' / ')}`)
-  return bits.join(', ')
-}
-
 export default function OverviewView() {
-  const { profile, setProfile, data, kept, average, compare, gapCount, uniName } = useDashboard()
+  const { profile, setProfile, data, kept, average, compare, gapCount, needs, uniName } =
+    useDashboard()
 
   // Has this student done anything yet? `kept` cannot answer that.
   //
@@ -75,11 +63,14 @@ export default function OverviewView() {
   const counts = average !== null ? balanceOf(average, kept) : null
   const total = counts ? ORDER.reduce((n, k) => n + counts[k], 0) : 0
 
-  // The most useful sentence on the page: the next prerequisite that is not
-  // ticked off. One, not a list — the list lives in Courses.
-  const nextGap = kept
-    .map((p) => ({ program: p, gap: gapFor(getProgramInfo(p.id)?.requiredCourses, profile.courses) }))
-    .find((x) => x.gap && !x.gap.satisfied)
+  // The most useful sentence on the page: the course that would clear the most
+  // programs. One, not a list — the list lives in Courses.
+  //
+  // Read off the shared rollup rather than walked here. The previous version
+  // mapped the ENTIRE shortlist through gapFor before `.find()` could
+  // short-circuit, unmemoised, on every render — and it named whichever program
+  // happened to be first rather than the course that does the most work.
+  const nextCourse = bestNextCourse(needs)
 
   /** The list broken down by subject — is it one bet or several? */
   const fieldMix = useMemo<Segment[]>(() => {
@@ -97,22 +88,14 @@ export default function OverviewView() {
    * not the same as "you are clear" and the site's whole rule is not to blur
    * them. Unverified is drawn last and lightest for the same reason.
    */
-  const courseMix = useMemo<Segment[]>(() => {
-    let covered = 0
-    let blocked = 0
-    let unverified = 0
-    for (const p of kept) {
-      const gap = gapFor(getProgramInfo(p.id)?.requiredCourses, profile.courses)
-      if (!gap) unverified += 1
-      else if (gap.satisfied) covered += 1
-      else blocked += 1
-    }
-    return [
-      { key: 'blocked', label: 'Missing a prerequisite', count: blocked },
-      { key: 'covered', label: 'Prerequisites covered', count: covered },
-      { key: 'unverified', label: 'Requirements not researched yet', count: unverified },
-    ]
-  }, [kept, profile.courses])
+  const courseMix = useMemo<Segment[]>(
+    () => [
+      { key: 'blocked', label: 'Missing a prerequisite', count: needs.blocked },
+      { key: 'covered', label: 'Prerequisites covered', count: needs.covered },
+      { key: 'unverified', label: 'Requirements not researched yet', count: needs.unverified },
+    ],
+    [needs],
+  )
 
   /** Schools on the list, most-kept first — the marks row under the charts. */
   const schools = useMemo(() => {
@@ -185,7 +168,20 @@ export default function OverviewView() {
             label="Courses ticked"
             value={profile.courses.length}
             to="/profile/courses"
-            note={gapCount ? `${gapCount} with a gap` : undefined}
+            // A denominator that MEANS something. "N with a gap" counted
+            // programs while the number above it counted courses, so the tile
+            // and its note were about different things. This one is the same
+            // unit as the value: of the courses your list actually names, how
+            // many do you have. Falls back to the program count when nothing on
+            // the list has been researched, because then there is no real
+            // denominator to give.
+            note={
+              needs.requiredCodes.length > 0
+                ? `${needs.heldCodes.length} of the ${needs.requiredCodes.length} your list needs`
+                : gapCount
+                  ? `${gapCount} with a gap`
+                  : undefined
+            }
           />
           <Stat label="Staged to compare" value={compare.length} to="/profile/compare" />
           <Stat
@@ -227,16 +223,16 @@ export default function OverviewView() {
                   Browse programs
                 </Button>
               </>
-            ) : nextGap ? (
+            ) : nextCourse ? (
               <>
                 <p className="mt-2 text-sm leading-relaxed text-slate">
-                  <Link
-                    to={`/program/${nextGap.program.universityId}/${nextGap.program.slug}`}
-                    className="font-600 text-ink hover:text-brand-600"
-                  >
-                    {nextGap.program.name}
-                  </Link>{' '}
-                  needs {gapPhrase(nextGap.gap!)}, which you haven&rsquo;t ticked off.
+                  {nextCourse.programIds.length === 1
+                    ? 'One program on your list needs '
+                    : `${nextCourse.programIds.length} programs on your list need `}
+                  <span className="font-600 text-ink">
+                    {COURSE_NAMES[nextCourse.code] ?? nextCourse.code}
+                  </span>
+                  , and you haven&rsquo;t ticked it.
                 </p>
                 <Link
                   to="/profile/courses"

@@ -5,7 +5,7 @@ import { useDashboard } from './context'
 // Prerequisites: the one hard gate on this site. An average is a comparison;
 // a missing course is a closed door.
 export default function CoursesView() {
-  const { profile, setProfile, kept, uniName } = useDashboard()
+  const { profile, setProfile, kept, uniName, needs } = useDashboard()
 
   return (
     <>
@@ -22,6 +22,7 @@ export default function CoursesView() {
         onToggle={(code) => setProfile(toggleCourse(code))}
         programs={kept}
         uniName={uniName}
+        needs={needs}
       />
     </>
   )
