@@ -34,3 +34,6 @@ dist-ssr
 # Per-machine Claude settings. Ignored globally on some machines and not others,
 # which is how one of these ended up committed.
 .claude/settings.local.json
+
+# Contact sheet from scripts/logo-check.mjs — regenerate, do not commit.
+.logo-check.png
