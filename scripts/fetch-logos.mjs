@@ -33,6 +33,15 @@
 // HANDOFF-NEXT.md §3. Pulling one is a one-line deletion and the monogram comes
 // back on its own.
 //
+// EXTRACTING A CREST FROM A LOCKUP. Eight schools shipped a lockup — the crest
+// set beside or above the school's name — and a lockup is unreadable at 24px, so
+// those eight drew a two-letter monogram in every listing despite having
+// artwork. The crest inside them is perfectly good: the files are 640x640, so
+// the crest region is 150-300px, which is more than the 256 this writes. A
+// source with `crop` takes that region instead of the whole image, and `local`
+// reads the file already in the folder rather than fetching anything. Boundaries
+// came from an ink-band scan of each file, not from eyeballing.
+//
 // HOW THE SQUARING WORKS. Sources are a mix of SVG, PNG and JPEG at wildly
 // different aspect ratios, so each is rendered into a 256x256 transparent
 // canvas with object-fit: contain and a small inset. Chrome does the
@@ -40,7 +49,7 @@
 // no image library to add. A wide wordmark stays wide inside the square; it is
 // letterboxed, not stretched.
 
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { launch } from 'puppeteer-core'
@@ -51,8 +60,13 @@ const WRITE = process.argv.includes('--write')
 const ONLY = process.argv.slice(2).filter((a) => !a.startsWith('--'))
 
 const CHROME = process.env.CHROME_PATH ?? 'C:/Program Files/Google/Chrome/Application/chrome.exe'
+// Mozilla-prefixed on purpose. Two university CDNs answer 403 to anything that
+// does not look like a browser, and the point of the string is to identify who
+// is asking rather than to pretend otherwise — the project name and its repo
+// are still in it.
 const USER_AGENT =
-  'acceptiversity-logo-fetch/1.0 (student project; https://github.com/derprito64bit/AI-slop-project)'
+  'Mozilla/5.0 (compatible; acceptiversity-logo-fetch/1.0; ' +
+  '+https://github.com/derprito64bit/AI-slop-project)'
 
 /** Rendered canvas, and the breathing room left around the art inside it. */
 const SIZE = 256
@@ -84,7 +98,13 @@ const SOURCES = {
     url: `${C}/6/6b/Carleton_University_Escutcheon.png/500px-Carleton_University_Escutcheon.png`,
     depicts: 'arms',
   },
-  brock: { url: `${W}/7/7f/BrockU_CoA.jpg`, depicts: 'arms' },
+  brock: {
+    url: `${W}/7/7f/BrockU_CoA.jpg`,
+    depicts: 'arms',
+    // Stays the full achievement, and so stays out of CREST_MARKS. Searched:
+    // Brock has no escutcheon file under any spelling, its brand site publishes
+    // a wordmark only, and its athletics mark is a badger plus wordmark.
+  },
   'ontario-tech': {
     url: 'https://shared.ontariotechu.ca/shared/department/communications/brand/visual-identities/9_coat_of_arms/UOIT_crest-100.jpg',
     depicts: 'arms',
@@ -122,13 +142,28 @@ const SOURCES = {
     depicts: 'arms',
   },
 
-  alberta: { url: `${W}/9/92/University_of_Alberta_Coat_of_Arms.png`, depicts: 'arms' },
-  windsor: { url: `${W}/8/8a/Coat_of_Arms_of_the_University_of_Windsor.png`, depicts: 'arms' },
+  alberta: {
+    // The university's own shield, not the full achievement that was here
+    // before. Single-colour green, and it survives 24px where the achievement
+    // did not.
+    url: 'https://www.ualberta.ca/favicon.svg',
+    depicts: 'arms',
+  },
+  windsor: {
+    url: 'https://www.uwindsor.ca/sites/all/themes/uwindsor_bootstrap/images/uwindsor_shield.svg',
+    depicts: 'arms',
+    // The institutional shield rather than the Lancers athletics one, which is
+    // marginally cleaner small but is the sports mark, not the university's.
+  },
   laurentian: {
     url: 'https://upload.wikimedia.org/wikipedia/commons/4/43/Laurentian_University_Escutcheon.png',
     depicts: 'arms',
   },
-  lakehead: { url: `${W}/3/33/LakeheadU_Coat_of_Arms.jpg`, depicts: 'arms' },
+  lakehead: {
+    url: 'https://www.lakeheadu.ca/apple-touch-icon.png',
+    depicts: 'arms',
+    // Lakehead's brand shield, which is the escutcheon out of its full arms.
+  },
   calgary: {
     url: `${C}/7/7e/University_of_Calgary_coat_of_arms_without_motto_scroll.svg/500px-University_of_Calgary_coat_of_arms_without_motto_scroll.svg.png`,
     depicts: 'arms',
@@ -151,8 +186,77 @@ const SOURCES = {
     // so unlike the two Toronto campuses there is no campus-specific art to
     // prefer. The rule throughout is the most specific mark that exists.
   },
-  victoria: { url: `${W}/3/37/UVic_CoA.svg`, depicts: 'arms' },
-  concordia: { url: `${W}/b/b6/Concordia_coa.png`, depicts: 'arms' },
+  victoria: {
+    // The escutcheon file, NOT a thumb of it: the source is 313px and Wikimedia
+    // will not upscale past that, so a 500px request 404s.
+    url: 'https://upload.wikimedia.org/wikipedia/commons/e/e7/University_of_Victoria_Escutcheon.png',
+    depicts: 'arms',
+  },
+  concordia: {
+    url: `${C}/0/0a/Coat_of_arms_of_Concordia_University.svg/500px-Coat_of_arms_of_Concordia_University.svg.png`,
+    depicts: 'arms',
+    // Named "Coat of arms of" on Commons but is escutcheon-only, and CC0.
+  },
+
+  // --- crests extracted from the lockups these schools shipped with ----------
+  //
+  // All eight had artwork and all eight still drew a two-letter monogram in
+  // every listing, because a crest-plus-name lockup is illegible at 24px and
+  // the 48px floor caught them. Between them they are 84% of every report the
+  // site holds, so this was most of the "placeholder text" left on the site.
+  //
+  // The crest inside each is the school's own current mark, at 150-300px in a
+  // 640x640 file — better provenance than a heraldic variant fetched from
+  // elsewhere, and no new licensing surface, since the file already shipped.
+  // Boxes are tight ink bounds computed from each file, not eyeballed.
+  waterloo: {
+    local: 'waterloo.png',
+    depicts: 'arms',
+    crop: { x: 0.383, y: 0.449, w: 0.23, h: 0.262 },
+  },
+  mcmaster: {
+    local: 'mcmaster.png',
+    depicts: 'arms',
+    // Top edge sits BELOW the baseline of "McMaster", which runs right over
+    // the shield — an ink-bounds scan alone kept catching the "ter".
+    crop: { x: 0.645, y: 0.447, w: 0.19, h: 0.248 },
+  },
+  western: {
+    local: 'western.png',
+    depicts: 'arms',
+    crop: { x: 0.32, y: 0.203, w: 0.379, h: 0.465 },
+  },
+  toronto: {
+    // NOT extracted. The crest inside the lockup is genuinely tall and narrow
+    // — about 1:2 — so cropped into a square it renders as a sliver a quarter
+    // the height of every shield beside it. The published arms are 180x180 and
+    // hold their detail at 24px, which is the whole test.
+    url: `${C.replace('/commons/', '/en/')}/0/04/Utoronto_coa.svg/500px-Utoronto_coa.svg.png`,
+    depicts: 'arms',
+  },
+  queens: {
+    local: 'queens.png',
+    depicts: 'arms',
+    crop: { x: 0.355, y: 0.215, w: 0.293, h: 0.359 },
+  },
+  ottawa: {
+    local: 'ottawa.png',
+    depicts: 'arms',
+    // Not heraldry — the portico device uOttawa uses as its mark. It exists
+    // nowhere except inside this lockup, which is the case extraction is for.
+    crop: { x: 0.25, y: 0.063, w: 0.5, h: 0.566 },
+  },
+  york: {
+    local: 'york.png',
+    depicts: 'arms',
+    // The red U block, likewise a brand device rather than arms.
+    crop: { x: 0.609, y: 0.352, w: 0.352, h: 0.258 },
+  },
+  guelph: {
+    local: 'guelph.png',
+    depicts: 'arms',
+    crop: { x: 0.402, y: 0.156, w: 0.199, h: 0.309 },
+  },
 
   ocad: {
     url: 'https://www.ocadu.ca/themes/custom/ocad/img/favicons/web-app-manifest-512x512.png',
@@ -164,6 +268,9 @@ const SOURCES = {
   rmc: {
     url: `${C}/3/3f/Royal_Military_College_Arms.svg/500px-Royal_Military_College_Arms.svg.png`,
     depicts: 'arms',
+    // Also stays the full achievement. Everything RMC publishes carries the
+    // crown, wreath and TRUTH DUTY VALOUR scroll; the Paladins mark is a
+    // wordmark lockup and rmc-cmr.ca's icon is the generic federal maple leaf.
   },
   unb: {
     url: `${C}/8/80/Coat_of_Arms_of_the_University_of_New_Brunswick.png/500px-Coat_of_Arms_of_the_University_of_New_Brunswick.png`,
@@ -174,6 +281,11 @@ const SOURCES = {
   stfx: {
     url: `${C.replace('/commons/', '/en/')}/f/f7/StFXCoatofArms.svg/500px-StFXCoatofArms.svg.png`,
     depicts: 'arms',
+    // Stays the full achievement, and so stays out of CREST_MARKS. StFX does
+    // publish a clean brand shield at
+    // goxgo.ca/assets/favicons/web-app-manifest-512x512.png, but that host
+    // answers 403 to a script under any User-Agent tried, and a source this
+    // file cannot actually fetch is not a source.
   },
   acadia: { url: `${W}/0/06/Acadia_University_Coat_of_Arms_2017.jpg`, depicts: 'arms' },
   'mount-allison': {
@@ -221,6 +333,17 @@ const pause = (ms) => new Promise((r) => setTimeout(r, ms))
 // step over 30 rows, so waiting is free.
 const THROTTLE_MS = 500
 
+/**
+ * Read one of the original lockups — the crest-extraction path.
+ *
+ * From scripts/lockups/, NOT from the output folder: this script overwrites
+ * square/<id>.png with the crest it crops out, so reading the input from there
+ * would crop its own output on the second run and zoom further in every time.
+ */
+function readLocal(name) {
+  return { buffer: readFileSync(join(ROOT, 'scripts/lockups', name)), type: 'image/png' }
+}
+
 async function download(url, attempt = 0) {
   await pause(THROTTLE_MS * (attempt + 1))
   const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT } })
@@ -245,14 +368,30 @@ async function download(url, attempt = 0) {
  * 24px, visibly worse than the monogram they replaced. Compositing those onto
  * white matches what every pre-existing mark in this folder already does.
  */
-async function square(page, buffer, type, background = 'transparent') {
+async function square(page, buffer, type, background = 'transparent', crop = null) {
   const data = `data:${type};base64,${buffer.toString('base64')}`
+  // With a crop box the image is blown up and shifted so the wanted region
+  // fills the frame, and the frame hides the rest. Scaling by 1/w keeps the
+  // aspect ratio, so a crest is never stretched to fill a square.
+  // The crop must CLIP, not just centre. An earlier version scaled by
+  // 1/max(w,h) and let the shorter axis show whatever was beside it, so a tall
+  // narrow crest came out with the wordmark next to it still in frame — which
+  // is the exact thing cropping was for. The box is now its own clipping
+  // window, sized to the crop's aspect and centred, and the image is shifted
+  // inside it.
+  const fit = SIZE - INSET * 2
+  const k = crop ? fit / Math.max(crop.w, crop.h) : 0
+  const frame = crop
+    ? `<div style="width:${crop.w * k}px;height:${crop.h * k}px;overflow:hidden;position:relative">` +
+      `<img src="${data}" style="position:absolute;width:${k}px;height:${k}px;` +
+      `left:${-crop.x * k}px;top:${-crop.y * k}px;max-width:none">` +
+      `</div>`
+    : `<img src="${data}" style="max-width:${fit}px;max-height:${fit}px;object-fit:contain">`
   await page.setContent(
     `<style>
        html,body{margin:0;padding:0;background:${background}}
        body{width:${SIZE}px;height:${SIZE}px;display:flex;align-items:center;justify-content:center}
-       img{max-width:${SIZE - INSET * 2}px;max-height:${SIZE - INSET * 2}px;object-fit:contain}
-     </style><img src="${data}">`,
+     </style>${frame}`,
     // NOT networkidle0. Several of these SVGs reference a webfont that never
     // resolves offline, so the network never goes idle and a perfectly good
     // logo times out after 30s. What actually matters is that the image
@@ -272,12 +411,24 @@ async function square(page, buffer, type, background = 'transparent') {
   // to be a 256x256 sheet of white, which would have shipped as an invisible
   // logo — worse than the monogram it replaced, because nothing looks broken.
   // So measure how much of the canvas is actually inked.
-  const inked = await page.$eval('img', (el) => {
+  const inked = await page.$eval('img', (el, box) => {
     const c = document.createElement('canvas')
     c.width = 64
     c.height = 64
     const ctx = c.getContext('2d')
-    ctx.drawImage(el, 0, 0, 64, 64)
+    // The CROPPED region, when there is one. Measuring the whole source would
+    // score a lockup by its wordmark and tell us nothing about whether the
+    // crest we actually cut out has anything in it.
+    if (box) {
+      ctx.drawImage(
+        el,
+        box.x * el.naturalWidth, box.y * el.naturalHeight,
+        box.w * el.naturalWidth, box.h * el.naturalHeight,
+        0, 0, 64, 64,
+      )
+    } else {
+      ctx.drawImage(el, 0, 0, 64, 64)
+    }
     const { data } = ctx.getImageData(0, 0, 64, 64)
     let n = 0
     for (let i = 0; i < data.length; i += 4) {
@@ -285,7 +436,7 @@ async function square(page, buffer, type, background = 'transparent') {
       if (a > 24 && !(r > 244 && g > 244 && b > 244)) n += 1
     }
     return n / (64 * 64)
-  })
+  }, crop)
   if (inked < 0.02) throw new Error(`blank — only ${(inked * 100).toFixed(1)}% inked`)
 
   return { png: await page.screenshot({ omitBackground: background === 'transparent' }), drawn, inked }
@@ -313,8 +464,10 @@ for (const id of ids) {
     continue
   }
   try {
-    const { buffer, type } = await download(source.url)
-    const { png, drawn, inked } = await square(page, buffer, type, source.background)
+    const { buffer, type } = source.local
+      ? readLocal(source.local)
+      : await download(source.url)
+    const { png, drawn, inked } = await square(page, buffer, type, source.background, source.crop)
     const target = join(OUT, `${id}.png`)
     if (WRITE) writeFileSync(target, png)
     done.push([

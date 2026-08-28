@@ -53,8 +53,21 @@ The dividing line is **not** crest versus wordmark — it is **shield versus ful
 achievement**. A shield is a flat two-colour shape and survives being 24 pixels
 wide. A full achievement is a shield plus crest, helm, mantling, two supporters
 and a motto scroll, so the shield is a third of the artwork and the rest is
-detail that turns to mud. Alberta, Windsor, Concordia, Victoria, Lakehead, Brock,
-RMC and St. FX are all in that second group.
+detail that turns to mud.
+
+Where a school publishes both, take the shield. Commons has a
+`<University> Escutcheon` series covering about twenty Canadian universities and
+it is the first place to look — Alberta, Windsor, Concordia, Victoria and
+Lakehead all moved off the full achievement that way. Only **Brock, RMC and
+St. FX** are still on one, and no escutcheon for those exists under any spelling.
+
+**Where no shield is published anywhere, crop one out of the lockup.** Eight
+schools shipped a crest-plus-name lockup, which is illegible small — so those
+eight drew a two-letter monogram in every listing despite having artwork, and
+between them they are 84% of every report held. `fetch-logos.mjs` cuts the crest
+out with a `crop` box, and the originals live in `scripts/lockups/` because the
+script overwrites its own output. Toronto, York and Guelph have no shield-only
+asset anywhere, so cropping is the only honest fix for them.
 
 Run `npm run logos:check` and answer one question per row: **at 24px, can you
 still tell which school this is?** An illegible logo is worse than a monogram,
@@ -62,21 +75,22 @@ which is why the list is opt-in rather than "has a file".
 
 ## Coverage
 
-38 of 39 schools have a mark. Ordered by how many student reports each school
-has, with a running cumulative share.
+38 of 39 schools have a mark, and **29 of those are legible small enough to draw
+at any size** — together 92.7% of every report the site holds. Ordered by report
+volume, with a running cumulative share.
 
 | id | University | Reports | Cumulative | Draws art at |
 |---|---|---:|---:|---|
-| `waterloo` | University of Waterloo | 1,477 | 14.2% | 48px and up |
-| `mcmaster` | McMaster University | 1,261 | 26.4% | 48px and up |
-| `western` | Western University | 1,024 | 36.3% | 48px and up |
-| `toronto` | University of Toronto | 1,022 | 46.1% | 48px and up |
-| `queens` | Queen's University | 922 | 55.0% | 48px and up |
+| `waterloo` | University of Waterloo | 1,477 | 14.2% | any size |
+| `mcmaster` | McMaster University | 1,261 | 26.4% | any size |
+| `western` | Western University | 1,024 | 36.3% | any size |
+| `toronto` | University of Toronto | 1,022 | 46.1% | any size |
+| `queens` | Queen's University | 922 | 55.0% | any size |
 | `tmu` | Toronto Metropolitan University | 750 | 62.2% | any size |
-| `ottawa` | University of Ottawa | 657 | 68.6% | 48px and up |
-| `york` | York University | 577 | 74.1% | 48px and up |
+| `ottawa` | University of Ottawa | 657 | 68.6% | any size |
+| `york` | York University | 577 | 74.1% | any size |
 | `laurier` | Wilfrid Laurier University | 571 | 79.6% | any size |
-| `guelph` | University of Guelph | 448 | 84.0% | 48px and up |
+| `guelph` | University of Guelph | 448 | 84.0% | any size |
 | `carleton` | Carleton University | 391 | 87.7% | any size |
 | `brock` | Brock University | 168 | 89.4% | 48px and up |
 | `ontario-tech` | Ontario Tech University | 159 | 90.9% | 48px and up |
@@ -86,16 +100,16 @@ has, with a running cumulative share.
 | `ubc` | University of British Columbia | 107 | 96.2% | any size |
 | `trent` | Trent University | 96 | 97.2% | **none** |
 | `dalhousie` | Dalhousie University | 55 | 97.7% | any size |
-| `alberta` | University of Alberta | 54 | 98.2% | 48px and up |
-| `windsor` | University of Windsor | 48 | 98.7% | 48px and up |
+| `alberta` | University of Alberta | 54 | 98.2% | any size |
+| `windsor` | University of Windsor | 48 | 98.7% | any size |
 | `laurentian` | Laurentian University | 27 | 98.9% | any size |
-| `lakehead` | Lakehead University | 19 | 99.1% | 48px and up |
+| `lakehead` | Lakehead University | 19 | 99.1% | any size |
 | `calgary` | University of Calgary | 15 | 99.3% | any size |
 | `nipissing` | Nipissing University | 13 | 99.4% | any size |
 | `guelph-humber` | University of Guelph-Humber | 13 | 99.5% | 48px and up |
 | `ubc-okanagan` | UBC Okanagan | 12 | 99.6% | any size |
-| `victoria` | University of Victoria | 7 | 99.7% | 48px and up |
-| `concordia` | Concordia University | 7 | 99.8% | 48px and up |
+| `victoria` | University of Victoria | 7 | 99.7% | any size |
+| `concordia` | Concordia University | 7 | 99.8% | any size |
 | `ocad` | OCAD University | 7 | 99.8% | 48px and up |
 | `rmc` | Royal Military College | 3 | 99.9% | 48px and up |
 | `unb` | University of New Brunswick | 3 | 99.9% | any size |
