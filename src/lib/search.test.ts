@@ -7,6 +7,7 @@ import {
   difficultyBand,
   findProgram,
   similarPrograms,
+  isCoop,
 } from './search'
 import type { Program, University } from '../data/types'
 
@@ -176,5 +177,52 @@ describe('queryPrograms', () => {
 
   it('defaults to most-reported when there is no query', () => {
     expect(queryPrograms(programs, {}, universities)[0].name).toBe('Computer Science')
+  })
+})
+
+describe('isCoop', () => {
+  // The dataset has no co-op field: co-op is baked into the program name,
+  // because build-data.mjs deliberately never merges "X" with "X (Co-op)".
+  it('recognises the ways the source spreadsheets word it', () => {
+    for (const name of [
+      'Engineering I (Co-op)',
+      'Health Sciences, Co-op',
+      'Computer Engineering (Co-op only)',
+      'Mathematics (Coop)',
+      'Computer Science (Co-op and Regular)',
+    ]) {
+      expect(isCoop(mk({ id: 'x', universityId: 'waterloo', name }))).toBe(true)
+    }
+  })
+
+  it('does not claim co-op from a name that never says so', () => {
+    for (const name of ['Computer Science', 'Cooperative Education Studies', 'Nursing']) {
+      expect(isCoop(mk({ id: 'x', universityId: 'waterloo', name }))).toBe(false)
+    }
+  })
+})
+
+describe('the co-op filter', () => {
+  const programs = [
+    mk({ id: 'a', universityId: 'waterloo', name: 'Computer Science (Co-op)' }),
+    mk({ id: 'b', universityId: 'waterloo', name: 'Computer Science' }),
+    mk({ id: 'c', universityId: 'mcmaster', name: 'Engineering I (Co-op)' }),
+  ]
+
+  it('keeps only co-op programs', () => {
+    expect(filterPrograms(programs, { coop: 'yes' }, universities).map((p) => p.id)).toEqual([
+      'a',
+      'c',
+    ])
+  })
+
+  it('keeps only the ones without it', () => {
+    expect(filterPrograms(programs, { coop: 'no' }, universities).map((p) => p.id)).toEqual(['b'])
+  })
+
+  // The failure this guards against: a "no preference" answer arriving as
+  // something truthy and quietly halving the shortlist.
+  it('leaves everything alone when no preference was expressed', () => {
+    expect(filterPrograms(programs, {}, universities)).toHaveLength(3)
   })
 })

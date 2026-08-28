@@ -4,15 +4,19 @@ import { useNavigate } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import Eyebrow from '../components/ui/Eyebrow'
 import Button from '../components/ui/Button'
+import Combobox, { type Option } from '../components/ui/Combobox'
 import { DURATION, STEP_VARIANTS } from '../lib/motion'
 import { loadCatalogue } from '../lib/dataSource'
 import { submitSurvey } from '../lib/api'
 import { useAuth } from '../lib/authContext'
+import { COURSES } from '../lib/courses'
+import { CITY_POINTS } from '../data/campus-locations'
 import {
   AMBITION_LABELS,
   FIELD_LABELS,
   PROVINCE_LABELS,
   averageBand,
+  loadProfile,
   matchPrograms,
   updateProfile,
   type Ambition,
@@ -20,13 +24,19 @@ import {
 } from '../lib/profile'
 import type { Program, University } from '../data/types'
 
-// The narrowing survey: four questions that cut 2,436 programs down to a
+// The narrowing survey: the questions that cut 2,436 programs down to a
 // shortlist the student can actually read.
 //
-// ONE QUESTION AT A TIME. All four at once, full-page width, was the version
+// ONE QUESTION AT A TIME. All of them at once, full-page width, was the version
 // that felt like a form to fill in rather than a conversation — you saw the
-// whole obligation before you had answered any of it. Each question now gets
-// its own card, its own step, and its own way out.
+// whole obligation before you had answered any of it. Each question gets its
+// own card, its own step, and its own way out.
+//
+// THE PICKERS ARE TYPEAHEADS, NOT CHIP GRIDS. Field and province used to be
+// thirteen and seven chips, which meant the first thing the survey asked you to
+// do was read twenty labels and then decide. A box you type into asks for one
+// thing, and every question carries an EXAMPLE of a real answer rather than a
+// restatement of its own label. See components/ui/Combobox.tsx.
 //
 // SKIPPING IS A FIRST-CLASS ANSWER, not an escape hatch. Every question can be
 // skipped and the whole survey can be abandoned at any point, because a
@@ -34,22 +44,51 @@ import type { Program, University } from '../data/types'
 // the one input it needs. `SurveyAnswers` carries '' and null for exactly this,
 // and `toFilters` widens rather than empties when something is missing.
 //
+// ADDING A QUESTION IS A FOUR-PLACE CHANGE, and missing one of them loses the
+// answer silently:
+//   1. `SurveyAnswers` in lib/profile.ts
+//   2. `applyRemoteProfile` in lib/sync.ts — it REBUILDS the local record from
+//      its own whitelist on every pull, so an unlisted field is erased on the
+//      next sign-in somewhere else
+//   3. `RemoteProfile` in lib/api.ts
+//   4. the profile model in TheKeems/UniServer
+// The one exception is `courses`, which is not a survey answer at all: it lives
+// on `SavedProfile` because the Courses tool owns it, and the survey merely
+// offers the fastest way to fill it in the first time.
+//
 // Structure, validation and the Field/inputClass helpers come from James
-// Zeng's original survey; the questions are different because these four map
-// one-to-one onto filters that already exist and are tested in search.ts, so
-// there is no second matching implementation to keep in step.
+// Zeng's original survey; the questions are different because they map onto
+// filters that already exist and are tested in search.ts, so there is no second
+// matching implementation to keep in step.
 //
 // It narrows WHAT TO LOOK AT, never what you will get into. Results are framed
 // as "programs where admitted students reported averages near yours" — the same
 // rule search.ts states for difficulty bands.
 
-const EMPTY: SurveyAnswers = { field: '', province: 'ON', average: null, ambition: 'balanced' }
+const EMPTY: SurveyAnswers = {
+  field: '',
+  province: 'ON',
+  average: null,
+  ambition: 'balanced',
+  homeCity: '',
+  coop: '',
+  gradYear: null,
+}
 
 // Wide enough to catch typos, not a real eligibility check.
 const MIN_AVERAGE = 40
 const MAX_AVERAGE = 100
 
-export const STEPS = ['field', 'province', 'average', 'ambition'] as const
+export const STEPS = [
+  'field',
+  'coop',
+  'province',
+  'homeCity',
+  'average',
+  'courses',
+  'gradYear',
+  'ambition',
+] as const
 export type StepId = (typeof STEPS)[number]
 
 /**
@@ -57,21 +96,33 @@ export type StepId = (typeof STEPS)[number]
  *
  * Skipping is not a separate state to track — it is "leave it at no preference
  * and move on", which is why these are the same values an untouched form
- * carries. Two of them matter downstream: `province: ''` means anywhere rather
- * than Ontario, and `average: null` means do not filter by average at all
- * (`toFilters` drops the ceiling instead of asking for medians under 3%).
+ * carries. Three of them matter downstream: `province: ''` means anywhere
+ * rather than Ontario, `average: null` means do not filter by average at all
+ * (`toFilters` drops the ceiling instead of asking for medians under 3%), and
+ * `coop: ''` means show both rather than neither.
  *
  * Ambition has no empty value because it is a view setting rather than a fact
- * about the student; balanced is what you get by not expressing one.
+ * about the student; balanced is what you get by not expressing one. `courses`
+ * is not here at all — it is not a survey answer, it lives on the profile, and
+ * the caller clears its own state for that step.
  */
 export function withSkipped(a: SurveyAnswers, id: StepId): SurveyAnswers {
   switch (id) {
     case 'field':
       return { ...a, field: '' }
+    case 'coop':
+      return { ...a, coop: '' }
     case 'province':
       return { ...a, province: '' }
+    case 'homeCity':
+      return { ...a, homeCity: '' }
     case 'average':
       return { ...a, average: null }
+    case 'gradYear':
+      return { ...a, gradYear: null }
+    case 'courses':
+      // Handled outside `answers`; nothing here to clear.
+      return a
     case 'ambition':
       return { ...a, ambition: 'balanced' }
   }
@@ -92,14 +143,58 @@ export function averageError(raw: string): string | undefined {
   return undefined
 }
 
+/** The graduating years worth offering: this one and the next four. */
+export function gradYearOptions(now = new Date().getFullYear()): Option[] {
+  return Array.from({ length: 5 }, (_, i) => ({
+    value: String(now + i),
+    label: String(now + i),
+  }))
+}
+
+const FIELD_OPTIONS: Option[] = Object.entries(FIELD_LABELS).map(([value, label]) => ({
+  value,
+  label,
+}))
+
+const PROVINCE_OPTIONS: Option[] = Object.entries(PROVINCE_LABELS).map(([value, label]) => ({
+  value,
+  label,
+}))
+
+// Only the cities the map can actually place. Offering one it cannot would
+// store an answer that silently does nothing.
+const CITY_OPTIONS: Option[] = Object.keys(CITY_POINTS)
+  .sort()
+  .map((city) => ({ value: city, label: city }))
+
+/** Where the home city used to live, before it became a survey answer. */
+const LEGACY_HOME_KEY = 'acceptiversity.map.home'
+
 export default function Survey() {
   const navigate = useNavigate()
-  // Only used to tell the truth about where the average goes — the survey itself
-  // behaves identically signed in or out.
+  // Only used to tell the truth about where the average goes — the survey
+  // itself behaves identically signed in or out.
   const { user } = useAuth()
   const signedIn = Boolean(user)
-  const [answers, setAnswers] = useState<SurveyAnswers>(EMPTY)
-  const [rawAverage, setRawAverage] = useState('')
+
+  // Prefilled from whatever is already stored, so "Change answers" is an edit
+  // rather than a re-interrogation. A student who has answered six of eight
+  // questions should not have to retype the six to change the seventh.
+  const [answers, setAnswers] = useState<SurveyAnswers>(() => {
+    const saved = loadProfile()
+    let legacyHome = ''
+    try {
+      legacyHome = localStorage.getItem(LEGACY_HOME_KEY) ?? ''
+    } catch {
+      /* storage unavailable — no city to recover */
+    }
+    return { ...EMPTY, homeCity: legacyHome, ...(saved?.answers ?? {}) }
+  })
+  const [courses, setCourses] = useState<string[]>(() => loadProfile()?.courses ?? [])
+  const [rawAverage, setRawAverage] = useState(() => {
+    const a = loadProfile()?.answers?.average
+    return typeof a === 'number' ? String(a) : ''
+  })
   const [error, setError] = useState<string>()
   const [step, setStep] = useState(0)
   // 1 = moving forward, -1 = going back. Drives which way the cards slide, so
@@ -129,7 +224,7 @@ export default function Survey() {
   }
 
   /** Save what we have and go to the dashboard. `null` = abandoned entirely. */
-  const finish = (final: SurveyAnswers | null) => {
+  const finish = (final: SurveyAnswers | null, finalCourses: string[]) => {
     if (sending) return
     setSending(true)
 
@@ -137,7 +232,7 @@ export default function Survey() {
     // never waits on a sleeping server to see their results — the telemetry
     // POST is fired afterwards and its failure is deliberately ignored.
     const matches = final && data ? matchPrograms(final, data.programs, data.universities) : []
-    updateProfile({ answers: final })
+    updateProfile({ answers: final, courses: finalCourses })
     navigate('/profile')
 
     if (!final) return
@@ -149,6 +244,9 @@ export default function Survey() {
       averageBand: averageBand(final.average),
       ambition: final.ambition,
       matchCount: matches.length,
+      // Deliberately NOT sent: homeCity, gradYear, courses. This endpoint's
+      // rows have to stay unlinkable to a person, and those three are facts
+      // about the student rather than about whether the funnel works.
     }).catch(() => {
       /* telemetry only — never block or alarm the student */
     })
@@ -174,9 +272,9 @@ export default function Survey() {
         : answers
 
     if (isLast) {
-      // finish() reads this object, not state: setAnswers would not have
+      // finish() reads these values, not state: setAnswers would not have
       // flushed by the time the shortlist is computed on the same tick.
-      finish(committed)
+      finish(committed, courses)
     } else {
       setAnswers(committed)
       go(1)
@@ -187,13 +285,18 @@ export default function Survey() {
   const onSkip = () => {
     if (current === 'average') setRawAverage('')
     const cleared = withSkipped(answers, current)
+    const clearedCourses = current === 'courses' ? [] : courses
+    if (current === 'courses') setCourses([])
     if (isLast) {
-      finish(cleared)
+      finish(cleared, clearedCourses)
     } else {
       setAnswers(cleared)
       go(1)
     }
   }
+
+  const toggleCourse = (code: string) =>
+    setCourses((prev) => (prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]))
 
   return (
     // The inner max-width is its own element rather than a utility on
@@ -201,202 +304,279 @@ export default function Survey() {
     // big monitors) and wins, which left the "compact card" spanning 1,100px.
     <section className="container-page flex min-h-[70vh] flex-col justify-center py-16">
       <div className="mx-auto w-full max-w-xl">
-      <div className="text-center">
-        <Eyebrow>Find your fit</Eyebrow>
-        <h1 className="mt-2 font-display text-display-3 font-600 text-ink">
-          Four questions. A shortlist you can actually read.
-        </h1>
-      </div>
+        <div className="text-center">
+          <Eyebrow>Find your fit</Eyebrow>
+          <h1 className="mt-2 font-display text-display-3 font-600 text-ink">
+            A few questions. A shortlist you can actually read.
+          </h1>
+        </div>
 
-      {/* --------------------------------------------------- the card --- */}
-      <div className="mt-8 rounded-2xl border border-line bg-paper p-6 shadow-[0_10px_40px_rgba(20,24,31,0.06)] sm:p-8">
-        <Progress step={step} total={STEPS.length} />
+        {/* --------------------------------------------------- the card --- */}
+        <div className="mt-8 rounded-2xl border border-line bg-paper p-6 shadow-[0_10px_40px_rgba(20,24,31,0.06)] sm:p-8">
+          <Progress step={step} total={STEPS.length} />
 
-        <form onSubmit={onNext} noValidate>
-          {/* Fixed minimum height: without it the card resizes between a
-              13-chip question and a 3-card one, and the buttons underneath
-              jump out from under the cursor mid-answer. Sized to the tallest
-              question (the three ambition cards) so nothing ever shrinks. */}
-          <div className="relative mt-6 min-h-[13.5rem]">
-            <AnimatePresence mode="wait" custom={dir} initial={false}>
-              <motion.div
-                key={current}
-                custom={dir}
-                variants={STEP_VARIANTS}
-                initial="initial"
-                animate="animate"
-                exit="exit"
-              >
-                {current === 'field' && (
-                  <Field
-                    id="survey-field"
-                    label="What do you want to study?"
-                    hint="A broad area is fine — you can change this later."
-                  >
-                    <div className="flex flex-wrap gap-2" role="radiogroup" aria-labelledby="survey-field-label">
-                      {Object.entries(FIELD_LABELS).map(([value, label]) => (
-                        <Chip
-                          key={value}
-                          selected={answers.field === value}
-                          onClick={() => set('field', value)}
-                        >
-                          {label}
-                        </Chip>
-                      ))}
-                    </div>
-                  </Field>
-                )}
-
-                {current === 'province' && (
-                  <Field
-                    id="survey-province"
-                    label="Where are you open to going?"
-                    hint="Most of our data is Ontario, so that's the default."
-                  >
-                    <div className="flex flex-wrap gap-2" role="radiogroup" aria-labelledby="survey-province-label">
-                      <Chip selected={answers.province === ''} onClick={() => set('province', '')}>
-                        Anywhere
-                      </Chip>
-                      {Object.entries(PROVINCE_LABELS).map(([code, label]) => (
-                        <Chip
-                          key={code}
-                          selected={answers.province === code}
-                          onClick={() => set('province', code)}
-                        >
-                          {label}
-                        </Chip>
-                      ))}
-                    </div>
-                  </Field>
-                )}
-
-                {current === 'average' && (
-                  <Field
-                    id="survey-average"
-                    label="What's your current overall average?"
-                    // This said "it's never uploaded" until profiles started
-                    // syncing, and then it was a false promise about the most
-                    // sensitive number on the site. Which sentence is true now
-                    // depends on whether they are signed in, so it is asked.
-                    hint={
-                      signedIn
-                        ? 'Saved to your account so your list works on any device. Skip it if you’d rather not say.'
-                        : 'Stays on this device — nothing is uploaded while you’re signed out. Skip it if you’d rather not say.'
-                    }
-                    error={error}
-                  >
-                    <div className="flex items-center gap-3">
-                      <input
-                        id="survey-average"
-                        name="average"
-                        type="number"
-                        inputMode="numeric"
-                        autoFocus
-                        min={MIN_AVERAGE}
-                        max={MAX_AVERAGE}
-                        value={rawAverage}
-                        onChange={(e) => {
-                          setRawAverage(e.target.value)
-                          setError(undefined)
-                        }}
-                        placeholder="88"
-                        className={`w-28 rounded-xl border bg-paper px-4 py-3 text-sm text-ink outline-none placeholder:text-slate ${
-                          error ? 'border-accent' : 'border-line focus:border-brand-300'
-                        }`}
-                        aria-invalid={Boolean(error)}
-                        aria-describedby={
-                          error ? 'survey-average-error survey-average-hint' : 'survey-average-hint'
-                        }
+          <form onSubmit={onNext} noValidate>
+            {/* Fixed minimum height: without it the card resizes between a
+                one-box question and a nine-chip one, and the buttons underneath
+                jump out from under the cursor mid-answer. Sized to the tallest
+                question (the course grid) so nothing ever shrinks. */}
+            <div className="relative mt-6 min-h-[15rem]">
+              <AnimatePresence mode="wait" custom={dir} initial={false}>
+                <motion.div
+                  key={current}
+                  custom={dir}
+                  variants={STEP_VARIANTS}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                >
+                  {current === 'field' && (
+                    <Field
+                      id="survey-field"
+                      label="What do you want to study?"
+                      hint="A broad area is fine — you can change this later."
+                    >
+                      <Combobox
+                        id="survey-field"
+                        value={answers.field}
+                        onChange={(v) => set('field', v)}
+                        options={FIELD_OPTIONS}
+                        anyLabel="Anything — don’t narrow it"
+                        placeholder="try “computer science”"
                       />
-                      <span className="text-slate">%</span>
-                    </div>
-                  </Field>
-                )}
+                    </Field>
+                  )}
 
-                {current === 'ambition' && (
-                  <Field
-                    id="survey-ambition"
-                    label="How wide should we cast the net?"
-                    hint="This only changes how far above your average we keep showing programs."
-                  >
-                    <div className="grid gap-2" role="radiogroup" aria-labelledby="survey-ambition-label">
-                      {(Object.keys(AMBITION_LABELS) as Ambition[]).map((key) => {
-                        const { label, hint } = AMBITION_LABELS[key]
-                        const selected = answers.ambition === key
-                        return (
-                          <button
-                            key={key}
-                            type="button"
-                            role="radio"
-                            aria-checked={selected}
-                            onClick={() => set('ambition', key)}
-                            className={`rounded-xl border p-4 text-left transition-colors ${
-                              selected
-                                ? 'border-brand-500 bg-brand-50'
-                                : 'border-line bg-paper hover:border-brand-300'
-                            }`}
-                          >
-                            <span className="block text-sm font-600 text-ink">{label}</span>
-                            <span className="mt-1 block text-xs leading-relaxed text-slate">{hint}</span>
-                          </button>
-                        )
-                      })}
-                    </div>
-                  </Field>
-                )}
-              </motion.div>
-            </AnimatePresence>
-          </div>
+                  {current === 'coop' && (
+                    <Field
+                      id="survey-coop"
+                      label="Do you want co-op?"
+                      hint="Co-op and non-co-op are separate programs with separate competition, so this genuinely changes the list."
+                    >
+                      <Cards
+                        name="survey-coop"
+                        value={answers.coop}
+                        onChange={(v) => set('coop', v as SurveyAnswers['coop'])}
+                        options={[
+                          { value: '', label: 'Either', hint: 'Show me both.' },
+                          {
+                            value: 'yes',
+                            label: 'Co-op only',
+                            hint: 'Paid work terms built into the degree.',
+                          },
+                          {
+                            value: 'no',
+                            label: 'No co-op',
+                            hint: 'Straight through, usually a year shorter.',
+                          },
+                        ]}
+                      />
+                    </Field>
+                  )}
 
-          {/* ------------------------------------------------ controls --- */}
-          <div className="mt-8 flex items-center gap-3 border-t border-line pt-5">
-            {step > 0 && (
-              <button
-                type="button"
-                onClick={() => go(-1)}
-                className="rounded-full px-3 py-2 text-sm text-slate transition-colors hover:text-ink"
-              >
-                ← Back
-              </button>
-            )}
+                  {current === 'province' && (
+                    <Field
+                      id="survey-province"
+                      label="Where are you open to going?"
+                      hint="Most of our data is Ontario, so that's the default."
+                    >
+                      <Combobox
+                        id="survey-province"
+                        value={answers.province}
+                        onChange={(v) => set('province', v)}
+                        options={PROVINCE_OPTIONS}
+                        anyLabel="Anywhere"
+                        placeholder="try “Ontario”"
+                      />
+                    </Field>
+                  )}
 
-            <div className="ml-auto flex items-center gap-3">
-              {/* Skip sits beside Next, not hidden in a corner: a student who
-                  does not know their average should not have to hunt for the
-                  way past the question. */}
-              <button
-                type="button"
-                onClick={onSkip}
-                className="rounded-full px-3 py-2 text-sm text-slate underline-offset-2 transition-colors hover:text-ink hover:underline"
-              >
-                Skip
-              </button>
-              <Button type="submit" disabled={sending} className={sending ? 'opacity-60' : ''}>
-                {isLast ? (sending ? 'Building your list…' : 'Show my matches') : 'Next'}
-              </Button>
+                  {current === 'homeCity' && (
+                    <Field
+                      id="survey-home"
+                      label="Where are you coming from?"
+                      hint="Used to work out how far each campus is. A city, never an address — and only cities that already appear in the data."
+                    >
+                      <Combobox
+                        id="survey-home"
+                        value={answers.homeCity}
+                        onChange={(v) => set('homeCity', v)}
+                        options={CITY_OPTIONS}
+                        anyLabel="Rather not say"
+                        placeholder="try “Mississauga”"
+                      />
+                    </Field>
+                  )}
+
+                  {current === 'average' && (
+                    <Field
+                      id="survey-average"
+                      label="What's your current overall average?"
+                      // This said "it's never uploaded" until profiles started
+                      // syncing, and then it was a false promise about the most
+                      // sensitive number on the site. Which sentence is true now
+                      // depends on whether they are signed in, so it is asked.
+                      hint={
+                        signedIn
+                          ? 'Saved to your account so your list works on any device. Skip it if you’d rather not say.'
+                          : 'Stays on this device — nothing is uploaded while you’re signed out. Skip it if you’d rather not say.'
+                      }
+                      error={error}
+                    >
+                      <div className="flex items-center gap-3">
+                        <input
+                          id="survey-average"
+                          name="average"
+                          type="number"
+                          inputMode="numeric"
+                          autoFocus
+                          min={MIN_AVERAGE}
+                          max={MAX_AVERAGE}
+                          value={rawAverage}
+                          onChange={(e) => {
+                            setRawAverage(e.target.value)
+                            setError(undefined)
+                          }}
+                          placeholder="88"
+                          className={`w-28 rounded-xl border bg-paper px-4 py-3 text-sm text-ink outline-none placeholder:text-slate ${
+                            error ? 'border-accent' : 'border-line focus:border-brand-300'
+                          }`}
+                          aria-invalid={Boolean(error)}
+                          aria-describedby={
+                            error
+                              ? 'survey-average-error survey-average-hint'
+                              : 'survey-average-hint'
+                          }
+                        />
+                        <span className="text-slate">%</span>
+                      </div>
+                    </Field>
+                  )}
+
+                  {current === 'courses' && (
+                    <Field
+                      id="survey-courses"
+                      label="Which Grade 12 U courses are you taking?"
+                      hint="Tick all that apply. A missing prerequisite is the one thing that closes a door outright, so this is the answer that does the most work."
+                    >
+                      <div className="flex flex-wrap gap-2">
+                        {COURSES.map((c) => {
+                          const on = courses.includes(c.code)
+                          return (
+                            <button
+                              key={c.code}
+                              type="button"
+                              role="checkbox"
+                              aria-checked={on}
+                              onClick={() => toggleCourse(c.code)}
+                              className={`rounded-full border px-3.5 py-2 text-sm transition-colors ${
+                                on
+                                  ? 'border-brand-500 bg-brand-500 text-white'
+                                  : 'border-line bg-paper text-ink hover:border-brand-300'
+                              }`}
+                            >
+                              {on ? '✓ ' : ''}
+                              {c.name}
+                              <span
+                                className={`ml-1.5 text-xs ${on ? 'text-white/70' : 'text-slate'}`}
+                              >
+                                {c.code}
+                              </span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </Field>
+                  )}
+
+                  {current === 'gradYear' && (
+                    <Field
+                      id="survey-year"
+                      label="When do you finish high school?"
+                      hint="So we can say which application cycle's reports describe you. Nothing about this is sent anywhere anonymous."
+                    >
+                      <Combobox
+                        id="survey-year"
+                        value={answers.gradYear === null ? '' : String(answers.gradYear)}
+                        onChange={(v) => set('gradYear', v ? Number(v) : null)}
+                        options={gradYearOptions()}
+                        anyLabel="Rather not say"
+                        placeholder="try “2027”"
+                      />
+                    </Field>
+                  )}
+
+                  {current === 'ambition' && (
+                    <Field
+                      id="survey-ambition"
+                      label="How wide should we cast the net?"
+                      hint="This only changes how far above your average we keep showing programs."
+                    >
+                      <Cards
+                        name="survey-ambition"
+                        value={answers.ambition}
+                        onChange={(v) => set('ambition', v as Ambition)}
+                        options={(Object.keys(AMBITION_LABELS) as Ambition[]).map((key) => ({
+                          value: key,
+                          label: AMBITION_LABELS[key].label,
+                          hint: AMBITION_LABELS[key].hint,
+                        }))}
+                      />
+                    </Field>
+                  )}
+                </motion.div>
+              </AnimatePresence>
             </div>
-          </div>
-        </form>
-      </div>
 
-      <div className="mt-4 flex items-center justify-between gap-4">
-        <button
-          type="button"
-          onClick={() => finish(null)}
-          className="text-sm text-slate underline-offset-2 hover:text-ink hover:underline"
-        >
-          Skip all — just let me browse
-        </button>
-        <span className="text-sm text-slate" aria-live="polite">
-          {!data ? 'Loading programs…' : ''}
-        </span>
-      </div>
+            {/* ------------------------------------------------ controls --- */}
+            <div className="mt-8 flex items-center gap-3 border-t border-line pt-5">
+              {step > 0 && (
+                <button
+                  type="button"
+                  onClick={() => go(-1)}
+                  className="rounded-full px-3 py-2 text-sm text-slate transition-colors hover:text-ink"
+                >
+                  ← Back
+                </button>
+              )}
 
-      <p className="mt-6 rounded-lg border border-line bg-surface p-4 text-sm leading-relaxed text-slate">
-        <strong className="font-600 text-ink">This narrows what to look at, not your odds.</strong>{' '}
-        Matches are programs where admitted students reported averages near yours. Because people
-        who get in are likelier to report, none of this is an admission chance.
-      </p>
+              <div className="ml-auto flex items-center gap-3">
+                {/* Skip sits beside Next, not hidden in a corner: a student who
+                    does not know their average should not have to hunt for the
+                    way past the question. */}
+                <button
+                  type="button"
+                  onClick={onSkip}
+                  className="rounded-full px-3 py-2 text-sm text-slate underline-offset-2 transition-colors hover:text-ink hover:underline"
+                >
+                  Skip
+                </button>
+                <Button type="submit" disabled={sending} className={sending ? 'opacity-60' : ''}>
+                  {isLast ? (sending ? 'Building your list…' : 'Show my matches') : 'Next'}
+                </Button>
+              </div>
+            </div>
+          </form>
+        </div>
+
+        <div className="mt-4 flex items-center justify-between gap-4">
+          <button
+            type="button"
+            onClick={() => finish(null, courses)}
+            className="text-sm text-slate underline-offset-2 hover:text-ink hover:underline"
+          >
+            Skip all — just let me browse
+          </button>
+          <span className="text-sm text-slate" aria-live="polite">
+            {!data ? 'Loading programs…' : ''}
+          </span>
+        </div>
+
+        <p className="mt-6 rounded-lg border border-line bg-surface p-4 text-sm leading-relaxed text-slate">
+          <strong className="font-600 text-ink">This narrows what to look at, not your odds.</strong>{' '}
+          Matches are programs where admitted students reported averages near yours. Because people
+          who get in are likelier to report, none of this is an admission chance.
+        </p>
       </div>
     </section>
   )
@@ -429,29 +609,46 @@ function Progress({ step, total }: { step: number; total: number }) {
   )
 }
 
-function Chip({
-  selected,
-  onClick,
-  children,
+/**
+ * A short set of choices where the difference between them needs explaining.
+ *
+ * Kept for co-op and ambition rather than moving them into a Combobox: three
+ * options, each of which needs a sentence, is exactly the case a typeahead
+ * handles badly — you would have to open the list to find out what the options
+ * mean.
+ */
+function Cards({
+  name,
+  value,
+  onChange,
+  options,
 }: {
-  selected: boolean
-  onClick: () => void
-  children: ReactNode
+  name: string
+  value: string
+  onChange: (value: string) => void
+  options: Array<{ value: string; label: string; hint: string }>
 }) {
   return (
-    <button
-      type="button"
-      role="radio"
-      aria-checked={selected}
-      onClick={onClick}
-      className={`rounded-full border px-4 py-2 text-sm transition-colors ${
-        selected
-          ? 'border-brand-500 bg-brand-500 text-white'
-          : 'border-line bg-paper text-ink hover:border-brand-300'
-      }`}
-    >
-      {children}
-    </button>
+    <div className="grid gap-2" role="radiogroup" aria-labelledby={`${name}-label`}>
+      {options.map((o) => {
+        const selected = value === o.value
+        return (
+          <button
+            key={o.value || '__any'}
+            type="button"
+            role="radio"
+            aria-checked={selected}
+            onClick={() => onChange(o.value)}
+            className={`rounded-xl border p-4 text-left transition-colors ${
+              selected ? 'border-brand-500 bg-brand-50' : 'border-line bg-paper hover:border-brand-300'
+            }`}
+          >
+            <span className="block text-sm font-600 text-ink">{o.label}</span>
+            <span className="mt-1 block text-xs leading-relaxed text-slate">{o.hint}</span>
+          </button>
+        )
+      })}
+    </div>
   )
 }
 

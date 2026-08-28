@@ -251,6 +251,12 @@ async function run(): Promise<void> {
  */
 export function applyRemoteProfile(accountId: string, remote: RemoteProfile): void {
   const record: SavedProfile = {
+    // EVERY FIELD OF SurveyAnswers HAS TO BE LISTED HERE. This rebuilds the
+    // local record from scratch on every pull, so a field that is missing from
+    // this object is not merely "not synced" — it is erased from the device the
+    // first time the student signs in somewhere else, silently, with their
+    // answer still sitting on the server. Adding a question means adding a line
+    // here, and the survey's `EMPTY` object is the checklist.
     answers: remote.answers
       ? {
           field: remote.answers.field ?? '',
@@ -263,6 +269,13 @@ export function applyRemoteProfile(accountId: string, remote: RemoteProfile): vo
             remote.answers.ambition === 'safe' || remote.answers.ambition === 'reach'
               ? remote.answers.ambition
               : 'balanced',
+          homeCity: remote.answers.homeCity ?? '',
+          coop:
+            remote.answers.coop === 'yes' || remote.answers.coop === 'no'
+              ? remote.answers.coop
+              : '',
+          gradYear:
+            typeof remote.answers.gradYear === 'number' ? remote.answers.gradYear : null,
         }
       : null,
     shortlist: remote.shortlist ?? [],

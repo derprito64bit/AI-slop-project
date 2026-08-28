@@ -26,7 +26,7 @@ export default function BalanceView() {
             on this device.
           </p>
           <Button to="/survey" className="mt-5">
-            Answer four questions
+            Answer the questions
           </Button>
         </div>
       ) : kept.length === 0 ? (

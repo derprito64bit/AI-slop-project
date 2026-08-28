@@ -138,7 +138,7 @@ export default function SignIn() {
       <p className="mt-6 border-t border-line pt-5 text-xs leading-relaxed text-slate">
         You don’t need an account to use the site — you can{' '}
         <Link to="/survey" className="font-600 text-brand-600 hover:text-brand-700">
-          answer the four questions
+          answer the questions
         </Link>{' '}
         or{' '}
         <Link to="/explore" className="font-600 text-brand-600 hover:text-brand-700">

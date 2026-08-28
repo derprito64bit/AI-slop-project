@@ -24,6 +24,13 @@ const answers = (over: Partial<SurveyAnswers> = {}): SurveyAnswers => ({
   province: 'ON',
   average: 88,
   ambition: 'balanced',
+  homeCity: 'Toronto',
+  // No co-op preference by default, matching the survey's EMPTY. A fixture that
+  // asked for co-op would silently filter out every program in these tests,
+  // since co-op lives in the program NAME — which is exactly what happened the
+  // first time this fixture was written.
+  coop: '',
+  gradYear: 2027,
   ...over,
 })
 

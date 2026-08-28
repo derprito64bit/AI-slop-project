@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { STEPS, averageError, withSkipped } from './Survey'
+import { STEPS, averageError, gradYearOptions, withSkipped } from './Survey'
 import { toFilters, type SurveyAnswers } from '../lib/profile'
 
 const answers = (over: Partial<SurveyAnswers> = {}): SurveyAnswers => ({
@@ -7,6 +7,9 @@ const answers = (over: Partial<SurveyAnswers> = {}): SurveyAnswers => ({
   province: 'ON',
   average: 88,
   ambition: 'balanced',
+  homeCity: 'Toronto',
+  coop: 'yes',
+  gradYear: 2027,
   ...over,
 })
 
@@ -47,12 +50,48 @@ describe('withSkipped', () => {
     expect(withSkipped(answers({ ambition: 'reach' }), 'ambition').ambition).toBe('balanced')
   })
 
+  it('opens co-op up to both rather than excluding one', () => {
+    expect(withSkipped(answers(), 'coop').coop).toBe('')
+  })
+
+  it('clears the home city, so no distance is implied', () => {
+    expect(withSkipped(answers(), 'homeCity').homeCity).toBe('')
+  })
+
+  it('makes a skipped graduating year null, never 0', () => {
+    expect(withSkipped(answers(), 'gradYear').gradYear).toBeNull()
+  })
+
+  // Courses are not a survey answer — they live on SavedProfile, because the
+  // Courses tool owns them. Skipping that step must not disturb the answers.
+  it('leaves the answers untouched when the courses step is skipped', () => {
+    const before = answers()
+    expect(withSkipped(before, 'courses')).toEqual(before)
+  })
+
   it('touches only the question that was skipped', () => {
     const before = answers()
     const after = withSkipped(before, 'field')
     expect(after.province).toBe(before.province)
     expect(after.average).toBe(before.average)
     expect(after.ambition).toBe(before.ambition)
+    expect(after.homeCity).toBe(before.homeCity)
+    expect(after.coop).toBe(before.coop)
+    expect(after.gradYear).toBe(before.gradYear)
+  })
+
+  // The guard against the four-place change going wrong. Every key of
+  // SurveyAnswers has to be reachable by some step, or that question's answer
+  // can never be undone — and a field nothing can clear is usually a field
+  // somebody forgot to wire through sync.ts as well.
+  it('covers every answer key across the whole step list', () => {
+    const full = answers()
+    const cleared = STEPS.reduce(withSkipped, full)
+    const untouched = (Object.keys(full) as Array<keyof SurveyAnswers>).filter(
+      (k) => cleared[k] === full[k],
+    )
+    // Ambition is the deliberate exception: 'balanced' IS its empty value.
+    expect(untouched).toEqual(['ambition'])
   })
 
   it('handles every step, so no question can be unskippable', () => {
@@ -72,6 +111,7 @@ describe('skipping everything', () => {
     expect(filters.medianAtMost).toBeUndefined()
     expect(filters.field).toBeUndefined()
     expect(filters.province).toBeUndefined()
+    expect(filters.coop).toBeUndefined()
     // Still true: a program with no reported median cannot be matched on one.
     expect(filters.withDataOnly).toBe(true)
   })
@@ -79,5 +119,28 @@ describe('skipping everything', () => {
   it('keeps the ceiling when only the average is given', () => {
     const onlyAverage = withSkipped(withSkipped(answers(), 'field'), 'province')
     expect(toFilters(onlyAverage).medianAtMost).toBe(91)
+  })
+})
+
+describe('toFilters carries co-op through', () => {
+  it('asks for co-op programs only when co-op was chosen', () => {
+    expect(toFilters(answers({ coop: 'yes' })).coop).toBe('yes')
+    expect(toFilters(answers({ coop: 'no' })).coop).toBe('no')
+  })
+
+  it('drops the filter entirely on no preference, rather than excluding both', () => {
+    expect(toFilters(answers({ coop: '' })).coop).toBeUndefined()
+  })
+})
+
+describe('gradYearOptions', () => {
+  it('offers this year and the next four', () => {
+    expect(gradYearOptions(2026).map((o) => o.value)).toEqual([
+      '2026',
+      '2027',
+      '2028',
+      '2029',
+      '2030',
+    ])
   })
 })

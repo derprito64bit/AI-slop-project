@@ -50,7 +50,18 @@ const DEMO_COURSES = ['ENG4U', 'MHF4U']
 
 export const DEMO_PROFILE: Omit<SavedProfile, 'savedAt'> = {
   ...EMPTY_PROFILE,
-  answers: { field: 'engineering', province: 'ON', average: 88, ambition: 'balanced' },
+  answers: {
+    field: 'engineering',
+    province: 'ON',
+    average: 88,
+    ambition: 'balanced',
+    // A demo student who lives near Toronto and finishes next year: the map
+    // opens on real distances rather than a prompt, and the course gap below
+    // is the one an Ontario applicant actually has in October.
+    homeCity: 'Mississauga',
+    coop: 'yes',
+    gradYear: 2027,
+  },
   shortlist: DEMO_SHORTLIST,
   courses: DEMO_COURSES,
   notes: {

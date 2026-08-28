@@ -174,7 +174,7 @@ export default function SurveyNudge() {
               onClick={accept}
               className="rounded-full bg-brand-500 px-4 py-2 text-sm font-600 text-white transition-colors hover:bg-brand-600"
             >
-              Answer 4 questions
+              Answer the questions
             </button>
             <button
               type="button"
