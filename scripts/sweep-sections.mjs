@@ -1,5 +1,7 @@
-// Checks the sections that were filled in on 2026-08-27: /about, /community,
-// the applications tracker and the deadlines recorder.
+// Checks the sections that were filled in on 2026-08-27: the applications
+// tracker, the deadlines recorder, and the methodology/reporting-bias content
+// that used to live at /about and /community and is now one dashboard tool at
+// /profile/database.
 //
 //   npm run sweep:sections                                  against the live site
 //   SWEEP_BASE=http://localhost:4200/AI-slop-project npm run sweep:sections
@@ -52,40 +54,51 @@ const walk = (p) => p.evaluate(async () => {
   for (let y = 0; y < 4000; y += 400) { window.scrollTo(0, y); await new Promise((r) => setTimeout(r, 80)) }
 })
 
-// --- /about
+// --- /profile/database
+//
+// The old /about and /community pages, merged into one dashboard tool. Both
+// sets of assertions are kept rather than trimmed: they are the figures the
+// page must never hard-code, and the whole point of the merge was that the
+// no-odds claim and the 93% evidence should appear together.
+//
+// Seeded with NO PROFILE on purpose. This tool is exempt from the dashboard's
+// first-run gate, because the methodology has to be readable before you decide
+// whether to trust the site — if that exemption ever regresses, every check
+// below fails at once.
 {
   const { p, errs } = await page(null)
-  await p.goto(`${BASE}/about`, { waitUntil: 'networkidle2' })
-  await walk(p)
-  await new Promise((r) => setTimeout(r, 1500))
-  const t = await textOf(p)
-  check('/about is no longer a placeholder', !/Coming together/.test(t))
-  check('/about: 10,372 reports', t.includes('10,372'))
-  check('/about: 2,436 programs', t.includes('2,436'))
-  check('/about: 39 universities', /\b39\b/.test(t))
-  check('/about: 369 chartable', t.includes('369'))
-  check('/about: 75 verified requirements', /75 programs/.test(t))
-  check('/about: states the no-odds rule', /never tell you your chances/i.test(t))
-  check('/about: no errors', errs.length === 0, errs[0] ?? '')
-  await p.close()
-}
-
-// --- /community
-{
-  const { p, errs } = await page(null)
-  await p.goto(`${BASE}/community`, { waitUntil: 'networkidle2' })
+  await p.goto(`${BASE}/profile/database`, { waitUntil: 'networkidle2' })
   await new Promise((r) => setTimeout(r, 2500))
   await walk(p)
   await new Promise((r) => setTimeout(r, 1500))
   const t = await textOf(p)
-  check('/community is no longer a placeholder', !/Coming together/.test(t))
-  check('/community: 93% offer share', /93% of reports are offers/.test(t))
-  check('/community: total reports', t.includes('10,372'))
-  check('/community: 2022-2023 = 953 reports, mean 92.6%', t.includes('953') && t.includes('92.6%'))
-  check('/community: 2025-2026 = 5,905 reports, mean 93.0%', t.includes('5,905') && t.includes('93.0%'))
-  check('/community: names the top school', /University of Waterloo/.test(t))
-  check('/community: carries the not-a-rate line', /not an acceptance rate/i.test(t))
-  check('/community: no errors', errs.length === 0, errs[0] ?? '')
+  check('database: reachable without a saved profile', !/Somewhere to think it through/.test(t))
+  check('database: 10,372 reports', t.includes('10,372'))
+  check('database: 2,436 programs', t.includes('2,436'))
+  check('database: 39 universities', /\b39\b/.test(t))
+  check('database: 369 chartable', t.includes('369'))
+  check('database: 75 verified requirements', /75 programs/.test(t))
+  check('database: states the no-odds rule', /never tell you your chances/i.test(t))
+  check('database: 93% offer share', /93% of reports are offers/.test(t))
+  check('database: 2022-2023 = 953 reports, mean 92.6%', t.includes('953') && t.includes('92.6%'))
+  check('database: 2025-2026 = 5,905 reports, mean 93.0%', t.includes('5,905') && t.includes('93.0%'))
+  check('database: names the top school', /University of Waterloo/.test(t))
+  check('database: carries the not-a-rate line', /not an acceptance rate/i.test(t))
+  check('database: no errors', errs.length === 0, errs[0] ?? '')
+  await p.close()
+}
+
+// --- the old URLs still land somewhere
+//
+// /about and /community were in the navbar of a deployed site for months, so
+// they are in the sitemap and in whatever anyone bookmarked. They redirect
+// rather than 404.
+for (const from of ['/about', '/community']) {
+  const { p } = await page(null)
+  await p.goto(`${BASE}${from}`, { waitUntil: 'networkidle2' })
+  await new Promise((r) => setTimeout(r, 1500))
+  const landed = await p.evaluate(() => location.pathname)
+  check(`${from} redirects to the database tool`, landed.endsWith('/profile/database'), landed)
   await p.close()
 }
 

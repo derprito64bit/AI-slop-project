@@ -387,3 +387,77 @@ body {
     scroll-behavior: auto !important;
   }
 }
+
+/* ------------------------------------------------------------- the map --- */
+/* Leaflet owns the DOM inside the map container, so its pieces are styled here
+   rather than with utility classes. Two things matter:
+
+   1. COLOUR COMES FROM CLASSES, not from Leaflet options. Leaflet writes its
+      color/fillColor options out as SVG presentation attributes, where var()
+      does not resolve and a mark renders black. Through a class the marks
+      follow the theme toggle instead of freezing at the palette of first paint.
+   2. The default Leaflet chrome is white-on-white in dark mode. Popups, the
+      zoom buttons and the attribution strip are all repainted with our own
+      tokens so the map does not become the one component that ignores the
+      theme. */
+
+.campus-mark {
+  fill: var(--color-chart);
+  fill-opacity: 0.45;
+  stroke: var(--color-chart);
+  cursor: pointer;
+}
+
+.campus-mark--home {
+  stroke: var(--color-accent);
+  fill-opacity: 0.6;
+}
+
+/* EVERY RULE BELOW IS SCOPED TO .theme-map, and that is not decoration.
+   Leaflet's own stylesheet is imported inside TileMap.tsx, which is a lazily
+   loaded chunk — so it is injected AFTER index.css and wins every tie at equal
+   specificity. Unscoped, `.leaflet-container { background: ... }` lost to
+   Leaflet's own `.leaflet-container` and the map rendered as a white box in
+   dark mode: container #ddd, attribution white, zoom buttons white-on-black.
+   The extra class makes these 0,2,0 against Leaflet's 0,1,0, which wins on
+   specificity rather than on load order. */
+
+.theme-map .leaflet-container {
+  background: var(--color-surface);
+  font: inherit;
+}
+
+.theme-map .leaflet-popup-content-wrapper,
+.theme-map .leaflet-popup-tip {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  box-shadow: 0 10px 40px rgb(0 0 0 / 0.18);
+}
+
+.tile-map-popup h3 { font-weight: 600; margin: 0 0 0.25rem; }
+.tile-map-popup ul { margin: 0; padding: 0; list-style: none; }
+.tile-map-popup li { margin-top: 0.4rem; }
+.tile-map-popup li span { display: block; font-size: 0.75rem; color: var(--color-slate); }
+.tile-map-popup li em { display: block; font-size: 0.75rem; font-style: normal; color: var(--color-slate); }
+.tile-map-distance { margin: 0 0 0.35rem; font-size: 0.75rem; color: var(--color-slate); }
+
+.theme-map .leaflet-bar a,
+.theme-map .leaflet-bar a:hover {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  border-bottom-color: var(--color-line);
+}
+
+/* This one carries .leaflet-container as well, and the extra class is load
+   bearing: Leaflet writes `.leaflet-container .leaflet-control-attribution`,
+   which is 0,2,0 — the same as `.theme-map .leaflet-control-attribution`. A tie
+   goes to whichever sheet loads later, and Leaflet's always does. The colour
+   applied and the background did not, which is how a white strip survived
+   across a dark map. The other rules here beat 0,1,0 selectors and need no
+   such help. */
+.theme-map .leaflet-container .leaflet-control-attribution {
+  background: color-mix(in oklab, var(--color-paper) 85%, transparent);
+  color: var(--color-slate);
+}
+
+.theme-map .leaflet-control-attribution a { color: var(--color-slate); }

@@ -227,7 +227,7 @@ function Created({ username, adopted }: { username: string; adopted: boolean }) 
           </>
         ) : (
           <>
-            <Button to="/survey">Answer the four questions</Button>
+            <Button to="/survey">Answer the questions</Button>
             <Button to="/explore" variant="secondary">
               Just let me browse
             </Button>

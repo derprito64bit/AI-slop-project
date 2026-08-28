@@ -17,6 +17,27 @@ export type ProgramFilters = {
   withDataOnly?: boolean
   /** only programs whose median accepted average is at or below this */
   medianAtMost?: number
+  /** 'yes' keeps only co-op programs, 'no' keeps only the ones that aren't */
+  coop?: 'yes' | 'no'
+}
+
+/**
+ * Whether a program is a co-op stream, read from its name.
+ *
+ * The dataset has no co-op field, and co-op is not a property that could be
+ * derived: it is baked into the program identity. `build-data.mjs` never merges
+ * near-duplicate names for exactly this reason — "Computer Science" and
+ * "Computer Science (Co-op)" are different programs with different competition,
+ * and collapsing them would average two populations together.
+ *
+ * So the name IS the record. This matches the several ways the source
+ * spreadsheets word it — "(Co-op)", ", Co-op", "(Co-op only)", "Coop" — and
+ * nothing else. A program whose name does not say co-op is treated as not
+ * co-op, which is the safe direction: it under-claims rather than telling a
+ * student a program has co-op when we do not know that.
+ */
+export function isCoop(program: Program): boolean {
+  return /\bco-?op\b/i.test(program.name)
 }
 
 export type SortKey = 'relevance' | 'most-reported' | 'average-asc' | 'average-desc' | 'name'
@@ -100,6 +121,8 @@ export function filterPrograms(
     if (filters.field && p.field !== filters.field) return false
     if (filters.withDataOnly && p.insufficientData) return false
     if (filters.difficulty && difficultyBand(p) !== filters.difficulty) return false
+    if (filters.coop === 'yes' && !isCoop(p)) return false
+    if (filters.coop === 'no' && isCoop(p)) return false
     if (filters.medianAtMost !== undefined) {
       const m = p.accepted?.median
       if (m === undefined || m === null || m > filters.medianAtMost) return false

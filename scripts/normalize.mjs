@@ -143,21 +143,36 @@ export function programSlug(name) {
 // because "sci" is followed by a word character. Where a term must not match
 // longer words, the \b is placed inside the alternation instead.
 const FIELD_RULES = [
-  ['engineering', /\b(?:engineering|mechatronic|software eng|nanotech)/i],
+  ['engineering', /\b(?:engineering|bioengineering|mechatronic|software eng|nanotech)/i],
   ['computer-science', /\b(?:computer sci|computing|comp sci|cs\b|informatics|data science|artificial intelligence)/i],
-  ['health', /\b(?:nursing|health sci|kinesiolog|medical sci|midwifery|pharmac|dental|paramedic|physiotherap|rehab)/i],
+  ['health', /\b(?:nursing|health\b|health sci|kinesiolog|human kinetic|medical sci|medical radiation|medical laborator|midwifery|pharmac|dental|paramedic|physiotherap|rehab|nutrition)/i],
   ['life-sciences', /\b(?:life sci|biolog|biochem|biomed|neurosci|genetic|microbiolog|zoolog|physiolog)/i],
-  ['business', /\b(?:business|commerce|bba\b|ibba\b|accounting|finance|management|marketing|economic)/i],
+  ['business', /\b(?:business|commerce|bba\b|ibba\b|bcom\b|bmos\b|afm\b|ivey|sauder|accounting|finance|management|managment|marketing|economic)/i],
   ['physical-sciences', /\b(?:physic|chemistr|astronom|earth sci|geolog|environmental sci|math|statistic|actuarial)/i],
-  ['social-sciences', /\b(?:psycholog|sociolog|political|criminolog|anthropolog|social work|geograph|international relations)/i],
-  ['arts-humanities', /\b(?:art\b|arts\b|english|histor|philosoph|language|music|theatre|drama|fine art|design|media|journalism|communication)/i],
-  ['education', /\b(?:education|teaching|concurrent educ)/i],
+  ['social-sciences', /\b(?:psycholog|sociolog|social science|social studies|politic|criminolog|anthropolog|social work|geograph|international relations)/i],
+  ['arts-humanities', /\b(?:art\b|arts\b|humanities|english|histor|philosoph|language|music|theatre|drama|fine art|design|media|journalism|communication)/i],
+  ['education', /\b(?:education|teaching|concurrent educ|b\.?ed\b|early childhood)/i],
   ['law', /\b(?:law\b|legal studies|justice)/i],
   ['agriculture', /\b(?:agricultur|food sci|animal sci|veterinar)/i],
-  ['architecture', /\b(?:architect|urban plan)/i],
+  ['architecture', /\b(?:architect|urban plan|planning)/i],
 ]
 
-/** @returns {string} a field id, or 'other' when nothing matches. */
+/**
+ * @returns {string} a field id, or 'other' when nothing matches.
+ *
+ * 'other' is a REAL BUCKET, not a dumping ground for failures. It holds the
+ * general-entry programs that genuinely have no subject: "Science", "Applied
+ * Science", "Ivey AEO"-style direct-entry streams, "Humanities I". Those are
+ * how several universities actually admit — you pick the subject in second year
+ * — and forcing them into a field would assert something the program does not.
+ *
+ * That is why nothing here matches a bare "Science". The rules above were
+ * widened for the strays that DID have an obvious home and were only missing
+ * because of wording ("Public Health" against a `health sci` pattern, "Politics
+ * & Governance" against `political`, "Urban and Regional Planning" against
+ * `urban plan`), and stop there. Typos are not handled here either —
+ * data/overrides.json is where a human decision about one row belongs.
+ */
 export function inferField(programName) {
   const t = String(programName || '')
   for (const [id, re] of FIELD_RULES) {

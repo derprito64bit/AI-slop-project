@@ -108,6 +108,9 @@ const answers = (over: Partial<SurveyAnswers> = {}): SurveyAnswers => ({
   province: 'ON',
   average: 88,
   ambition: 'balanced',
+  homeCity: 'Toronto',
+  coop: 'yes',
+  gradYear: 2027,
   ...over,
 })
 

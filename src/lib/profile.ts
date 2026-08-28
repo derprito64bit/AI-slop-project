@@ -57,6 +57,36 @@ export type SurveyAnswers = {
    */
   average: number | null
   ambition: Ambition
+  /**
+   * The city the student calls home, for map distances. '' = skipped.
+   *
+   * A city, never an address. It is the coarsest thing that still makes a
+   * distance mean something, and coarse is the point: this record is uploaded
+   * for a signed-in student, and the audience is mostly minors. Keys match
+   * CITY_POINTS in data/campus-locations.ts.
+   *
+   * This used to live in its own localStorage key set from the Map view, which
+   * meant it was asked for in the one place it was already obvious. Moving it
+   * into the survey is what lets distance appear anywhere.
+   */
+  homeCity: string
+  /**
+   * Co-op preference. '' = no preference / skipped.
+   *
+   * The dataset supports this honestly because co-op and non-co-op are separate
+   * programs and are never merged — see `isCoop` in search.ts.
+   */
+  coop: '' | 'yes' | 'no'
+  /**
+   * Calendar year the student expects to finish high school, or null.
+   *
+   * Kept deliberately coarse and deliberately OUT OF THE TELEMETRY. It is a
+   * fact about the student rather than about a program, and /api/data is the
+   * one endpoint whose rows must stay unlinkable to a person — see api.ts.
+   * Inside the private profile it is fine, and it is what lets the site say
+   * which application cycle's data is the one that describes them.
+   */
+  gradYear: number | null
 }
 
 export type SavedProfile = {
@@ -99,7 +129,13 @@ export const FIELD_LABELS: Record<string, string> = {
   law: 'Law',
   architecture: 'Architecture',
   agriculture: 'Agriculture',
-  other: 'Something else',
+  // Not "Something else". This bucket holds 247 real programs — "Science",
+  // "Applied Science", direct-entry streams like Ivey AEO, "Humanities I" —
+  // which are how several universities actually admit: you pick the subject in
+  // second year. Labelling that as a leftover told a student the programs were
+  // unclassified when the truth is they are undeclared, which is a feature of
+  // the program and often the reason to apply to one.
+  other: 'General & interdisciplinary',
 }
 
 export const PROVINCE_LABELS: Record<string, string> = {
@@ -137,6 +173,7 @@ export function toFilters(a: SurveyAnswers): ProgramFilters {
   return {
     field: a.field || undefined,
     province: a.province || undefined,
+    coop: a.coop || undefined,
     // Matching compares against a reported median, so a program without one
     // cannot be matched at all — it would be an empty row in the results.
     withDataOnly: true,

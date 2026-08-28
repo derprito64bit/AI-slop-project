@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import UniversityMark from '../../components/UniversityMark'
 import Tag from '../../components/ui/Tag'
+import Combobox from '../../components/ui/Combobox'
 import { FitTag } from '../../components/BalanceCheck'
 import { ListSkeleton, LoadingNote } from '../../components/Skeleton'
 import {
@@ -54,6 +55,7 @@ export default function ProgramsView() {
   const difficulty = (params.get('band') ?? '') as DifficultyBand | ''
   const medianAtMost = params.get('max') ? Number(params.get('max')) : undefined
   const withDataOnly = params.get('data') === '1'
+  const coop = (params.get('coop') ?? '') as 'yes' | 'no' | ''
   const sort = (params.get('sort') ?? 'most-reported') as SortKey
 
   /**
@@ -85,11 +87,12 @@ export default function ProgramsView() {
       difficulty: difficulty || undefined,
       medianAtMost,
       withDataOnly: withDataOnly || undefined,
+      coop: coop || undefined,
     }
     return queryPrograms(data.programs, { query, filters, sort }, data.universities)
-  }, [data, query, field, province, universityId, difficulty, medianAtMost, withDataOnly, sort])
+  }, [data, query, field, province, universityId, difficulty, medianAtMost, withDataOnly, coop, sort])
 
-  const active = [field, province, universityId, difficulty, medianAtMost, withDataOnly].filter(
+  const active = [field, province, universityId, difficulty, medianAtMost, withDataOnly, coop].filter(
     Boolean,
   ).length
 
@@ -148,17 +151,28 @@ export default function ProgramsView() {
           ))}
         </Select>
 
-        <Select
-          label="University"
-          value={universityId}
-          onChange={(v) => set({ uni: v })}
-          anyLabel="Any university"
-        >
-          {universities.map((u) => (
-            <option key={u.id} value={u.id}>
-              {u.name}
-            </option>
-          ))}
+        {/* A Combobox rather than a Select, and the only one in this row: with
+            39 schools a native dropdown is a scroll, while typing "water"
+            narrows it to one. The shorter lists stay native selects on purpose
+            — a real <select> is better on a phone, and swapping them all out
+            for consistency would trade usability for tidiness. */}
+        <label className="flex w-56 flex-col gap-1 text-xs font-600 uppercase tracking-wider text-slate">
+          University
+          <span className="normal-case tracking-normal">
+            <Combobox
+              id="programs-university"
+              value={universityId}
+              onChange={(v) => set({ uni: v })}
+              options={universities.map((u) => ({ value: u.id, label: u.name }))}
+              anyLabel="Any university"
+              placeholder="try “waterloo”"
+            />
+          </span>
+        </label>
+
+        <Select label="Co-op" value={coop} onChange={(v) => set({ coop: v })} anyLabel="Either">
+          <option value="yes">Co-op only</option>
+          <option value="no">No co-op</option>
         </Select>
 
         <Select

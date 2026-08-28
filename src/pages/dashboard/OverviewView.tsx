@@ -1,20 +1,33 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import UniversityMark from '../../components/UniversityMark'
 import Button from '../../components/ui/Button'
 import { ListSkeleton } from '../../components/Skeleton'
+import { FitLegend, ListSpread, StackedBar, type Segment } from '../../components/ListCharts'
 import { gapFor, type Gap } from '../../lib/courses'
 import { getProgramInfo } from '../../data/program-info'
-import { FIT_LABELS, balanceOf, type Fit } from '../../lib/profile'
+import { FIELD_LABELS, FIT_LABELS, balanceOf, type Fit } from '../../lib/profile'
 import { useDashboard } from './context'
 
 // The dashboard's front page.
 //
 // /profile used to redirect straight to My list, which meant the answer to
 // "where am I with all this?" was a list of cards and nothing else. This is the
-// broad view: a few honest numbers, the one thing most worth doing next, and a
-// door down into each tool. Nothing here is a new capability — every figure is
-// computed by something already tested, and every card links to the tool that
-// owns it.
+// broad view: the shape of the list in charts, the one thing most worth doing
+// next, and a door down into each tool.
+//
+// IT IS CHARTS NOW, NOT PARAGRAPHS. The previous version stated the same facts
+// in prose — "four ambitious, two in range" — which is a summary of a picture
+// with the picture thrown away. A list that clusters two points above the
+// student's average and one that spreads twenty read identically in words and
+// look nothing alike. Every chart here is built from something already tested
+// (`balanceOf`, `gapFor`, the program records themselves); none of them is a
+// new claim about the data, and none is a probability.
+//
+// The charting vocabulary is the site's existing one on purpose: stacked bars
+// for parts of a whole rather than pies, one hue stepped down rather than a
+// rainbow, and no value drawn without its count printed somewhere. See the
+// notes in DecisionMix and ListCharts for why.
 //
 // It also has to read properly for a student who has skipped everything. The
 // empty states are not decoration; skipping is a supported path, and this is
@@ -47,7 +60,48 @@ export default function OverviewView() {
     .map((p) => ({ program: p, gap: gapFor(getProgramInfo(p.id)?.requiredCourses, profile.courses) }))
     .find((x) => x.gap && !x.gap.satisfied)
 
+  /** The list broken down by subject — is it one bet or several? */
+  const fieldMix = useMemo<Segment[]>(() => {
+    const by = new Map<string, number>()
+    for (const p of kept) by.set(p.field, (by.get(p.field) ?? 0) + 1)
+    return [...by.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([key, count]) => ({ key, label: FIELD_LABELS[key] ?? key, count }))
+  }, [kept])
+
+  /**
+   * Prerequisite status across the list.
+   *
+   * Three states, not two, because "we have not researched this program yet" is
+   * not the same as "you are clear" and the site's whole rule is not to blur
+   * them. Unverified is drawn last and lightest for the same reason.
+   */
+  const courseMix = useMemo<Segment[]>(() => {
+    let covered = 0
+    let blocked = 0
+    let unverified = 0
+    for (const p of kept) {
+      const gap = gapFor(getProgramInfo(p.id)?.requiredCourses, profile.courses)
+      if (!gap) unverified += 1
+      else if (gap.satisfied) covered += 1
+      else blocked += 1
+    }
+    return [
+      { key: 'blocked', label: 'Missing a prerequisite', count: blocked },
+      { key: 'covered', label: 'Prerequisites covered', count: covered },
+      { key: 'unverified', label: 'Requirements not researched yet', count: unverified },
+    ]
+  }, [kept, profile.courses])
+
+  /** Schools on the list, most-kept first — the marks row under the charts. */
+  const schools = useMemo(() => {
+    const by = new Map<string, number>()
+    for (const p of kept) by.set(p.universityId, (by.get(p.universityId) ?? 0) + 1)
+    return [...by.entries()].sort((a, b) => b[1] - a[1])
+  }, [kept])
+
   const recent = [...kept].reverse().slice(0, 4)
+  const hasList = kept.length > 0
 
   return (
     <>
@@ -83,11 +137,11 @@ export default function OverviewView() {
           {!profile.answers ? (
             <>
               <p className="mt-2 text-sm leading-relaxed text-slate">
-                You haven&rsquo;t answered the four questions. They only narrow what you get shown
-                — every one is skippable, and your average never leaves this device.
+                You haven&rsquo;t answered the questions yet. They only narrow what you get shown —
+                every one is skippable.
               </p>
               <Button to="/survey" className="mt-4">
-                Answer four questions
+                Answer the questions
               </Button>
             </>
           ) : kept.length === 0 ? (
@@ -154,23 +208,17 @@ export default function OverviewView() {
           </div>
           {counts && total > 0 ? (
             <>
-              <ul className="mt-4 space-y-2">
-                {ORDER.map((k) => (
-                  <li key={k} className="flex items-center gap-3">
-                    <span className="w-24 shrink-0 text-sm text-slate">{FIT_LABELS[k].label}</span>
-                    <span className="h-2 flex-1 overflow-hidden rounded-full bg-surface">
-                      <span
-                        className="block h-full rounded-full bg-brand-500"
-                        style={{ width: `${(counts[k] / total) * 100}%` }}
-                      />
-                    </span>
-                    <span className="w-6 shrink-0 text-right text-sm font-600 text-ink [font-variant-numeric:tabular-nums]">
-                      {counts[k]}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-4 text-xs leading-relaxed text-slate">
+              <div className="mt-4">
+                <StackedBar
+                  label="Balance of your list"
+                  segments={ORDER.map((k) => ({
+                    key: k,
+                    label: FIT_LABELS[k].label,
+                    count: counts[k],
+                  }))}
+                />
+              </div>
+              <p className="mt-3 text-xs leading-relaxed text-slate">
                 Against the median average admitted students reported — not a chance of admission.
               </p>
             </>
@@ -183,6 +231,74 @@ export default function OverviewView() {
           )}
         </section>
       </div>
+
+      {/* -------------------------------------------------------- spread --- */}
+      {hasList && (
+        <section className="mt-6 rounded-xl border border-line bg-paper p-5">
+          <div className="flex flex-wrap items-baseline justify-between gap-3">
+            <h2 className="font-600 text-ink">Where your list sits</h2>
+            {average !== null && <FitLegend />}
+          </div>
+          <div className="mt-4">
+            <ListSpread programs={kept} average={average} />
+          </div>
+        </section>
+      )}
+
+      {/* ----------------------------------------------------- breakdown --- */}
+      {hasList && (
+        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+          <section className="rounded-xl border border-line bg-paper p-5">
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 className="font-600 text-ink">What you&rsquo;re applying to</h2>
+              <Link to="/profile/fields" className="text-sm text-brand-600 hover:text-brand-700">
+                Fields
+              </Link>
+            </div>
+            <div className="mt-4">
+              <StackedBar label="Your list by field" segments={fieldMix} />
+            </div>
+            {schools.length > 0 && (
+              <div className="mt-5 border-t border-line pt-4">
+                <p className="text-[11px] font-600 uppercase tracking-wider text-slate">
+                  {schools.length} school{schools.length === 1 ? '' : 's'}
+                </p>
+                <ul className="mt-2 flex flex-wrap gap-1.5">
+                  {schools.map(([id, n]) => (
+                    <li
+                      key={id}
+                      title={`${uniName.get(id) ?? id} — ${n} program${n === 1 ? '' : 's'}`}
+                      className="flex items-center gap-1"
+                    >
+                      <UniversityMark id={id} name={uniName.get(id) ?? id} size={24} />
+                      <span className="text-xs text-slate [font-variant-numeric:tabular-nums]">
+                        {n}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </section>
+
+          <section className="rounded-xl border border-line bg-paper p-5">
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 className="font-600 text-ink">Prerequisites</h2>
+              <Link to="/profile/courses" className="text-sm text-brand-600 hover:text-brand-700">
+                Open
+              </Link>
+            </div>
+            <div className="mt-4">
+              <StackedBar label="Prerequisite status across your list" segments={courseMix} />
+            </div>
+            <p className="mt-3 text-xs leading-relaxed text-slate">
+              A missing prerequisite is the one hard gate here — an average is a comparison, a
+              closed door is not. Programs we haven&rsquo;t researched say so rather than counting
+              as clear.
+            </p>
+          </section>
+        </div>
+      )}
 
       {/* ------------------------------------------------------ recently --- */}
       <section className="mt-6">

@@ -3,8 +3,8 @@
 Read `HANDOFF.md` first for the project as a whole (rules, data pipeline,
 architecture). This file is only about **where things stand now**.
 
-Written 2026-08-27. Everything below is **merged and deployed** unless it says
-otherwise.
+Rewritten 2026-08-27. **Nothing below is merged or deployed yet** — that is the
+main difference from the last version of this file.
 
 ---
 
@@ -12,135 +12,120 @@ otherwise.
 
 | | |
 |---|---|
-| `origin/main` | deployed and live at https://derprito64bit.github.io/AI-slop-project/ |
-| Working state | **no open PRs, no unmerged work** |
+| Site | all work is **uncommitted** on `claude/review-update-recommendations-01764a` |
+| Backend | `TheKeems/UniServer`, cloned to `C:/Users/Aaron/Documents/GitHub/UniServer`, also **uncommitted** |
+| Live site | still the previous build — none of this has shipped |
 
-Everything from the last three sessions is on `main`: the survey funnel,
-accounts, the motion pass, the profile build-out, the map, demo mode, and the
-six empty sections. `origin/account` is the only unmerged branch — an obsolete
-orphan whose content already landed via PR #24. Twenty-odd merged branches are
-safe to prune.
-
-**Baseline, all measured against the live site:**
+**Baseline, measured against a production build served at the deploy base:**
 
 ```
-npm test               226 pass
-npm run lint           0 errors
-npm run sweep          116 of 118        <- see the note below
-npm run sweep:sections 27 of 27
-npm run probe:motion   minVisible 0.55, 0 dark frames
+npm run lint            0 errors
+npm test                246 pass          (was 226)
+npm run sweep           125 of 125        (was 116 of 118)
+npm run sweep:sections  26 of 26
+npm run probe:motion    minVisible 0.55, 0 dark frames
+cd ../UniServer && npm test               133 pass
 ```
 
-**The sweep is expected to fail exactly two checks**, both `no failed requests`,
-both the missing square logos for Laurier and TMU (§5). They are the only two
-universities with no logo file at all, so the browser tries `.png`, tries
-`.svg`, then falls back to a monogram — which looks right, but does cost two
-404s per page. Add those two files and the suite goes green. **Anything else
-failing is new.**
+**The sweep is green now, and one of the two old failures is only masked.**
+`vite preview` serves `index.html` for unknown paths, so a missing logo file
+returns 200 locally. The Laurier/TMU square-logo 404s are still real on GitHub
+Pages until the files land — see §2. The sweep also now ignores failures on
+`/api/universities` and `/api/map/config` specifically, because the site is
+built to survive losing them; any *other* API failure still counts.
 
-Those three suites were promoted out of a scratch directory into `scripts/` in
-this session **specifically so they survive the chat that wrote them**. They
-need `puppeteer-core`, which is a declared devDependency but was not installed
-in this worktree — `npm i` first.
+## 2. What was built
 
-## 2. What each empty section became
+**Navigation.** `/community`, `/about` and the `Global posts` tab are gone,
+merged into one dashboard tool at `/profile/database`. The old URLs redirect.
+That tool is exempt from the dashboard's first-run gate — the methodology has to
+be readable before someone decides whether to trust the site.
 
-Every blank surface now has a resolution, and the reasoning matters more than
-the result:
+**Backend (`TheKeems/UniServer`).** New `universitycontents` collection holding
+**prose only**; `isAdmin` on accounts; `GET /api/universities` (public),
+`PUT`/`DELETE /api/universities/:id` (admin); a map tile proxy at
+`/api/map/tiles/:z/:x/:y`. Full detail in that repo's README.
 
-- **`/about`** — real methodology page. Every figure reads from the dataset at
-  render time. Do not hand-type a statistic here; that is how the home page once
-  claimed "120+ programs" against a real 2,436.
-- **`/community`** — the reporting-bias page. 93% of reports are offers, which
-  is who answered rather than who got in. It deliberately draws **no trend line**
-  through the per-cycle averages: they are flat (92.6 → 93.0) while volume grew
-  six-fold, and charting that would invent a trend the data does not contain.
-- **Applications** — a real tracker. **Deadlines** — the student records dates
-  they found, each with a link to the page they read it on. The site publishes
-  no dates of its own and should not start.
-- **Global posts** — still a mock, genuinely blocked on a backend and on
-  moderation for an audience that is mostly minors.
-- **The Extras tab** — deleted. It was empty on all 2,436 program pages.
+**Admin panel** at `/admin` — not in the navbar, renders the 404 page without
+the flag. The client gate is cosmetic by design; `requireAdmin` re-reads the
+database on every write.
 
-## 3. The constraint that shapes anything per-program you build next
+**The map** draws real tiles through our own proxy when `TILE_URL_TEMPLATE` is
+set, and falls back to the original hand-drawn SVG when it is not. The fallback
+is not a placeholder — it is what covers an unconfigured provider, a provider
+outage, and a sleeping Render instance.
 
-**`sync.ts` whitelists profile fields in BOTH directions.** A new field on
-`SavedProfile` would not merely fail to upload: `applyRemoteProfile` rebuilds
-the local record from that whitelist on every pull, so the first sign-in on
-another device would **erase it silently**.
+**Survey** went from 4 questions to 8, with a typeahead replacing the chip
+grids. New answers: home city, co-op, graduating year, and Grade 12 courses.
 
-That is why `src/lib/tracker.ts` lives in its own localStorage key, outside the
-profile, and why both Track pages say on screen that they stay on the device.
-There is a test asserting a profile rewrite cannot touch tracker data — keep it.
+**Dashboard**: charted overview, Fields ranked by reports, required/recommended
+courses split, Compare gained "You still need".
 
-To make the tracker sync, the field has to be added to the backend
-(`TheKeems/UniServer`) **and** to both maps in `sync.ts`. Until then, do not move
-it into the profile.
+**Logos**: `UniversityMark` no longer forces a monogram below 48px for every
+school — `CREST_MARKS` in that file lists ids whose square file is crest art and
+therefore legible small. **`laurier` is already in that set and its file is not
+saved yet**, so Laurier costs two failed requests per session until you add
+`public/images/universities/square/laurier.png`. TMU's brand kit has no crest;
+its wide wordmark belongs in `public/images/universities/tmu.png`, and it stays
+a monogram in listings.
 
-## 4. Motion, and why it is set the way it is
+## 3. Before any of this is useful to a student
 
-Two findings, both measured, both easy to undo by accident:
+1. **Deploy UniServer.** Nothing in §2's backend half exists on Render yet.
+   Until then the site degrades exactly as designed — no editable prose, SVG
+   map — but the admin panel cannot save.
+2. **Pick a tile provider.** `TILE_URL_TEMPLATE` is unset, so the map is the SVG
+   one. **Do not point it at `tile.openstreetmap.org`** — their tile policy does
+   not allow a proxy in front of it, and it is only used in the local dev
+   instructions. Use MapTiler, Stadia or Thunderforest.
+3. **Promote yourself to admin**, by hand, in the database. There is no route
+   that does it and that is deliberate:
+   `db.accounts.updateOne({ usernameKey: 'you' }, { $set: { isAdmin: true } })`
+4. **Set `ALLOWED_ORIGINS` on Render.** Still unset; CORS still falls back to `*`.
+5. **Settle the UniServer licence.** Still none, so all-rights-reserved by
+   default. The only item on this list that gets harder with time.
+6. **Save the two logo files** (§2).
 
-- **Nothing animates from `opacity: 0`.** Arrivals start at `ENTER_FROM = 0.55`
-  (`src/lib/motion.ts`). Measured with `npm run probe:motion`: with a zero start
-  there were 5–7 consecutive frames of blank page per navigation. The probe
-  reports `minVisible` and `darkFrames` — **0.55 and 0 is the passing state**.
-- **Scroll reveals are CSS, not JavaScript.** `Reveal` and the Explore grid go
-  through `lib/revealOnScroll.ts` and a CSS transition, with `will-change` armed
-  200px early and released on `transitionend`. A JS-driven reveal cost 565ms of
-  style recalculation per scroll of Explore against 18ms without; paired runs put
-  total main-thread work at ~1,567ms (JS) versus ~951–1,242ms (CSS). If reveals
-  are ever moved back into `motion`, that cost comes back.
+## 4. Traps that cost real time in this session
 
-Durations and easings all live in `src/lib/motion.ts`. "Make it slower" is a
-one-file change; that is the point of the file.
+- **`vite preview` serves index.html for missing files, with a 200.** So a
+  missing image "loads", the sweep sees no failure, and you conclude the logos
+  are fine. They are not — check against the live site or the file system.
+- **Leaflet's CSS arrives in the lazy chunk**, i.e. after `index.css`, so it
+  wins every specificity tie. The map rendered as a white box in dark mode until
+  the rules were scoped under `.theme-map`, and the attribution strip stayed
+  white after that because Leaflet writes
+  `.leaflet-container .leaflet-control-attribution` — 0,2,0, the same as the
+  scoped rule. That one needs three classes.
+- **`{x.length && <div/>}` renders a literal `0`.** It shipped in
+  `Program.tsx` and printed a bare "0" above the facts table for any school with
+  a blurb and no description — which is the *first* thing an admin fills in.
+  Every other length guard in the codebase uses an explicit comparison.
+- **A combobox that only closes on outside-pointerdown never closes for a
+  keyboard user.** Tabbing out left the list floating and blanked the chosen
+  answer, because the input renders `open ? query : label`.
+- **`req.path` inside a router mounted at `/api` has the prefix stripped**, so a
+  deliberately-indistinguishable 404 was distinguishable after all.
+- **Node's `fetch` + `res.setHeader` ordering matters.** Setting the
+  content-type and a week of `immutable` caching *before* awaiting the body
+  means a failed read is served and cached as a broken image.
+- The animation-frame traps from the previous handoff all still apply, plus:
+  **a hidden browser pane does not composite frames**, so `AnimatePresence
+  mode="wait"` never finishes its exit and the survey looks stuck. That is the
+  harness, not the app — the headless sweeps are the real check.
 
-## 5. Open items, roughly by value
+## 5. Still true from before
 
-- **`/community` is in the navbar and `Global posts` duplicates its idea.**
-  Worth deciding whether the dashboard tab survives at all.
-- **31 of 39 universities have no square logo**, so they render a monogram.
-  Cosmetic. Carleton (173 programs), Laurier (156) and TMU (136) are the ones
-  worth adding.
-- **`console.log('Sent data')` is still live** in `submitSurvey`
-  (`src/lib/api.ts`). It came from commit 652b6c9 and was deliberately restored
-  rather than silently dropped during a merge. It is debug output on a
-  production path and probably wants removing.
-- **The backend repo has no licence** — `TheKeems/UniServer`, which holds the
-  accounts, is all-rights-reserved by default. Settle that while the
-  collaboration is active.
-- **`ALLOWED_ORIGINS` is unset on Render**, so the API's CORS falls back to `*`.
-  One env var; auth travels in an `Authorization` header rather than a cookie,
-  so this is defence in depth.
-- **Deadlines research** is no longer blocking anything, because the site no
-  longer intends to publish dates.
-- **Coverage**: 75 of 2,436 programs have verified requirements (33 of the 50
-  most-reported); 369 have enough reports to chart. Both are stated honestly in
-  the UI and on `/about`.
+The rules have not moved: no probability of admission, no PII, no fact from a
+search summary, and the dataset stays in the spreadsheet → `npm run data:build`
+→ static JSON pipeline. The new content collection holds no numbers, so nothing
+an admin types can contradict a median.
 
-## 6. Traps that cost real time in this session
+`sync.ts` still whitelists profile fields in **both** directions, and there are
+now four places a new survey answer has to be added — `SurveyAnswers`,
+`applyRemoteProfile`, `RemoteProfile`, and UniServer's `answersSchema` +
+`cleanAnswers`. Miss one and the answer is erased from the device on the next
+sign-in elsewhere. There are tests on both sides asserting the full key set.
 
-- **`vite preview` does not serve at the deploy base.** `vite.config.ts` only
-  applies `base: '/AI-slop-project/'` when `command === 'build'`, so preview
-  serves at `/` while `dist/index.html` requests `/AI-slop-project/...` and every
-  asset 404s into a blank page that looks exactly like a broken build. Use the
-  **`vite-preview`** entry in `.claude/launch.json`, and restart it after every
-  rebuild — it caches its file list at startup.
-- **Verify against the built bundle at the deploy base, not the dev server.**
-  Two real bugs shipped past a dev-server check and were caught only in preview:
-  a redirect that dropped the base path and landed on a 404, and a
-  rules-of-hooks violation `oxlint` had been reporting all along. **Run
-  `npm run lint`.**
-- **`page.evaluateOnNewDocument` re-runs on every navigation.** Seeding
-  localStorage through it means a test that clears storage gets it written back
-  underneath, which reads exactly like an app bug. It cost a false "sign-out
-  leaks your data" report in this session. `scripts/sweep.mjs` has a `seedOnce`
-  option for this.
-- **Frame-delta timing on this machine is too noisy to tune on** — identical
-  builds measured 17% dropped frames and 0% minutes apart. Use CPU accounting
-  (`Performance.getMetrics`) for anything performance-related.
-- **On GitHub Pages every deep link returns HTTP 404** with the right content,
-  because `index.html` is copied to `404.html`. Both sweeps filter the document
-  out of their error checks; do not "fix" that.
-- **A console error carries no resource type.** Asset failures have to be caught
-  on the `response` event if you want to tell them apart from the fallback above.
+Motion settings, the CSS-not-JS scroll reveals, and the `vite-preview` launch
+config are all unchanged and all still load-bearing.

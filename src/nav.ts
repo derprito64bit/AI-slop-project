@@ -7,8 +7,12 @@ export const NAV_LINKS: NavLink[] = [
   { label: 'Explore', to: '/explore' },
   // No "Program" entry: a program page is reached by opening a card in
   // Explore, so it isn't a standalone destination.
-  { label: 'Community', to: '/community' },
-  { label: 'About', to: '/about' },
+  //
+  // No "Community" or "About" either. They were two top-level destinations
+  // arguing the same point from opposite ends — About claimed "we never tell
+  // you your chances", Community showed the 93% offer share that is the reason
+  // — and a student had to find both to get either. They are now one dashboard
+  // tool, /profile/database, and the old URLs redirect to it.
   { label: 'My Profile', to: '/profile', cta: true },
 ]
 

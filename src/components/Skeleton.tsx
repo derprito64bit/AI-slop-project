@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react'
+
 // Loading placeholders shaped like the content that replaces them.
 //
 // These are a LAYOUT-SHIFT FIX first and decoration second. Before they
@@ -97,6 +99,59 @@ export function LoadingNote({ children = 'Loading…' }: { children?: string }) 
   return (
     <p className="sr-only" role="status" aria-live="polite">
       {children}
+    </p>
+  )
+}
+
+/**
+ * A VISIBLE "fetching data" note, for loads that go over the network.
+ *
+ * `LoadingNote` above is `sr-only` because a skeleton is already telling a
+ * sighted reader that something is coming. That reasoning holds for a 950kB
+ * static chunk and breaks completely for the Render service, which spins down
+ * when idle: a cold start takes the better part of a minute, during which a
+ * silent grey rectangle reads as a site that has broken itself.
+ *
+ * So this says what is happening, and after `slowAfterMs` says why it is
+ * taking so long. The escalation is not decoration — "waiting" and "waiting on
+ * a server that is waking up" are different situations and only the second one
+ * is worth staying for. The wording matches `messageForStatus`'s 503 text in
+ * lib/api.ts, which is the same fact arriving through a different door.
+ *
+ * Announced politely rather than assertively: it is progress, not an alert.
+ */
+export function FetchingNote({
+  children = 'Fetching data…',
+  slow,
+  slowAfterMs = 4000,
+}: {
+  children?: string
+  /** shown instead once the wait stops being ordinary. Omit for local loads. */
+  slow?: string
+  slowAfterMs?: number
+}) {
+  const [isSlow, setIsSlow] = useState(false)
+
+  useEffect(() => {
+    if (!slow) return
+    const id = setTimeout(() => setIsSlow(true), slowAfterMs)
+    return () => clearTimeout(id)
+  }, [slow, slowAfterMs])
+
+  return (
+    <p
+      className="flex items-center gap-2 text-sm text-slate"
+      role="status"
+      aria-live="polite"
+    >
+      {/* Pure CSS, and hidden from assistive tech: the text is the message.
+          `motion-safe` so a reduced-motion setting gets a still dot rather
+          than a pulse it did not ask for. */}
+      <span
+        aria-hidden="true"
+        className="h-1.5 w-1.5 shrink-0 rounded-full bg-brand-500 motion-safe:animate-pulse"
+      />
+      {isSlow && slow ? slow : children}
     </p>
   )
 }

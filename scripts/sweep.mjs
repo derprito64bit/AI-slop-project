@@ -43,6 +43,18 @@ async function open(path, opts = {}) {
   if (reduced) await page.emulateMediaFeatures([{ name: 'prefers-reduced-motion', value: 'reduce' }])
   const errors = []
   const bad = []
+  // The two calls the site is DESIGNED to survive losing.
+  //
+  // /api/universities and /api/map/config are additive: editable prose and
+  // whether a basemap can be drawn. Both resolve to "nothing, then" on failure —
+  // `loadUniversityContent` returns {} and the map falls back to its SVG — so a
+  // 404 from a backend that has not been deployed yet, or a refusal from one
+  // that is asleep, is the expected state rather than a regression.
+  //
+  // Narrow on purpose: any OTHER API route failing still counts. If this ever
+  // grows to cover /api/profile, the sweep has stopped being able to tell you
+  // that sync is broken.
+  const EXPECTED_API_MISS = /\/api\/(universities|map\/config)\b/
   page.on('console', (m) => {
     if (m.type() !== 'error') return
     // Every deep link on GitHub Pages is served through 404.html, so the
@@ -52,13 +64,20 @@ async function open(path, opts = {}) {
     if (/Failed to load resource/.test(m.text())) return
     errors.push(m.text().slice(0, 140))
   })
-  page.on('requestfailed', (r) => bad.push(`${r.failure()?.errorText ?? 'failed'} ${r.url().slice(-55)}`))
+  page.on('requestfailed', (r) => {
+    // Same reasoning as the API 404 below: with the backend not deployed, or
+    // asleep, the content call is refused outright rather than answered. The
+    // site is built to shrug that off.
+    if (EXPECTED_API_MISS.test(r.url())) return
+    bad.push(`${r.failure()?.errorText ?? 'failed'} ${r.url().slice(-55)}`)
+  })
   // A 404 on the DOCUMENT is by design on GitHub Pages: index.html is copied to
   // 404.html so deep links resolve, which means every deep link is served with a
   // 404 status and correct content. Only asset failures mean something is broken.
   page.on('response', (r) => {
     if (r.status() < 400) return
     if (r.request().resourceType() === 'document') return
+    if (EXPECTED_API_MISS.test(r.url())) return
     bad.push(`${r.status()} ${r.url().slice(-55)}`)
   })
   await page.evaluateOnNewDocument(
@@ -256,40 +275,121 @@ async function sweepProgram() {
 
 /* ---------------------------------------------------------------- survey --- */
 
+/** Pick an option out of a Combobox the way a student does: type, then click. */
+async function pickOption(page, selector, query, label) {
+  await page.focus(selector)
+  await type(page, selector, query)
+  await wait(250)
+  return page.evaluate((t) => {
+    const o = [...document.querySelectorAll('[role="option"]')].find((e) =>
+      e.innerText.trim().startsWith(t),
+    )
+    if (!o) return false
+    // pointerdown, not click: that is what the component listens for, because a
+    // click would arrive after the input's blur had already closed the list.
+    o.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, cancelable: true }))
+    return true
+  }, label)
+}
+
 async function sweepSurvey() {
   const { page, errors, bad } = await open('/survey')
-  const step = () => text(page).then((t) => (t.match(/QUESTION (\d) OF 4/i) ?? [])[1])
+  // Not pinned to a question count. It used to read `OF 4`, which is why every
+  // check in here failed at once when the survey grew rather than the one that
+  // had actually changed.
+  const step = () => text(page).then((t) => (t.match(/QUESTION (\d+) OF \d+/i) ?? [])[1])
 
   check('survey', 'starts at question 1', (await step()) === '1')
 
-  await clickText(page, 'Engineering', 'button')
+  // --- 1. field, through the typeahead that replaced the chip grid
+  const took = await pickOption(page, '#survey-field', 'engine', 'Engineering')
+  check('survey', 'the field typeahead offers a match and takes it', took)
   await wait(200)
+  const chosen = await page.$eval('#survey-field', (el) => el.value).catch(() => '')
+  check('survey', 'the chosen field stays in the box', chosen === 'Engineering', `value="${chosen}"`)
+
   await clickText(page, 'Next', 'button')
   await wait(700)
   check('survey', 'Next advances', (await step()) === '2')
 
+  // --- 2. co-op
+  await clickText(page, 'Co-op only', 'button')
+  await wait(200)
+  await clickText(page, 'Next', 'button')
+  await wait(700)
+  check('survey', 'the co-op question advances', (await step()) === '3')
+
+  // --- 3. province
   await clickText(page, 'Skip', 'button')
   await wait(700)
-  check('survey', 'Skip advances past a question', (await step()) === '3')
+  check('survey', 'Skip advances past a question', (await step()) === '4')
 
-  // 40-100 range check: a typo must be caught, a real average accepted.
+  // --- 4. home city
+  await clickText(page, 'Skip', 'button')
+  await wait(700)
+  check('survey', 'reaches the average question', (await step()) === '5')
+
+  // --- 5. average. 40-100 range check: a typo must be caught, a real average
+  // accepted. This is the only question that can be wrong rather than absent.
   await type(page, '#survey-average', '8')
   await clickText(page, 'Next', 'button')
   await wait(600)
   const err = await page.evaluate(() => document.querySelector('[role="alert"]')?.innerText ?? '')
-  check('survey', 'rejects an implausible average', /between 40 and 100/i.test(err) && (await step()) === '3', err.slice(0, 40))
+  check('survey', 'rejects an implausible average', /between 40 and 100/i.test(err) && (await step()) === '5', err.slice(0, 40))
 
   await type(page, '#survey-average', '88')
   await clickText(page, 'Next', 'button')
   await wait(700)
-  check('survey', 'accepts a real average', (await step()) === '4')
+  check('survey', 'accepts a real average', (await step()) === '6')
 
   await clickText(page, 'Back', 'button')
   await wait(700)
   const kept = await page.$eval('#survey-average', (el) => el.value).catch(() => '')
-  check('survey', 'Back preserves the typed answer', (await step()) === '3' && kept === '88', `value="${kept}"`)
+  check('survey', 'Back preserves the typed answer', (await step()) === '5' && kept === '88', `value="${kept}"`)
 
   await page.close()
+
+  // A full run, ending in a stored profile.
+  //
+  // The courses question is the one that writes somewhere other than `answers`
+  // — it fills SavedProfile.courses, which the Courses tool owns — so a run
+  // that did not check both halves would miss the point of adding it.
+  const { page: p3 } = await open('/survey')
+  await pickOption(p3, '#survey-field', 'engine', 'Engineering')
+  await wait(200)
+  for (let i = 0; i < 5; i++) {
+    // field, co-op, province, home city, average
+    await clickText(p3, 'Next', 'button')
+    await wait(650)
+  }
+  await clickText(p3, 'Advanced Functions', 'button')
+  await wait(200)
+  for (let i = 0; i < 2; i++) {
+    // courses, graduating year
+    await clickText(p3, 'Next', 'button')
+    await wait(650)
+  }
+  await clickText(p3, 'Show my matches', 'button')
+  await wait(1800)
+  const done = await p3.evaluate(() => ({
+    path: location.pathname,
+    profile: JSON.parse(localStorage.getItem('acceptiversity.profile.v2') ?? 'null'),
+  }))
+  check('survey', 'a full run lands on the dashboard', /\/profile/.test(done.path), done.path)
+  check('survey', 'a full run stores the field', done.profile?.answers?.field === 'engineering',
+    JSON.stringify(done.profile?.answers))
+  check('survey', 'the courses question writes to the profile, not to answers',
+    Array.isArray(done.profile?.courses) && done.profile.courses.includes('MHF4U'),
+    JSON.stringify(done.profile?.courses))
+  // Every key of SurveyAnswers has to survive the round trip. A missing one is
+  // the signature of the four-place change going wrong — see Survey.tsx.
+  check('survey', 'stores every answer key',
+    Boolean(done.profile?.answers) &&
+      ['field', 'province', 'average', 'ambition', 'homeCity', 'coop', 'gradYear'].every(
+        (k) => k in done.profile.answers,
+      ),
+    JSON.stringify(Object.keys(done.profile?.answers ?? {})))
+  await p3.close()
 
   // Skip all: a profile with answers: null, and a dashboard that still works.
   const { page: p2 } = await open('/survey')
@@ -321,7 +421,7 @@ const VIEWS = [
   ['/fields', 'Fields', 'Engineering'],
   ['/applications', 'Applications', 'stays on this device'],
   ['/deadlines', 'Deadlines', 'We do not publish deadlines'],
-  ['/posts', 'Global posts', 'Not live yet'],
+  ['/database', 'The data', 'not an acceptance rate'],
   ['/account', '', 'account'],
 ]
 
@@ -481,7 +581,9 @@ async function sweepCross() {
     await page.close()
   }
 
-  for (const [path, expect] of [['/about', 'About'], ['/community', 'Community'], ['/nonsense-route', 'not found']]) {
+  // /about and /community are redirects now, not pages — they land on the
+  // database tool, which is where both sets of content went.
+  for (const [path, expect] of [['/about', 'The data'], ['/community', 'The data'], ['/nonsense-route', 'not found']]) {
     const { page } = await open(path)
     const body = await text(page)
     check('cross', `${path} renders`, new RegExp(expect, 'i').test(body), body.slice(0, 34).replace(/\n/g, ' '))
@@ -536,7 +638,7 @@ async function sweepCross() {
   const claims = /\b(your odds|real odds|true odds|acceptance rate|chance of admission|admission chances)\b/i
   const disclaimer =
     /not an acceptance rate|not your odds|none of this is an admission chance|never an admission|never tell you your chances/i
-  for (const path of ['/', '/explore', '/survey', '/about', '/community']) {
+  for (const path of ['/', '/explore', '/survey', '/profile/database']) {
     const { page: p } = await open(path)
     const body = await text(p)
     const hit = body.match(claims)

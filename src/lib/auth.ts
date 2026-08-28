@@ -35,6 +35,7 @@ import {
   createAccount,
   deleteRemoteAccount,
   fetchAccount,
+  type RemoteAccount,
   type RemoteProfile,
 } from './api'
 import {
@@ -52,6 +53,23 @@ import { applyRemoteProfile, flushProfile, forgetPending, pullProfile } from './
 
 /** What the rest of the app sees. */
 export type Account = SessionAccount
+
+/**
+ * The server's account shape, narrowed to the one we cache.
+ *
+ * The only difference is `isAdmin`, which is optional on the wire — a server
+ * build predating the field just omits it — and required here. Absent is not an
+ * admin, and this is the single place that decision gets made rather than seven
+ * `?? false`s scattered through the callers.
+ */
+function asAccount(remote: RemoteAccount): Account {
+  return {
+    id: remote.id,
+    username: remote.username,
+    createdAt: remote.createdAt,
+    isAdmin: remote.isAdmin === true,
+  }
+}
 
 /**
  * An error a form can render against the right input.
@@ -222,8 +240,9 @@ export async function signUp(
     throw asAuthError(cause, 'username')
   }
 
-  const adopted = adoptGuestProfile(result.account.id)
-  startSession(result.account, result.token)
+  const account = asAccount(result.account)
+  const adopted = adoptGuestProfile(account.id)
+  startSession(account, result.token)
 
   // A brand-new account's server profile is empty, so the local copy is the one
   // worth keeping. Push it rather than pulling over it — pulling here is how the
@@ -233,10 +252,10 @@ export async function signUp(
       /* stays on the device, and sync.ts retries */
     })
   } else if (result.profile) {
-    applyRemoteProfile(result.account.id, result.profile)
+    applyRemoteProfile(account.id, result.profile)
   }
 
-  return { account: result.account, adopted }
+  return { account, adopted }
 }
 
 /**
@@ -260,10 +279,11 @@ export async function signIn(rawUsername: string, password: string): Promise<Acc
     throw asAuthError(cause, 'password')
   }
 
-  startSession(result.account, result.token)
+  const account = asAccount(result.account)
+  startSession(account, result.token)
 
   if (result.profile) {
-    applyRemoteProfile(result.account.id, result.profile)
+    applyRemoteProfile(account.id, result.profile)
   } else {
     // The login response normally carries the profile; pull it if this server
     // build does not send one, so a sign-in is never a blank dashboard.
@@ -272,7 +292,7 @@ export async function signIn(rawUsername: string, password: string): Promise<Acc
     })
   }
 
-  return result.account
+  return account
 }
 
 /**
@@ -290,8 +310,12 @@ export async function verifySession(): Promise<Account | null> {
 
   try {
     const { account } = await fetchAccount(token)
-    updateSessionAccount(account)
-    return account
+    // Refreshes isAdmin as well as the username, so a promotion — or a
+    // revocation — done in the database reaches the browser on the next load
+    // rather than on the next sign-in.
+    const fresh = asAccount(account)
+    updateSessionAccount(fresh)
+    return fresh
   } catch (cause) {
     if (cause instanceof ApiError && !cause.isTransport && cause.status === 401) {
       // Expired, revoked, or the account was deleted elsewhere. The local profile
