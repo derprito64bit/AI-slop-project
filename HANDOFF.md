@@ -201,13 +201,25 @@ below. **KokonutUI** is worth using but is *not* a dependency — its components
 are copy-in and already assume Motion + Tailwind, so paste individual ones in as
 needed.
 
-**Motion timings come from the `ui-ux-pro-max` motion table**
-(`~/.claude/skills/ui-ux-pro-max/data/motion.csv`), not taste. Scroll reveals
-are 400ms at `y: 12` (its Subtle tier: *"keep the y offset small (8-16px) so it
-reads as a fade, not a slide"*), staggers are 0.04s/item (it warns against more
-than 0.1s per item and more than ~8 staggered children), and the hero settles in
-0.61s rather than the old 0.98s. If motion starts feeling sluggish again, check
-these numbers before adding anything new.
+**Motion timings come from `src/lib/motion.ts`**, which is the one place they
+live — components import `DURATION`, `EASE`, `SPRING`, `staggerDelay` and
+`chartDelay` rather than carrying their own.
+
+Those numbers were chosen against the `ui-ux-pro-max` motion table
+(`~/.claude/skills/ui-ux-pro-max/data/motion.csv`), and it is worth knowing
+exactly how far that goes, because this paragraph used to overclaim it. That
+table is 16 rows of **GSAP presets** — `power2.out`, `back.out(1.4)` — not CSS
+curves, and **it has no chart row at all**. Its scroll-reveal guidance is real
+and is what the reveals follow: keep the y offset 8-16px so it reads as a fade
+rather than a slide, never stagger more than ~8 children, never more than 0.1s
+per item. Its one line that bears on charts is a prohibition — *"don't use
+`back.out` on dense data tables; the overshoot reads as sloppy on informational
+UI"* — which is why nothing here overshoots.
+
+Chart timing comes from the rules every source does agree on: micro-interactions
+150-300ms, complex motion under 400ms, transform and opacity only. A hover is
+`DURATION.hover` and is always its own transition, never folded into an
+entrance.
 
 **The hero section must not clip.** Its `overflow-hidden` now lives on the inner
 decorative layer, not the `<section>`. It was on the section to contain the
@@ -362,8 +374,9 @@ and pastes the requirements text. Structuring and citing it takes seconds.
 
 ### Assets the user is sourcing
 
-4. **Square university logos** → `public/images/universities/square/{id}.svg|png`.
-   **0 of 39 present.** README there lists all 39 ids ordered by report volume
+4. ~~**Square university logos**~~ — **DONE.** 38 of 39 present
+   (`public/images/universities/square/{id}.png`), 29 of them cleared to draw at
+   any size. Only Trent is absent, deliberately. See that folder's README. README there lists all 39 ids ordered by report volume
    with a running cumulative share — the top 11 cover ~88%. Until they land,
    `UniversityMark` renders a coloured monogram, so nothing is broken.
    (The 8 wide wordmarks in the parent folder are a different asset, used by the

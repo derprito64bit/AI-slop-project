@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { DURATION, EASE } from '../lib/motion'
+import { DURATION, EASE, chartDelay } from '../lib/motion'
 import { motion, useReducedMotion } from 'motion/react'
 import type { CyclePoint } from '../lib/analytics'
 
@@ -39,17 +39,25 @@ export default function CycleTrend({ points }: { points: CyclePoint[] }) {
                 {p.median}%
               </span>
               <motion.div
+                // origin-bottom was already on this class list and did nothing,
+                // because nothing was transformed — the height animated instead,
+                // which is a layout pass per frame. Now the height is static and
+                // the scale grows from the baseline, which is also what the
+                // dataviz guidance means by a bar growing from a single baseline.
                 className="origin-bottom rounded-t-md"
-                style={{ background: 'var(--color-chart)' }}
-                initial={reduced ? false : { height: 0, opacity: 0.6 }}
+                style={{ background: 'var(--color-chart)', height: `${Math.max(4, h)}%` }}
+                initial={reduced ? false : { scaleY: 0, opacity: 0.6 }}
                 animate={{
-                  height: `${Math.max(4, h)}%`,
+                  scaleY: 1,
                   opacity: hover === null || hover === p.cycle ? 1 : 0.55,
                 }}
                 transition={
                   reduced
                     ? { duration: 0 }
-                    : { duration: DURATION.slow, delay: i * 0.08, ease: EASE.out }
+                    : {
+                        scaleY: { duration: DURATION.base, delay: chartDelay(i), ease: EASE.out },
+                        opacity: { duration: DURATION.hover, ease: EASE.out },
+                      }
                 }
                 title={`${p.cycle}: median ${p.median}% from ${p.n} reports`}
               />

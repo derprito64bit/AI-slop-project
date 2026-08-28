@@ -1,3 +1,5 @@
+import { motion, useReducedMotion } from 'motion/react'
+import { DURATION, EASE, chartDelay } from '../lib/motion'
 import { FIT_LABELS, balanceOf, fitFor, type Fit } from '../lib/profile'
 import type { Program } from '../data/types'
 
@@ -23,6 +25,10 @@ export default function BalanceCheck({
   average: number
   programs: Program[]
 }) {
+  // Above the early return, without exception: a hook after it changes the hook
+  // order the moment `total` goes from 0 to non-zero.
+  const reduced = useReducedMotion()
+
   const counts = balanceOf(average, programs)
   const total = ORDER.reduce((n, k) => n + counts[k], 0)
   if (!total) return null
@@ -38,10 +44,25 @@ export default function BalanceCheck({
         role="img"
         aria-label={ORDER.map((k) => `${FIT_LABELS[k].label}: ${counts[k]}`).join(', ')}
       >
-        {ORDER.filter((k) => counts[k] > 0).map((k) => (
-          <div
+        {/* This bar was the one on the site that never animated, so the same
+            stacked shape arrived differently depending on which page you were
+            on. Same scaleX growth as StackedBar and DecisionMix. */}
+        {ORDER.filter((k) => counts[k] > 0).map((k, i) => (
+          <motion.div
             key={k}
-            style={{ width: `${(counts[k] / total) * 100}%`, background: BAR[k], marginRight: 2 }}
+            style={{
+              width: `${(counts[k] / total) * 100}%`,
+              background: BAR[k],
+              marginRight: 2,
+              transformOrigin: 'left',
+            }}
+            initial={reduced ? false : { scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={
+              reduced
+                ? { duration: 0 }
+                : { duration: DURATION.base, ease: EASE.out, delay: chartDelay(i) }
+            }
             title={`${FIT_LABELS[k].label}: ${counts[k]}`}
           />
         ))}

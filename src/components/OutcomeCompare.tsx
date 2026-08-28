@@ -27,6 +27,19 @@ const ROWS = [
   },
 ] as const
 
+/**
+ * Where the median sits inside the p25-p75 strip, as a percentage of its width.
+ *
+ * That point is the strip's transform origin, so it grows outwards from the
+ * median exactly as the old `left` + `width` animation did. Guarded because a
+ * degenerate strip (p25 === p75) would divide by zero.
+ */
+function medianOrigin(p25: number, median: number, p75: number): number {
+  const span = p75 - p25
+  if (span <= 0) return 50
+  return Math.max(0, Math.min(100, ((median - p25) / span) * 100))
+}
+
 export default function OutcomeCompare({ offers, rejections }: Props) {
   const reduced = useReducedMotion()
   // Shared scale across both rows, padded so end caps are never flush.
@@ -63,21 +76,30 @@ export default function OutcomeCompare({ offers, rejections }: Props) {
                 />
                 {/* p25–p75, where the middle half sat. Grows from the median
                     outwards, so the eye lands on the median first. */}
+                {/* `left` and `width` are static and the scale animates. This
+                    animated BOTH of them at once, which is the most expensive
+                    thing on the page: two layout properties, per frame, per row.
+                    Scaling from the median's own position inside the strip gives
+                    the identical "grows outwards from the median" movement on
+                    the compositor instead. */}
                 <motion.div
                   className="absolute top-1/2 h-4 -translate-y-1/2 rounded-md"
-                  style={{ background: row.fill }}
-                  initial={
-                    reduced ? false : { left: `${pos(s.median)}%`, width: '0%', opacity: 0 }
-                  }
-                  animate={{
+                  style={{
+                    background: row.fill,
                     left: `${pos(s.p25)}%`,
                     width: `${Math.max(0.6, pos(s.p75) - pos(s.p25))}%`,
-                    opacity: 1,
+                    transformOrigin: `${medianOrigin(pos(s.p25), pos(s.median), pos(s.p75))}% center`,
                   }}
+                  initial={reduced ? false : { scaleX: 0 }}
+                  animate={{ scaleX: 1 }}
                   transition={
                     reduced
                       ? { duration: 0 }
-                      : { duration: DURATION.slow, delay: row.key === 'offers' ? 0.07 : 0.2, ease: EASE.out }
+                      : {
+                          duration: DURATION.base,
+                          delay: row.key === 'offers' ? 0.07 : 0.2,
+                          ease: EASE.out,
+                        }
                   }
                 />
                 {/* median — the one direct marker */}
@@ -86,7 +108,13 @@ export default function OutcomeCompare({ offers, rejections }: Props) {
                   style={{ left: `${pos(s.median)}%` }}
                   initial={reduced ? false : { scaleY: 0, opacity: 0 }}
                   animate={{ scaleY: 1, opacity: 1 }}
-                  transition={reduced ? { duration: 0 } : { duration: DURATION.base, delay: 0.34 }}
+                  // Carried no `ease` at all and fell back to the library default,
+                  // so it was the one mark on the page not on the site's curve.
+                  transition={
+                    reduced
+                      ? { duration: 0 }
+                      : { duration: DURATION.base, delay: 0.34, ease: EASE.out }
+                  }
                 />
               </div>
             </li>

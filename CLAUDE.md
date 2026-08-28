@@ -96,7 +96,7 @@ npm run sweep && npm run sweep:sections && npm run probe:motion
 | `npm test` | 282 pass |
 | `npm run sweep` | 135 of 135 |
 | `npm run sweep:sections` | 26 of 26 |
-| `npm run probe:motion` | `minVisible 0.55`, `0 dark frames` |
+| `npm run probe:motion` | `minVisible 0.55` (the charts row reports `1`), `0 dark frames` |
 
 The backend has its own suite: `cd ../UniServer && npm test` — 133 pass.
 
