@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import UniversityMark from './UniversityMark'
+import { COURSE_NAMES, gapFor } from '../lib/courses'
 import { getProgramInfo, getUniversityInfo } from '../data/program-info'
 import type { Program } from '../data/types'
 
@@ -12,15 +13,29 @@ import type { Program } from '../data/types'
 //
 // Every verified row carries the date its sources were read, because a
 // requirement from two years ago is not a requirement.
+//
+// THREE COURSE ROWS, not one. "Required courses" alone made the table describe
+// the programs without ever describing the choice: two engineering programs
+// list the same five courses, so the row that was supposed to separate them
+// printed the same text twice. What separates them is what the student is
+// short of. So the rows are now what the university requires, what it merely
+// suggests, and — the useful one — what is still outstanding for this student.
+//
+// The same rule as everywhere else applies to the middle row: a recommended
+// course is never counted as missing, and `gapFor` reads only the required
+// list. See lib/courses.ts.
 
 const MAX = 4
 
 export default function CompareTable({
   programs,
+  taking,
   uniName,
   onRemove,
 }: {
   programs: Program[]
+  /** the Grade 12 courses the student ticked, for the outstanding-courses row */
+  taking: string[]
   uniName: Map<string, string>
   onRemove: (id: string) => void
 }) {
@@ -69,6 +84,42 @@ export default function CompareTable({
             ))}
           </ul>
         )
+      },
+    },
+    {
+      label: 'Recommended',
+      render: (p) => {
+        const info = getProgramInfo(p.id)
+        if (!info) return <Unverified />
+        // An empty cell, not "not verified yet". Most programs recommend
+        // nothing, and a page of amber "unverified" flags against courses that
+        // simply do not exist would read as missing research.
+        if (!info.recommendedCourses?.length) {
+          return <span className="text-slate">&mdash;</span>
+        }
+        return (
+          <ul className="list-disc pl-4 text-slate">
+            {info.recommendedCourses.map((c) => (
+              <li key={c}>{c}</li>
+            ))}
+          </ul>
+        )
+      },
+    },
+    {
+      label: 'You still need',
+      render: (p) => {
+        const info = getProgramInfo(p.id)
+        const gap = gapFor(info?.requiredCourses, taking)
+        if (!gap) return <Unverified />
+        if (gap.satisfied) {
+          return <span className="font-600 text-brand-600">Nothing outstanding</span>
+        }
+        const bits = [
+          ...gap.missing.map((c) => COURSE_NAMES[c] ?? c),
+          ...gap.choices.map((c) => `${c.count} of ${c.codes.map((x) => COURSE_NAMES[x] ?? x).join(' / ')}`),
+        ]
+        return <span className="font-600 text-ink">{bits.join(', ')}</span>
       },
     },
     {

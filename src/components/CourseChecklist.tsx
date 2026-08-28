@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { COURSES, COURSE_NAMES, gapFor } from '../lib/courses'
+import { COURSES, COURSE_NAMES, gapFor, parseRequirement } from '../lib/courses'
 import { getProgramInfo } from '../data/program-info'
 import type { Program } from '../data/types'
 
@@ -10,6 +10,18 @@ import type { Program } from '../data/types'
 // useful tool here and the most dangerous — see the safety rules at the top of
 // lib/courses.ts. Anything unresolved is shown as the university's own wording
 // and never counted against a program.
+//
+// REQUIRED AND RECOMMENDED ARE KEPT VISIBLY APART, and the separation is the
+// safety rule rather than a layout choice. `ProgramInfo` has carried
+// `recommendedCourses` since the research began and nothing has ever rendered
+// it, so a course the university merely suggests has been invisible. Showing it
+// is useful. Showing it anywhere near the missing-prerequisite list would be
+// worse than not showing it at all: a student who drops a required course
+// because it looked optional loses a year, and `gapFor` deliberately never
+// reads the recommended list for exactly that reason.
+//
+// So: different heading, different weight, an explicit "not required" label,
+// and no effect on whether a program counts as blocked.
 
 export default function CourseChecklist({
   taking,
@@ -79,7 +91,7 @@ export default function CourseChecklist({
 
           {blocked.length > 0 && (
             <ul className="mt-5 space-y-3">
-              {blocked.map(({ program, gap }) => (
+              {blocked.map(({ program, info, gap }) => (
                 <li key={program.id} className="rounded-xl border border-line bg-paper p-4">
                   <div className="flex flex-wrap items-baseline justify-between gap-2">
                     <Link
@@ -93,8 +105,12 @@ export default function CourseChecklist({
                     </span>
                   </div>
 
+                  <p className="mt-3 text-[11px] font-600 uppercase tracking-wider text-accent">
+                    Required
+                  </p>
+
                   {gap!.missing.length > 0 && (
-                    <p className="mt-2 text-sm text-ink">
+                    <p className="mt-1 text-sm text-ink">
                       Still needs{' '}
                       <strong className="font-600">
                         {gap!.missing.map((c) => COURSE_NAMES[c] ?? c).join(', ')}
@@ -103,7 +119,7 @@ export default function CourseChecklist({
                   )}
 
                   {gap!.choices.map((ch, i) => (
-                    <p key={i} className="mt-2 text-sm text-ink">
+                    <p key={i} className="mt-1 text-sm text-ink">
                       Needs {ch.count} of{' '}
                       {ch.codes.map((c) => COURSE_NAMES[c] ?? c).join(', ')}{' '}
                       <span className="text-slate">({ch.have} so far)</span>
@@ -111,6 +127,8 @@ export default function CourseChecklist({
                   ))}
 
                   {gap!.notes.length > 0 && <Notes notes={gap!.notes} />}
+
+                  <Recommended courses={info?.recommendedCourses} taking={taking} />
                 </li>
               ))}
             </ul>
@@ -121,9 +139,20 @@ export default function CourseChecklist({
               <p className="text-sm font-600 text-ink">
                 {clear.length} program{clear.length === 1 ? '' : 's'} — prerequisites covered
               </p>
-              <p className="mt-1 text-sm text-slate">
-                {clear.map((r) => r.program.name).join(' · ')}
-              </p>
+              {/* Deliberately compact: these are the ones needing no action, so
+                  they get a line each rather than a card each. The exception is
+                  a recommended course, which is the one thing here a student
+                  might still want to do something about. */}
+              <ul className="mt-1 space-y-1">
+                {clear.map((r) => (
+                  <li key={r.program.id} className="text-sm text-slate">
+                    {r.program.name}
+                    {r.info?.recommendedCourses?.length ? (
+                      <Recommended courses={r.info.recommendedCourses} taking={taking} inline />
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
               {clear.some((r) => r.gap!.notes.length > 0) && (
                 <p className="mt-2 text-xs text-slate">
                   Some also list general requirements (an extra 4U course, a total subject count)
@@ -149,6 +178,69 @@ export default function CourseChecklist({
         </>
       )}
     </section>
+  )
+}
+
+/**
+ * Courses the university suggests but does not require.
+ *
+ * NEVER A GAP. It renders nothing at all when the program has no recommended
+ * list, says "not required" on its face, and takes no part in whether a program
+ * counts as blocked — `gapFor` does not read this field and must not start.
+ *
+ * A course the student is already taking is ticked, because "you have this one
+ * covered" is the useful half of the message. One that is missing is stated
+ * plainly and left alone: it is a suggestion, and dressing it up as an
+ * outstanding item is how a recommendation turns into a false requirement.
+ *
+ * The wording is the university's own, parsed only far enough to spot a single
+ * named course. Anything more complicated is printed verbatim.
+ */
+function Recommended({
+  courses,
+  taking,
+  inline = false,
+}: {
+  courses?: string[]
+  taking: string[]
+  /** a one-line variant, for the compact "prerequisites covered" list */
+  inline?: boolean
+}) {
+  if (!courses?.length) return null
+
+  const have = new Set(taking)
+  const items = courses.map((text) => {
+    const req = parseRequirement(text)
+    return { text, held: req.kind === 'course' && have.has(req.code) }
+  })
+
+  if (inline) {
+    return (
+      <span className="text-xs text-slate">
+        {' '}
+        · also recommends {items.map((i) => i.text).join('; ')}{' '}
+        <span className="text-slate/70">(not required)</span>
+      </span>
+    )
+  }
+
+  return (
+    <div className="mt-3 border-t border-line pt-2">
+      <p className="text-[11px] font-600 uppercase tracking-wider text-slate">
+        Recommended · not required
+      </p>
+      <ul className="mt-1 space-y-1">
+        {items.map((i) => (
+          <li key={i.text} className="text-xs leading-relaxed text-slate">
+            <span aria-hidden="true" className={i.held ? 'text-brand-600' : 'text-slate/60'}>
+              {i.held ? '✓ ' : '· '}
+            </span>
+            {i.text}
+            {i.held && <span className="sr-only"> — you are taking this</span>}
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }
 
