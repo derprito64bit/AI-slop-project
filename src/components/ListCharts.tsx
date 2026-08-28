@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
-import { DURATION, EASE } from '../lib/motion'
+import { DURATION, EASE, chartDelay } from '../lib/motion'
 import { FIT_LABELS, fitFor, type Fit } from '../lib/profile'
 import type { Program } from '../data/types'
 
@@ -46,13 +46,27 @@ export function StackedBar({ segments, label }: { segments: Segment[]; label: st
         role="img"
         aria-label={`${label}. ${shown.map((s) => `${s.label}: ${s.count}`).join(', ')}`}
       >
+        {/* The width is a STATIC style and the scale is what animates.
+            Animating the width itself made every frame a layout pass: this repo
+            measured that pattern at 565ms of style recalculation against 18ms
+            for the transform path. A transform runs on the compositor and the
+            main thread does nothing per frame. */}
         {shown.map((s, i) => (
           <motion.div
             key={s.key}
-            initial={reduced ? false : { width: 0 }}
-            animate={{ width: `${(s.count / total) * 100}%` }}
-            transition={{ duration: DURATION.base, ease: EASE.out, delay: i * 0.04 }}
-            style={{ background: shade(i, shown.length), marginRight: i < shown.length - 1 ? 2 : 0 }}
+            style={{
+              width: `${(s.count / total) * 100}%`,
+              background: shade(i, shown.length),
+              marginRight: i < shown.length - 1 ? 2 : 0,
+              transformOrigin: 'left',
+            }}
+            initial={reduced ? false : { scaleX: 0 }}
+            animate={{ scaleX: 1 }}
+            transition={
+              reduced
+                ? { duration: 0 }
+                : { duration: DURATION.base, ease: EASE.out, delay: chartDelay(i) }
+            }
             title={`${s.label}: ${s.count}`}
           />
         ))}
@@ -170,23 +184,53 @@ export function ListSpread({
           const y = BASE - 14 - (i % 3) * 15
           const fit = average !== null ? fitFor(average, d.median) : null
           return (
-            <motion.circle
-              key={d.p.id}
-              cx={x(d.median)}
-              cy={y}
-              r={active === d.p.id ? 8 : 6}
-              fill={fit ? FIT_FILL[fit] : 'var(--color-chart)'}
-              stroke="var(--color-paper)"
-              strokeWidth="1.5"
-              initial={reduced ? false : { opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: DURATION.base, ease: EASE.out, delay: i * 0.015 }}
-              style={{ cursor: 'pointer' }}
-              onPointerEnter={() => setActive(d.p.id)}
-              onPointerLeave={() => setActive((c) => (c === d.p.id ? null : c))}
-            >
-              <title>{`${d.p.name} — ${d.median}% median`}</title>
-            </motion.circle>
+            <g key={d.p.id}>
+              <motion.circle
+                cx={x(d.median)}
+                cy={y}
+                r={6}
+                fill={fit ? FIT_FILL[fit] : 'var(--color-chart)'}
+                stroke="var(--color-paper)"
+                strokeWidth="1.5"
+                style={{ transformOrigin: `${x(d.median)}px ${y}px`, pointerEvents: 'none' }}
+                initial={reduced ? false : { opacity: 0 }}
+                // The radius used to jump 6 to 8 as a plain attribute, which is
+                // the one state change on this chart that never animated. A
+                // scale does the same thing on the compositor.
+                animate={{ opacity: 1, scale: active === d.p.id ? 1.35 : 1 }}
+                transition={
+                  reduced
+                    ? { duration: 0 }
+                    : {
+                        opacity: { duration: DURATION.base, delay: chartDelay(i), ease: EASE.out },
+                        scale: { duration: DURATION.hover, ease: EASE.out },
+                      }
+                }
+              />
+              {/* A SEPARATE HIT TARGET, and a focusable one.
+                  The dot is r=6 — a 12px mark, which the dataviz anti-patterns
+                  name outright as a pinpoint target nobody lands on reliably;
+                  the floor is ~24px. And the dot was pointer-only, so a keyboard
+                  user got no readout at all, on the one chart whose values live
+                  in a caption rather than on the marks. Focus now does exactly
+                  what hover does. */}
+              <circle
+                cx={x(d.median)}
+                cy={y}
+                r={13}
+                fill="transparent"
+                tabIndex={0}
+                role="button"
+                aria-label={`${d.p.name}, ${d.median}% median`}
+                style={{ cursor: 'pointer' }}
+                onPointerEnter={() => setActive(d.p.id)}
+                onPointerLeave={() => setActive((c) => (c === d.p.id ? null : c))}
+                onFocus={() => setActive(d.p.id)}
+                onBlur={() => setActive((c) => (c === d.p.id ? null : c))}
+              >
+                <title>{`${d.p.name} — ${d.median}% median`}</title>
+              </circle>
+            </g>
           )
         })}
 

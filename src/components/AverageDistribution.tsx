@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useRef, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
-import { DURATION, EASE } from '../lib/motion'
+import { DURATION, EASE, chartDelay } from '../lib/motion'
 
 // Distribution of reported accepted averages for one program.
 //
@@ -216,11 +216,17 @@ export default function AverageDistribution({ values, median, p25, p75, you }: P
               style={{ transformOrigin: `${x + w / 2}px ${PAD.top + plotH}px` }}
               initial={reduced ? false : { scaleY: 0, opacity: 0.6 }}
               animate={{ scaleY: 1, opacity: isHot ? 1 : 0.92 }}
+              // The hover highlight has its own transition. It used to share
+              // this one, so highlighting a bar ran at 1.0s plus up to 0.5s of
+              // stagger delay — a pointer response arriving a second and a half
+              // late, on the chart with the most marks to hover.
               transition={
                 reduced
                   ? { duration: 0 }
-                  : // Stagger caps out so a 20-bucket chart still finishes fast.
-                    { duration: DURATION.slow, delay: Math.min(i * 0.035, 0.5), ease: EASE.out }
+                  : {
+                      scaleY: { duration: DURATION.base, delay: chartDelay(i), ease: EASE.out },
+                      opacity: { duration: DURATION.hover, ease: EASE.out },
+                    }
               }
             />
           )

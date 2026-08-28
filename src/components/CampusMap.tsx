@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { motion } from 'motion/react'
+import { motion, useReducedMotion } from 'motion/react'
 import { CITY_POINTS, distanceKm, mapCity, project, type Point } from '../data/campus-locations'
 import { DURATION, EASE, staggerDelay } from '../lib/motion'
 import type { University } from '../data/types'
@@ -73,6 +73,11 @@ export default function CampusMap({
   home: string | null
 }) {
   const [active, setActive] = useState<string | null>(null)
+  // This was the one animated component with no guard of its own, relying
+  // entirely on the global MotionConfig. That is enough in practice, but it
+  // meant the file read as though it had opted out of a rule the other twelve
+  // call sites follow explicitly.
+  const reduced = useReducedMotion()
   const { groups } = useMemo(() => groupByCity(universities), [universities])
 
   const bounds = useMemo(() => {
@@ -165,9 +170,13 @@ export default function CampusMap({
             return (
               <motion.g
                 key={g.city}
-                initial={{ opacity: 0, scale: 0.6 }}
+                initial={reduced ? false : { opacity: 0, scale: 0.6 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: DURATION.base, ease: EASE.out, delay: staggerDelay(i) }}
+                transition={
+                  reduced
+                    ? { duration: 0 }
+                    : { duration: DURATION.base, ease: EASE.out, delay: staggerDelay(i) }
+                }
                 style={{ transformOrigin: `${x}px ${y}px`, cursor: 'pointer' }}
                 onPointerEnter={() => setActive(g.city)}
                 onPointerLeave={() => setActive((c) => (c === g.city ? null : c))}

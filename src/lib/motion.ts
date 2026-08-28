@@ -33,6 +33,17 @@ export const DURATION = {
   reveal: 0.85,
   /** a chart drawing itself — the one place a longer take is the point */
   slow: 1.0,
+  /**
+   * A hover, a press, a highlight.
+   *
+   * Separate from `instant` because 0.3s is the TOP of the micro-interaction
+   * band, and hovers were not even getting that: every chart had its hover
+   * highlight inside the same `animate` object as its entrance, so hovering a
+   * histogram bar ran at `slow` (1.0s) plus up to 0.5s of stagger delay, and
+   * the fourth segment of the decision mix began responding 270ms after the
+   * pointer arrived. Every rule source puts this band at 150-300ms.
+   */
+  hover: 0.18,
 } as const
 
 /**
@@ -169,6 +180,28 @@ export const STAGGER_STEP = 0.09
 /** Delay for the nth item in a staggered list, flattening past the cap. */
 export function staggerDelay(index: number): number {
   return Math.min(index, STAGGER_LIMIT) * STAGGER_STEP
+}
+
+/**
+ * Per-mark delay inside one chart, seconds.
+ *
+ * Tighter than `STAGGER_STEP`, and capped harder, because a chart's marks are
+ * one object rather than a list of separate arrivals — a 20-bucket histogram
+ * staggered at 0.09 would take 1.8s to finish drawing. The motion table's list
+ * guidance is 0.02-0.04s per item for anything longer than ten, and never more
+ * than 0.1s; this sits inside that.
+ *
+ * Every chart used to carry its own number: 0.015, 0.035, 0.04, 0.08 and 0.09
+ * across five components, none of them from here.
+ */
+export const CHART_STAGGER = 0.035
+
+/** Total stagger a chart may spend before the last mark starts. */
+const CHART_STAGGER_CAP = 0.35
+
+/** Delay for the nth mark in a chart, flattening once the cap is reached. */
+export function chartDelay(index: number): number {
+  return Math.min(index * CHART_STAGGER, CHART_STAGGER_CAP)
 }
 
 /* -------------------------------------------------------------- steps --- */

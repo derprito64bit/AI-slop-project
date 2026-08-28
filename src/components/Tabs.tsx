@@ -1,6 +1,6 @@
 import { useId, useRef, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
-import { SPRING } from '../lib/motion'
+import { SPRING, DURATION, EASE } from '../lib/motion'
 
 // Accessible tab set following the ARIA tabs pattern: roving tabindex, arrow
 // keys to move between tabs, Home/End to jump to the ends. Only the active
@@ -101,7 +101,7 @@ export default function Tabs({
               initial={reduced ? { opacity: 0 } : { opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={reduced ? { opacity: 0 } : { opacity: 0, y: -4 }}
-              transition={{ duration: reduced ? 0 : 0.2, ease: [0.22, 1, 0.36, 1] }}
+              transition={{ duration: reduced ? 0 : DURATION.instant, ease: EASE.out }}
               className="pt-8 focus-visible:outline-none"
             >
               {t.content}

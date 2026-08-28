@@ -91,6 +91,20 @@ try {
   await page.waitForFunction(() => document.querySelector('form')?.innerText.length > 40)
   await probe('survey step 1 -> 2', 'Next', 'form > div')
 
+  // ---- the charts.
+  //
+  // This probe walked every animated surface on the site EXCEPT the one with the
+  // most animation on it. The /profile probes above click AWAY from Overview,
+  // where the spread and the stacked bars live, and nothing opened a program
+  // page at all — so the histogram, the decision mix, the cycle trend and the
+  // outcome strips were the only motion here that was never measured.
+  //
+  // The Analytics tab is the right trigger: it is where all four mount at once,
+  // behind an AnimatePresence that swaps panels.
+  await page.goto(`${BASE}/program/mcmaster/engineering-i-co-op`, { waitUntil: 'networkidle2' })
+  await page.waitForFunction(() => document.querySelector('main')?.innerText.length > 100)
+  await probe('program -> analytics (charts)', 'Analytics', '#main')
+
   // ---- top-level route change, which uses a different transition
   await page.goto(`${BASE}/`, { waitUntil: 'networkidle2' })
   await page.waitForFunction(() => document.querySelector('main')?.innerText.length > 100)
