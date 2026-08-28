@@ -137,7 +137,7 @@ export default function ExplorePreview() {
                   <div ref={revealRef(i)} className="reveal-item flex w-full">
                   <Link
                     to={`/program/${p.universityId}/${p.slug}`}
-                    className="group flex w-full flex-col overflow-hidden rounded-xl border border-line bg-paper transition-shadow hover:shadow-md"
+                    className="card-lift group flex w-full flex-col overflow-hidden rounded-xl border border-line bg-paper"
                   >
                     {/* --- image band: the logo fills it edge to edge --- */}
                     <div className="relative">
@@ -199,7 +199,7 @@ export default function ExplorePreview() {
               <button
                 type="button"
                 onClick={() => setShown((n) => n + PAGE)}
-                className="rounded-full border border-line bg-paper px-6 py-3 text-sm font-600 text-ink transition-colors hover:border-brand-300 hover:text-brand-600"
+                className="rounded-full border border-line bg-paper px-6 py-3 text-sm font-600 text-ink transition-[scale,transform,background-color,border-color,color] hover:border-brand-300 hover:text-brand-600 active:scale-[0.97]"
               >
                 Show more ({(matches.length - results.length).toLocaleString()} left)
               </button>

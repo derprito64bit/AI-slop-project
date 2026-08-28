@@ -125,6 +125,18 @@ The backend has its own suite: `cd ../UniServer && npm test` — 133 pass.
   every specificity tie. Map rules are scoped under `.theme-map`.
 - **Frame-delta timing on this machine is too noisy to tune on.** Use CPU
   accounting for anything performance-related.
+- **A stale `vite preview` will happily verify the wrong build.** `pkill -f
+  "vite preview"` does not reliably kill it here, and without `--strictPort` the
+  replacement silently moves to 4201, 4202, ... while `SWEEP_BASE=...:4200`
+  keeps hitting the old one. Eight had accumulated before this was noticed.
+  Start it with `--strictPort`, kill the port holder by PID from PowerShell
+  (`Get-NetTCPConnection -LocalPort 4200`), and confirm the served CSS hash
+  matches `dist/assets/index-*.css` before believing a green run.
+- **Tailwind v4's `scale-*` sets the CSS `scale` property, not a `transform`
+  function.** So `transition-[transform,...]` does not cover it, and every
+  `active:scale-*` press snaps instead of animating. List `scale` explicitly.
+  This is invisible in a screenshot — it only shows up if you read
+  `getComputedStyle(el).scale` partway through a press.
 
 ## Where to look next
 

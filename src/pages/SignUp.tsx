@@ -146,7 +146,7 @@ export default function SignUp() {
           </p>
         )}
 
-        <Button type="submit" disabled={busy} className={busy ? 'opacity-60' : ''}>
+        <Button type="submit" disabled={busy}>
           {/* The server sleeps when idle and can take most of a minute to wake, so
               the button says what it is doing rather than appearing to have
               ignored the tap. */}

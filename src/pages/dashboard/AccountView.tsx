@@ -288,7 +288,7 @@ function ChangePassword() {
             autoComplete="new-password"
           />
           <div className="flex items-center gap-3">
-            <Button type="submit" size="sm" disabled={busy} className={busy ? 'opacity-60' : ''}>
+            <Button type="submit" size="sm" disabled={busy}>
               {busy ? 'Saving…' : 'Save new password'}
             </Button>
             <button

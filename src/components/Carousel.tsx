@@ -242,7 +242,7 @@ function Tile({
       </div>
     ) : (
       <div
-        className={`group relative shrink-0 overflow-hidden border border-line ${rounded} ${imgFit === 'contain' ? 'bg-white' : 'bg-cloud'} transition-transform duration-700 hover:-translate-y-1`}
+        className={`group relative shrink-0 overflow-hidden border border-line ${rounded} ${imgFit === 'contain' ? 'bg-white' : 'bg-cloud'} card-lift`}
         style={{ width, aspectRatio: aspect }}
       >
         {hasImg ? (
