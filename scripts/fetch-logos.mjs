@@ -122,6 +122,38 @@ const SOURCES = {
     depicts: 'arms',
   },
 
+  alberta: { url: `${W}/9/92/University_of_Alberta_Coat_of_Arms.png`, depicts: 'arms' },
+  windsor: { url: `${W}/8/8a/Coat_of_Arms_of_the_University_of_Windsor.png`, depicts: 'arms' },
+  laurentian: {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/4/43/Laurentian_University_Escutcheon.png',
+    depicts: 'arms',
+  },
+  lakehead: { url: `${W}/3/33/LakeheadU_Coat_of_Arms.jpg`, depicts: 'arms' },
+  calgary: {
+    url: `${C}/7/7e/University_of_Calgary_coat_of_arms_without_motto_scroll.svg/500px-University_of_Calgary_coat_of_arms_without_motto_scroll.svg.png`,
+    depicts: 'arms',
+    // The version WITHOUT the motto scroll. Calgary publishes both, and the
+    // scroll is the first thing to turn to mush below 32px.
+  },
+  nipissing: { url: `${W}/4/4e/Nipissing_University_Coat_of_Arms.png`, depicts: 'arms' },
+  'guelph-humber': {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/8/82/Guelph-Humber_logo.png',
+    depicts: 'wordmark',
+    background: '#fff',
+    // A joint Guelph/Humber program with no heraldry of its own. Its only other
+    // asset is 8.3:1, which is far worse in a square tile than this.
+  },
+  'ubc-okanagan': {
+    url: 'https://upload.wikimedia.org/wikipedia/commons/f/fb/British_columbia_univ_coat_arms.svg',
+    depicts: 'arms',
+    // The parent shield. UBC treats the crest as one institutional mark across
+    // both campuses and distinguishes Okanagan only by a wordmark descriptor,
+    // so unlike the two Toronto campuses there is no campus-specific art to
+    // prefer. The rule throughout is the most specific mark that exists.
+  },
+  victoria: { url: `${W}/3/37/UVic_CoA.svg`, depicts: 'arms' },
+  concordia: { url: `${W}/b/b6/Concordia_coa.png`, depicts: 'arms' },
+
   // Trent is deliberately absent. Its official crest is a WHITE KNOCKOUT on
   // transparency — invisible on the light tile these are drawn on — and Trent
   // is one of the few Canadian universities with no granted arms of its own
@@ -131,7 +163,15 @@ const SOURCES = {
   // its own if anyone adds it back without reading this.
 }
 
+const pause = (ms) => new Promise((r) => setTimeout(r, ms))
+
+// upload.wikimedia.org answers 429 "does not comply with our robot policy" when
+// a script asks for several files in quick succession. This is a one-off build
+// step over 30 rows, so waiting is free.
+const THROTTLE_MS = 500
+
 async function download(url) {
+  await pause(THROTTLE_MS)
   const res = await fetch(url, { headers: { 'User-Agent': USER_AGENT } })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   const type = res.headers.get('content-type') ?? ''

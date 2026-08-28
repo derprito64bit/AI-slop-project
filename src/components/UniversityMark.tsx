@@ -39,6 +39,31 @@ const EXTENSIONS = ['png', 'svg'] as const
 const CREST_MARKS = new Set<string>([
   // Wilfrid Laurier — circular crest, reads down to about 20px.
   'laurier',
+  // Everything below was judged on the contact sheet from
+  // `npm run logos:check`, which draws every mark at 24/32/48/64 on both the
+  // light and the dark surface. The test is not "is this a crest" — it is "at
+  // 24px, can you still tell which school this is".
+  'tmu', // escutcheon: yellow field, blue chevron. Unmistakable at 24.
+  'carleton', // black shield, red maple leaf. The strongest of the set.
+  'mcgill', // red-on-white shield, three martlets still countable at 32.
+  'ubc', // blue and gold shield, holds its blocking at 24.
+  'dalhousie', // gold seal. Detail goes at 24, but a gold roundel is distinctive.
+  'calgary', // red shield, heavy blocking. Survives 24 easily.
+  'laurentian', // blue and white shield with a gold sun. The cleanest of the set.
+  'nipissing', // blue shield, strong white waves.
+  'ubc-okanagan', // the UBC shield — see the note in fetch-logos.mjs.
+  // DELIBERATELY NOT HERE, having looked at every one of them at 24px:
+  //   brock, alberta, windsor, concordia, victoria, lakehead
+  //     — full heraldic ACHIEVEMENTS: crest, helm, mantling, supporters and a
+  //       motto scroll. Beautiful at 64 and an indistinct blob at 24, because
+  //       the shield is only a third of the artwork.
+  //   ontario-tech
+  //     — fine blue linework on white; a smudge below 48.
+  // Every one of those is correct square art and renders properly at 48 and up,
+  // which is all the 48px floor asks. The monogram is genuinely more useful
+  // than an illegible logo, and that is why this set is opt-in rather than
+  // "has a file". If a shield-only variant of any of them turns up, it is a
+  // one-line change here plus a new URL in fetch-logos.mjs.
 ])
 
 /**
