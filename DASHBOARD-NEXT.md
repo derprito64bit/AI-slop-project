@@ -126,8 +126,11 @@ Each should answer "what will this look like once I have used it?", not only
 - **Balance** needs an average and says so. Give it a one-click route. `/survey`
   always starts at question 1; either add a `?step=average` param or label the
   link honestly about where it lands.
-- **Courses** already lists the nine courses to tick, which is good. Its "what
-  your list needs" half is empty — say what will appear there.
+- ~~**Courses**~~ — **DONE.** The "what your list needs" half now opens with a
+  rollup of the whole list rather than repeating a per-program sentence on every
+  card: how many courses the list names, how many the student holds, which one
+  the most programs want, and which ticked course nothing asks for. It states
+  its own coverage, because most shortlists are mostly unresearched.
 - **Applications / Deadlines** are real tools with nothing in them. Offer to seed
   from the kept list: "Add your 3 kept programs to the tracker". `src/lib/
   tracker.ts` owns that state — **do not move it into the profile**, see
@@ -156,9 +159,12 @@ and barely read.
 
 - **`ListSpread`** in `src/components/ListCharts.tsx` filters and sorts in the
   component body on every render. Wrap in `useMemo`. Small but real.
-- **`gapFor` is walked twice** over the same list — `gapCount` in
-  `DashboardShell` and `courseMix` in `OverviewView`. Compute once in the shell
-  and pass both through `DashboardContext`.
+- ~~**`gapFor` is walked twice**~~ — **DONE.** It was five times, not two:
+  `gapCount` in `DashboardShell` (memoised on the whole `profile`, so renaming a
+  tag re-parsed every requirement), `nextGap` in `OverviewView` (unmemoised, and
+  it mapped the entire shortlist before `.find()` could short-circuit),
+  `courseMix`, `CourseChecklist.rows`, and `CompareTable`. Now one `listNeeds`
+  call in the shell, on `DashboardContext.needs`.
 
 ---
 
@@ -201,7 +207,7 @@ Then the `vite-preview` entry in `.claude/launch.json` (port 4200, base
 npm run sweep && npm run sweep:sections && npm run probe:motion
 ```
 
-Baseline to hold: 0 lint errors, 268 tests, sweep 132/132, sections 26/26,
+Baseline to hold: 0 lint errors, 282 tests, sweep 135/135, sections 26/26,
 motion `minVisible 0.55` and `0 dark frames`.
 
 **`scripts/sweep.mjs` depends on the string `Programs kept` in five places**, not

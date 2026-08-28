@@ -27,7 +27,7 @@ describe('startSteps', () => {
     const steps = startSteps(profile())
     expect(steps.map((s) => s.key)).toEqual(['answers', 'kept', 'courses'])
     expect(steps.every((s) => !s.done)).toBe(true)
-    expect(steps.map((s) => s.value)).toEqual(['Not yet', '0 of 1', `0 of ${COURSES.length}`])
+    expect(steps.map((s) => s.value)).toEqual(['Not yet', '0 of 1', 'none ticked yet'])
   })
 
   it('ticks the questions when they were walked through and skipped', () => {
@@ -60,14 +60,23 @@ describe('startSteps', () => {
     // through SES4U, so a step requiring the full set could never complete.
     const [, , courses] = startSteps(profile({ courses: ['ENG4U'] }))
     expect(courses.done).toBe(true)
-    expect(courses.value).toBe(`1 of ${COURSES.length}`)
+    expect(courses.value).toBe('1 ticked')
   })
 
   it('counts only codes the course list knows, so it can never exceed the total', () => {
     const [, , courses] = startSteps(
       profile({ courses: [...COURSES.map((c) => c.code), 'XYZ4U', 'ABC4U'] }),
     )
-    expect(courses.value).toBe(`${COURSES.length} of ${COURSES.length}`)
+    expect(courses.value).toBe(`${COURSES.length} ticked`)
+  })
+
+  it('never states a denominator the student cannot reach', () => {
+    // "0 of 9" implied a target nobody hits — nine is the length of the pick
+    // list, not a goal — and it contradicted the tick, which goes green at one.
+    for (const courses of [[], ['ENG4U'], ['ENG4U', 'MHF4U']]) {
+      const [, , step] = startSteps(profile({ courses }))
+      expect(step.value).not.toMatch(/ of /)
+    }
   })
 
   it('links every step at an absolute path', () => {

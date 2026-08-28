@@ -5,8 +5,7 @@ import Button from '../../components/ui/Button'
 import Eyebrow from '../../components/ui/Eyebrow'
 import { VIEW_ENTER } from '../../lib/motion'
 import { loadCatalogue } from '../../lib/dataSource'
-import { gapFor } from '../../lib/courses'
-import { getProgramInfo } from '../../data/program-info'
+import { listNeeds } from '../../lib/courseNeeds'
 import {
   AMBITION_LABELS,
   EMPTY_PROFILE,
@@ -108,14 +107,18 @@ export default function DashboardShell() {
     setCompare((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
   }, [])
 
-  /** Programs on the list with an unmet prerequisite — the badge worth showing. */
-  const gapCount = useMemo(() => {
-    if (!profile) return 0
-    return kept.filter((p) => {
-      const gap = gapFor(getProgramInfo(p.id)?.requiredCourses, profile.courses)
-      return gap && !gap.satisfied
-    }).length
-  }, [kept, profile])
+  /**
+   * The one requirement walk, for everything that needs one.
+   *
+   * Keyed on `profile?.courses` rather than `profile`: the previous version
+   * depended on the whole object, so editing a note or renaming a tag re-parsed
+   * every requirement string on the list for no reason.
+   */
+  const needs = useMemo(
+    () => listNeeds(kept, profile?.courses ?? []),
+    [kept, profile?.courses],
+  )
+  const gapCount = needs.blocked
 
   // Nothing stored at all — offer both doors rather than an empty chrome.
   //
@@ -140,7 +143,8 @@ export default function DashboardShell() {
   const average = shown.answers?.average ?? null
 
   const context: DashboardContext = {
-    profile: shown, setProfile, data, byId, uniName, kept, average, compare, toggleCompare, gapCount,
+    profile: shown, setProfile, data, byId, uniName, kept, average, compare, toggleCompare,
+    needs, gapCount,
   }
 
   const groups: Array<{ label: string; items: NavItem[] }> = [

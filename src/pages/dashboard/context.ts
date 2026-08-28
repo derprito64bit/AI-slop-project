@@ -1,4 +1,5 @@
 import { useOutletContext } from 'react-router-dom'
+import type { ListNeeds } from '../../lib/courseNeeds'
 import type { SavedProfile } from '../../lib/profile'
 import type { Program, University } from '../../data/types'
 
@@ -25,12 +26,19 @@ export type DashboardContext = {
   compare: string[]
   toggleCompare: (id: string) => void
   /**
-   * Kept programs with an unmet prerequisite.
+   * What the whole list needs, rolled up once.
    *
-   * Computed once in the shell, where the sidebar badge already needed it,
-   * rather than by each view that wants to mention it — it walks the whole
-   * shortlist through `gapFor` and there is no reason to do that twice.
+   * This comment used to say `gapCount` was computed here so no view would walk
+   * the shortlist through `gapFor` twice. That was the intent and it was not
+   * what happened: the walk also ran in OverviewView twice over (once
+   * unmemoised), in CourseChecklist, and in CompareTable — five times per
+   * render, re-parsing the same requirement strings each time.
+   *
+   * Now it genuinely is once. Views read the rollup instead of re-deriving it,
+   * which also means they cannot quietly disagree about what "blocked" means.
    */
+  needs: ListNeeds
+  /** Kept programs with an unmet prerequisite — `needs.blocked`, for the badge. */
   gapCount: number
 }
 

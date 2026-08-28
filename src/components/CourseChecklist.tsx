@@ -1,5 +1,7 @@
+import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { COURSES, COURSE_NAMES, gapFor, parseRequirement } from '../lib/courses'
+import type { ListNeeds } from '../lib/courseNeeds'
 import { getProgramInfo } from '../data/program-info'
 import type { Program } from '../data/types'
 
@@ -28,16 +30,26 @@ export default function CourseChecklist({
   onToggle,
   programs,
   uniName,
+  needs,
 }: {
   taking: string[]
   onToggle: (code: string) => void
   programs: Program[]
   uniName: Map<string, string>
+  /** the list-level rollup, computed once in the shell */
+  needs: ListNeeds
 }) {
-  const rows = programs.map((p) => {
-    const info = getProgramInfo(p.id)
-    return { program: p, info, gap: gapFor(info?.requiredCourses, taking) }
-  })
+  // Memoised: this re-parses every requirement string of every kept program,
+  // and it used to run on every render — including every one of the nine course
+  // toggles above, which is the most-clicked control on the page.
+  const rows = useMemo(
+    () =>
+      programs.map((p) => {
+        const info = getProgramInfo(p.id)
+        return { program: p, info, gap: gapFor(info?.requiredCourses, taking) }
+      }),
+    [programs, taking],
+  )
 
   const unverified = rows.filter((r) => !r.gap)
   const blocked = rows.filter((r) => r.gap && !r.gap.satisfied)
@@ -88,6 +100,68 @@ export default function CourseChecklist({
           <h3 className="mt-12 font-display text-display-3 font-600 text-ink">
             What your list needs
           </h3>
+
+          {/* The heading finally saying something about the LIST.
+              Everything below it is per-program, and a student with six kept
+              programs read "Still needs Chemistry" six times without ever being
+              told that one course would clear four of them. That sentence is
+              the most actionable thing this tool can produce and it was the one
+              thing missing.
+
+              It leads with coverage rather than with a clean-looking zero:
+              "nothing missing" and "we have not read the requirements" are
+              different facts, and only one of them is good news. */}
+          <div className="mt-4 rounded-xl border border-line bg-surface p-5 text-sm leading-relaxed">
+            {needs.requiredCodes.length === 0 && needs.choices.length === 0 ? (
+              <p className="text-slate">
+                {needs.unverified === programs.length
+                  ? 'None of the programs on your list have had their requirements read yet, so there is nothing to check against. That is a gap in our research, not a clear run.'
+                  : 'Nothing specific is outstanding for the programs we have read.'}
+              </p>
+            ) : (
+              <>
+                <p className="text-ink">
+                  <span className="font-600">
+                    Your list names {needs.requiredCodes.length} course
+                    {needs.requiredCodes.length === 1 ? '' : 's'}.
+                  </span>{' '}
+                  You have {needs.heldCodes.length} of them.
+                </p>
+
+                {/* "NEEDED BY", not "would clear". Adding this course removes
+                    one requirement from those programs; it does not follow that
+                    they are then clear, because they may be short others too.
+                    An earlier draft said "would clear 2 of your 3 programs",
+                    which is the kind of small overstatement a student would
+                    plan a timetable around. */}
+                {needs.missing.length > 0 && (
+                  <p className="mt-2 text-slate">
+                    <span className="font-600 text-ink">
+                      {COURSE_NAMES[needs.missing[0].code] ?? needs.missing[0].code}
+                    </span>{' '}
+                    is the one your list asks for most — {needs.missing[0].programIds.length} of
+                    your {programs.length} {programs.length === 1 ? 'program' : 'programs'}{' '}
+                    {needs.missing[0].programIds.length === 1 ? 'needs' : 'need'} it.
+                  </p>
+                )}
+
+                {needs.unused.length > 0 && (
+                  <p className="mt-2 text-slate">
+                    {needs.unused.map((c) => COURSE_NAMES[c] ?? c).join(', ')}{' '}
+                    {needs.unused.length === 1 ? 'is' : 'are'} ticked, and no program we have read
+                    on your list asks for {needs.unused.length === 1 ? 'it' : 'them'}.
+                  </p>
+                )}
+              </>
+            )}
+
+            {needs.unverified > 0 && needs.unverified !== programs.length && (
+              <p className="mt-2 text-xs text-slate">
+                Based on the {needs.blocked + needs.covered} of {programs.length} we have read the
+                requirements for.
+              </p>
+            )}
+          </div>
 
           {blocked.length > 0 && (
             <ul className="mt-5 space-y-3">

@@ -519,6 +519,31 @@ async function sweepDashboard() {
     }
     await p3.close()
   }
+
+  // The courses step must never state a denominator the student cannot reach.
+  {
+    const { page: p4 } = await open('/profile', { seed: NEW_SEED })
+    const body = await text(p4)
+    check('dashboard', 'courses step states no unreachable target',
+      /Tick your Grade 12 courses/i.test(body) && !/\bof 9\b/.test(body),
+      body.match(/Tick your Grade 12 courses\s*\S+[^\n]*/)?.[0] ?? '')
+    await p4.close()
+  }
+
+  // The list-level course rollup — the sentence the per-program cards cannot
+  // give, because it is about the list rather than about one program.
+  {
+    const { page: p5 } = await open('/profile/courses', { seed: SEED })
+    const body = await text(p5)
+    check('dashboard', 'courses view rolls the list up', /Your list names \d+ course/i.test(body),
+      body.match(/Your list names[^\n]*/)?.[0] ?? 'no rollup')
+    // "would clear N programs" was the first draft and it overstates: adding a
+    // course removes one requirement, it does not follow that the program is
+    // then clear.
+    check('dashboard', 'rollup does not claim a course clears a program',
+      !/would clear \d+ of your/i.test(body))
+    await p5.close()
+  }
 }
 
 /* -------------------------------------------------------------- accounts --- */
