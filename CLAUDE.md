@@ -64,6 +64,31 @@ Tests on both sides assert the full key set. Keep them.
 this exact reason. Do not move it in until the field exists in both maps in
 `sync.ts` and on the server.
 
+## The design system, in four places
+
+Added 2026-08-28. Reach for these rather than a one-off value — each replaced a
+set of hand-written ones, and the note beside each says what went wrong.
+
+- **Elevation** — `--shadow-sm/DEFAULT/md/lg` in `src/index.css`, built on
+  `--p-shadow` and `--p-shadow-boost` so it flips with the theme. Every shadow
+  used to be a hand-written `rgba(20,24,31,…)`, which is the *light* ink, so
+  elevation silently did not exist in dark mode. **Never add an arbitrary
+  `shadow-[...]`.**
+- **Interaction** — `.card-lift` is the one hover for anything card-shaped;
+  `active:` scale is the pressed state. Note Tailwind v4's `scale-*` sets the
+  CSS `scale` property, so a transition list must name `scale`, not `transform`.
+- **Rhythm** — `ui/Section.tsx`: `pad` is `section` (py-20) / `band` (py-16) /
+  `none`, `tone` is `paper` / `surface` / `cloud`. The rule is also written
+  beside `container-page`. Type scale is `display-1..4` + `text-lead`.
+- **Motion** — `src/lib/motion.ts` and nowhere else: `DURATION`, `EASE`,
+  `SPRING`, `staggerDelay()` for lists, `chartDelay()` for marks inside one
+  chart, `DURATION.hover` for anything a pointer touches. Two rules that are
+  measured, not preferences: **nothing animates from `opacity: 0`**
+  (`ENTER_FROM = 0.55`), and **charts animate transforms, never `width` /
+  `height` / `left`** — the layout-property version cost 565ms of style
+  recalculation against 18ms. A hover must never share a transition with an
+  entrance, or it inherits the entrance's stagger delay.
+
 ## Verifying a change
 
 ```bash

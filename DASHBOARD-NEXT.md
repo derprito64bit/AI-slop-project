@@ -4,7 +4,18 @@ Read `CLAUDE.md` first for the rules that do not bend, and `HANDOFF-NEXT.md` for
 where things currently stand. This file is only about what to build in the
 dashboard, in the order worth building it.
 
-Written 2026-08-28, after the map and admin work landed.
+Written 2026-08-28, after the map and admin work landed. Updated the same day at
+the end of a long session.
+
+**Status: P1 is done (#32) and P4 is half done (#41). P2 and P3 are what
+remain.** The measurements below were taken before any of that, so treat the
+table as the argument for P2/P3 rather than as the current state — the Overview
+in particular is no longer one of the blank views.
+
+Start with **P2 → Compare**: its empty state fires for *one* staged program as
+well as none, so a student who staged one is told to "pick at least two" with no
+acknowledgement they did anything, and the staged program is invisible on the
+page.
 
 ---
 
@@ -134,7 +145,7 @@ Each should answer "what will this look like once I have used it?", not only
 - **Applications / Deadlines** are real tools with nothing in them. Offer to seed
   from the kept list: "Add your 3 kept programs to the tracker". `src/lib/
   tracker.ts` owns that state — **do not move it into the profile**, see
-  `HANDOFF-NEXT.md` §3 on the sync whitelist erasing it.
+  `HANDOFF-NEXT.md` §5 on the sync whitelist erasing it.
 
 ---
 
@@ -158,7 +169,10 @@ and barely read.
 ## P4 — Polish, and the optimisations that are real
 
 - **`ListSpread`** in `src/components/ListCharts.tsx` filters and sorts in the
-  component body on every render. Wrap in `useMemo`. Small but real.
+  component body on every render. Wrap in `useMemo`. Small but real, and **still
+  open** — #41 changed how its dots animate but did not touch the `points`
+  computation. Note the early `return null` sits between the two blocks, so the
+  memo has to go above it or oxlint will (correctly) reject it.
 - ~~**`gapFor` is walked twice**~~ — **DONE.** It was five times, not two:
   `gapCount` in `DashboardShell` (memoised on the whole `profile`, so renaming a
   tag re-parsed every requirement), `nextGap` in `OverviewView` (unmemoised, and
@@ -208,7 +222,11 @@ npm run sweep && npm run sweep:sections && npm run probe:motion
 ```
 
 Baseline to hold: 0 lint errors, 282 tests, sweep 135/135, sections 26/26,
-motion `minVisible 0.55` and `0 dark frames`.
+motion `minVisible 0.55` and `0 dark frames` — the charts row reports `1`.
+
+Two traps worth reading in `CLAUDE.md` before trusting a green run: a stale
+`vite preview` will verify the wrong build, and `vite preview` answers 200 for a
+missing file so a green *local* sweep never proves an asset exists.
 
 **`scripts/sweep.mjs` depends on the string `Programs kept` in five places**, not
 the four this file used to claim — the `VIEWS` `must` entry, `overview counts the
