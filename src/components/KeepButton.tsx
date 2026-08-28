@@ -6,30 +6,32 @@ import { isKept, loadProfile, toggleShortlist } from '../lib/profile'
 // This is what makes the survey optional: keeping a program creates a profile
 // on demand, so a student can browse first and answer questions later — or
 // never. Nothing here needs an account or a server.
+//
+// TWO EXPORTS, and the difference matters. `KeepButton` owns its own state and
+// writes straight to localStorage, which is right on a page that holds no
+// profile of its own (Explore, a program page). Inside the dashboard it is
+// wrong: the shell derives `kept` from the profile it holds, so a button that
+// bypasses `setProfile` leaves the page showing the old list until it remounts.
+// That is why the dashboard views hand-rolled this markup. `KeepControl` is
+// that markup, so there is one button and two wirings rather than four copies.
 
-export default function KeepButton({
-  programId,
+/** The button itself. Controlled — the caller owns `kept` and the write. */
+export function KeepControl({
+  kept,
+  onToggle,
   size = 'sm',
   className = '',
 }: {
-  programId: string
+  kept: boolean
+  onToggle: () => void
   size?: 'sm' | 'md'
   className?: string
 }) {
-  const [kept, setKept] = useState(false)
-
-  // Read on mount rather than at render: localStorage is not available during
-  // SSR-style first paint, and reading it in render would also mean every card
-  // re-reads storage on every re-render.
-  useEffect(() => {
-    setKept(isKept(loadProfile(), programId))
-  }, [programId])
-
   const onClick = (e: React.MouseEvent) => {
     // Cards are wrapped in links; keeping should not navigate.
     e.preventDefault()
     e.stopPropagation()
-    setKept(isKept(toggleShortlist(programId), programId))
+    onToggle()
   }
 
   return (
@@ -48,5 +50,34 @@ export default function KeepButton({
     >
       {kept ? '✓ Kept' : '+ Keep'}
     </button>
+  )
+}
+
+/** Self-contained: reads and writes localStorage itself. */
+export default function KeepButton({
+  programId,
+  size = 'sm',
+  className = '',
+}: {
+  programId: string
+  size?: 'sm' | 'md'
+  className?: string
+}) {
+  const [kept, setKept] = useState(false)
+
+  // Read on mount rather than at render: localStorage is not available during
+  // SSR-style first paint, and reading it in render would also mean every card
+  // re-reads storage on every re-render.
+  useEffect(() => {
+    setKept(isKept(loadProfile(), programId))
+  }, [programId])
+
+  return (
+    <KeepControl
+      kept={kept}
+      onToggle={() => setKept(isKept(toggleShortlist(programId), programId))}
+      size={size}
+      className={className}
+    />
   )
 }

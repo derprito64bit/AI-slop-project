@@ -34,6 +34,23 @@ const SEED = JSON.stringify({
   savedAt: '2026-08-19T00:00:00.000Z',
 })
 
+/**
+ * Been through the questions, kept nothing — the state EVERY student is in on
+ * their first visit.
+ *
+ * None of the checks that use SEED can reach it: they all seed three kept
+ * programs, so every one of them exercises the populated dashboard and the
+ * whole empty branch shipped untested.
+ */
+const NEW_SEED = JSON.stringify({
+  answers: { field: 'engineering', province: 'ON', average: 88, ambition: 'balanced' },
+  shortlist: [],
+  courses: [],
+  notes: {},
+  tags: {},
+  savedAt: '2026-08-19T00:00:00.000Z',
+})
+
 let browser
 
 async function open(path, opts = {}) {
@@ -467,6 +484,39 @@ async function sweepDashboard() {
   check('dashboard', 'programs filters restore from the URL',
     selects[0] === 'business' && selects[1] === 'ON' && /programs match/.test(t2), selects.join(','))
   await p2.close()
+
+  // The empty Overview.
+  {
+    const { page: p3, errors } = await open('/profile', { seed: NEW_SEED })
+    const body = await text(p3)
+
+    check('dashboard', 'empty overview shows the start path', /Where to start/i.test(body),
+      body.slice(0, 60).replace(/\n/g, ' '))
+    check('dashboard', 'empty overview drops the row of zeros', !/Programs kept/.test(body),
+      body.match(/Programs kept\s*\d+/)?.[0] ?? '')
+    check('dashboard', 'empty overview offers real programs',
+      /Worth a look/i.test(body) && /reported offers/.test(body))
+    // 1.3: the field they named, not the dataset-wide fallback.
+    check('dashboard', 'empty overview reads the field they answered',
+      /Engineering, in the data/i.test(body) && /typical reported median/i.test(body),
+      body.match(/typical reported median/i)?.[0] ?? 'no field summary')
+    check('dashboard', 'empty overview no console errors', errors.length === 0, errors.slice(0, 1).join(''))
+
+    // The whole point of the section: ONE CLICK has to end the empty state,
+    // with no reload. A Keep control that writes to localStorage behind the
+    // shell's back leaves the path on screen and passes every check above.
+    const keep = await p3.$('main button[aria-label="Keep this program"]')
+    check('dashboard', 'empty overview has a keep control', Boolean(keep))
+    if (keep) {
+      await keep.click()
+      await wait(500)
+      const after = await text(p3)
+      check('dashboard', 'keeping from the overview ends the empty state',
+        /Programs kept\s*1/.test(after) && !/Where to start/i.test(after),
+        after.match(/Programs kept\s*\d+/)?.[0] ?? after.slice(0, 60).replace(/\n/g, ' '))
+    }
+    await p3.close()
+  }
 }
 
 /* -------------------------------------------------------------- accounts --- */

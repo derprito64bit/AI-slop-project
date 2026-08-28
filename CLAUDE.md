@@ -93,8 +93,8 @@ npm run sweep && npm run sweep:sections && npm run probe:motion
 | | |
 |---|---|
 | `npm run lint` | 0 errors |
-| `npm test` | 246 pass |
-| `npm run sweep` | 125 of 125 |
+| `npm test` | 268 pass |
+| `npm run sweep` | 132 of 132 |
 | `npm run sweep:sections` | 26 of 26 |
 | `npm run probe:motion` | `minVisible 0.55`, `0 dark frames` |
 

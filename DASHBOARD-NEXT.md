@@ -48,9 +48,29 @@ inventing a single number.**
 
 ---
 
-## P1 — The empty Overview
+## P1 — The empty Overview — **DONE 2026-08-28**
 
-`src/pages/dashboard/OverviewView.tsx`. This is the priority.
+`src/pages/dashboard/OverviewView.tsx`. Shipped on
+`feature/overview-empty-state`. Kept below because the reasoning is still the
+argument for P2 and P3, and because two things were decided differently from
+what is written here:
+
+- **1.2's "reuse `KeepButton`" was wrong.** That component owns its own state
+  and writes straight to localStorage, so a click would never reach
+  `setProfile` and the empty state would survive it until a remount — the one
+  thing 1.2 exists to prevent. The markup was extracted instead as
+  `KeepControl` (a named export of `KeepButton.tsx`), controlled, wired to
+  `setProfile(toggleShortlist(id))`. `ProgramsView` and `ListView` still carry
+  their own inline copies; migrating them onto `KeepControl` is a clean
+  follow-up.
+- **The empty state is gated on `profile.shortlist.length`, not `kept.length`.**
+  `kept` resolves ids against the lazily-loaded catalogue, so it is `[]` on the
+  first paint of *every* visit — gating on it flashes the onboarding path at
+  every returning student, every load.
+
+1.3's `summarise()` moved to `src/lib/fields.ts` as planned; the three-step path
+and the featured-card ids live in `src/lib/overview.ts`, both pure so the
+node-only Vitest can reach them.
 
 ### 1.1 Replace the four zeros with a path
 
@@ -181,21 +201,34 @@ Then the `vite-preview` entry in `.claude/launch.json` (port 4200, base
 npm run sweep && npm run sweep:sections && npm run probe:motion
 ```
 
-Baseline to hold: 0 lint errors, 246 tests, sweep 125/125, sections 26/26,
+Baseline to hold: 0 lint errors, 268 tests, sweep 132/132, sections 26/26,
 motion `minVisible 0.55` and `0 dark frames`.
 
-**`scripts/sweep.mjs` depends on the string `Programs kept` in four places** —
-`VIEWS` at line 415, `overview counts the seeded profile` at 459, and two
-accounts checks at 507–508.
+**`scripts/sweep.mjs` depends on the string `Programs kept` in five places**, not
+the four this file used to claim — the `VIEWS` `must` entry, `overview counts the
+seeded profile`, the accounts check, and `/\d+ programs? kept/i` twice in the
+`/list` block, which matches `ListView.tsx`'s header rather than a tile.
+`AccountView.tsx` renders the same label and is not asserted at all.
 
-All four open the dashboard with `{ seed: SEED }`, i.e. a profile with programs
-already kept, so they exercise the **populated** view. That means P1.1 as
-described here — swapping the tiles only when `kept.length === 0` — does not
-touch them. Changing the populated tiles as well breaks all four at once, so
-update them in the same commit if you go further than the empty state.
+They all read a **populated** dashboard, so an empty-state-only change does not
+touch them — but the mechanism differs, and the correction matters if one ever
+fails: the `VIEWS` and overview checks open with `{ seed: SEED }`, while the
+accounts one uses `seedOnce`, wipes `localStorage` and repopulates from the live
+server. That one also fails when sync breaks, not only when a label changes.
+Changing the **populated** tiles breaks all five at once; update them in the same
+commit if you go further than the empty state.
 
-The empty state is the thing being changed, so test it *as* the empty state:
-clear `localStorage`, answer the survey skipping every question, and confirm the
-Overview is worth looking at with nothing kept. Then keep one program and confirm
-the populated view still works. Check both themes and 375px — the sweep covers
-overflow at 375/1280/2560 but will not know about new sections.
+The empty branch now has its own coverage — the `NEW_SEED` block at the end of
+`sweepDashboard` seeds answers with an empty shortlist and asserts the path, the
+absence of the zero tiles, the field summary, and that **one click on a Keep
+control ends the empty state without a reload**. That last one is the check that
+would have caught using the uncontrolled `KeepButton` here.
+
+Still worth doing by hand, because no sweep knows what a page looks like: clear
+`localStorage`, answer the survey skipping every question, and confirm the
+Overview is worth looking at with nothing kept. Check both themes and 375px — the
+sweep covers overflow at 375/1280/2560 but will not know about new sections. Two
+layout bugs got through every automated check here and were only visible in a
+screenshot: the dashboard content column is roughly 560px, so a three-column card
+grid truncated every program name to two letters, and `truncate` on the path
+labels rendered them as "Answer the q…".
