@@ -114,7 +114,17 @@ a monogram in listings.
   mode="wait"` never finishes its exit and the survey looks stuck. That is the
   harness, not the app — the headless sweeps are the real check.
 
-## 5. Still true from before
+## 5. What to build next
+
+The dashboard's tools all work and seven of its twelve views are nearly blank
+for a student who has just arrived — the rich ones read the dataset, the empty
+ones read the student's list. **`DASHBOARD-NEXT.md`** measures that and sets out
+the backlog in priority order, starting with the Overview.
+
+`CLAUDE.md` holds the rules that do not bend and the verification baseline, and
+is loaded into every session.
+
+## 6. Still true from before
 
 The rules have not moved: no probability of admission, no PII, no fact from a
 search summary, and the dataset stays in the spreadsheet → `npm run data:build`
