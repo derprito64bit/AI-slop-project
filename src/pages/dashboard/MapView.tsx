@@ -1,9 +1,11 @@
-import { useMemo, useState } from 'react'
+import { lazy, Suspense, useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import CampusMap, { groupByCity } from '../../components/CampusMap'
-import { ListSkeleton, LoadingNote } from '../../components/Skeleton'
+import { ListSkeleton, FetchingNote } from '../../components/Skeleton'
 import { CITY_POINTS } from '../../data/campus-locations'
-import { PROVINCE_LABELS } from '../../lib/profile'
+import { fetchMapConfig, type MapConfig, type UniversityContent } from '../../lib/api'
+import { loadUniversityContent } from '../../lib/dataSource'
+import { PROVINCE_LABELS, updateProfile } from '../../lib/profile'
 import { useDashboard } from './context'
 
 // "Where are these places, actually?"
@@ -13,14 +15,39 @@ import { useDashboard } from './context'
 // often more than a median does. Every university record already carried a
 // city; nothing used it.
 //
-// Ontario is drawn. The sixteen schools elsewhere in Canada are listed instead
-// of plotted: a map of the whole country for schools in Halifax, Vancouver and
+// TWO MAPS, AND BOTH ARE REAL ANSWERS.
+//
+// `TileMap` draws a surveyed basemap through our own tile proxy. `CampusMap` is
+// the hand-drawn SVG scatter that came first: no coastline, because inventing
+// the shape of Ontario would be this site drawing something its data does not
+// contain. Which one you get depends on whether a tile provider is configured.
+//
+// The fallback is NOT a placeholder waiting to be deleted. It is what a student
+// sees when TILE_URL_TEMPLATE is unset — the state this project is in until
+// somebody signs up for a provider — and it is also what covers a sleeping
+// Render instance and a provider outage. A blank grey rectangle where a map
+// should be reads as a broken site; a working scatter plot does not.
+//
+// Leaflet is loaded lazily for the same reason the catalogue is: it is ~40kB
+// plus a stylesheet that nobody who never opens this tool should pay for.
+//
+// Ontario is drawn. The schools elsewhere in Canada are listed instead of
+// plotted: a map of the whole country for schools in Halifax, Vancouver and
 // Regina would be mostly empty space, and the list tells you the same thing.
 
-const HOME_KEY = 'acceptiversity.map.home'
+const TileMap = lazy(() => import('../../components/TileMap'))
+
+/**
+ * Where the home city used to live.
+ *
+ * It is a survey answer now, so it travels with the account instead of being
+ * stranded on one browser. This key is still READ once, so nobody who set a
+ * city before the move loses it — but nothing writes it any more.
+ */
+const LEGACY_HOME_KEY = 'acceptiversity.map.home'
 
 export default function MapView() {
-  const { data } = useDashboard()
+  const { data, profile, setProfile } = useDashboard()
   const universities = data?.universities ?? []
 
   const ontario = useMemo(() => universities.filter((u) => u.province === 'ON'), [universities])
@@ -32,29 +59,75 @@ export default function MapView() {
     [universities],
   )
 
-  // Which city the student calls home, for distances. Stored like everything
-  // else here — on the device, and never sent anywhere. A city is not an
-  // address: it is the coarsest thing that still makes the distances mean
-  // something.
-  const [home, setHome] = useState<string | null>(() => {
+  // Which city the student calls home, for distances. A city is not an address:
+  // it is the coarsest thing that still makes the distances mean something,
+  // which is why it is safe to keep in a profile that syncs.
+  //
+  // Read from the survey answers, falling back once to the old map-only key so
+  // a city chosen before the move is not silently forgotten.
+  const [legacyHome, setLegacyHome] = useState<string>(() => {
     try {
-      return localStorage.getItem(HOME_KEY)
+      return localStorage.getItem(LEGACY_HOME_KEY) ?? ''
     } catch {
-      return null
+      return ''
     }
   })
+  // The legacy key is a FALLBACK FOR AN UNANSWERED QUESTION, not a default that
+  // outranks an answer. Reading `answers?.homeCity || legacyHome` made "nowhere
+  // in particular" impossible to choose on any device that still had the old
+  // key: the empty string is falsy, so the stale city came straight back.
+  //
+  // So it applies only when there are no survey answers at all — the one state
+  // where nothing has been said about a home city either way.
+  const home = profile.answers ? profile.answers.homeCity || null : legacyHome || null
 
   const chooseHome = (city: string) => {
-    setHome(city || null)
-    try {
-      if (city) localStorage.setItem(HOME_KEY, city)
-      else localStorage.removeItem(HOME_KEY)
-    } catch {
-      /* storage unavailable — the map still works, distances just do not persist */
+    // Writing through the profile rather than to a key of its own is what makes
+    // this follow the student to another device. `updateProfile` returns the
+    // saved record, so the view re-renders from the same object the shell holds.
+    //
+    // AND IT ONLY WRITES `answers` WHEN THERE ALREADY ARE SOME. Fabricating a
+    // full default SurveyAnswers here would flip `profile.answers != null` — the
+    // site-wide test for "has this student answered the survey?" — on for
+    // somebody who has only picked a city off a dropdown. They would stop being
+    // offered the survey, and the rail would show four answers they never gave.
+    // Before the survey, the city goes back to the standalone key it came from.
+    if (!profile.answers) {
+      try {
+        if (city) localStorage.setItem(LEGACY_HOME_KEY, city)
+        else localStorage.removeItem(LEGACY_HOME_KEY)
+      } catch {
+        /* storage unavailable — the map still works, distances just do not persist */
+      }
+      setLegacyHome(city)
+      return
     }
+    setProfile(updateProfile({ answers: { ...profile.answers, homeCity: city } }))
   }
 
   const { unplaceable } = useMemo(() => groupByCity(ontario), [ontario])
+
+  // Whether a real basemap can be drawn, and the editable prose to hang off the
+  // marks. Both are network calls to a service that spends most of its life
+  // asleep, so both fail closed: no provider means the SVG map, no content means
+  // marks without blurbs. Neither is an error state a student should ever see.
+  //
+  // `undefined` is "still asking" and is distinct from `{available: false}` —
+  // drawing the fallback and then swapping in a real map a second later would be
+  // a worse experience than a moment of "Checking for a map".
+  const [mapConfig, setMapConfig] = useState<MapConfig | undefined>()
+  const [content, setContent] = useState<Record<string, UniversityContent>>({})
+
+  useEffect(() => {
+    let live = true
+    fetchMapConfig()
+      .then((config) => live && setMapConfig(config))
+      .catch(() => live && setMapConfig({ available: false, attribution: '' }))
+    loadUniversityContent().then((c) => live && setContent(c))
+    return () => {
+      live = false
+    }
+  }, [])
 
   return (
     <>
@@ -82,17 +155,43 @@ export default function MapView() {
               </option>
             ))}
         </select>
-        <span className="text-xs">Stays on this device.</span>
+        {/* This used to say "Stays on this device", which stopped being true the
+            moment the home city became a survey answer. The account page is
+            where the full story lives; this just does not claim otherwise. */}
+        <span className="text-xs">Saved with your answers.</span>
       </label>
 
       {!data ? (
         <>
-          <LoadingNote>Loading universities…</LoadingNote>
+          <FetchingNote>Loading universities…</FetchingNote>
           <ListSkeleton rows={4} />
         </>
       ) : (
         <>
-          <CampusMap universities={ontario} home={home} />
+          {mapConfig === undefined ? (
+            <>
+              <FetchingNote slow="Still checking — the server may be waking up.">
+                Checking for a map…
+              </FetchingNote>
+              <div className="mt-3 h-[26rem] w-full rounded-xl border border-line bg-surface" />
+            </>
+          ) : mapConfig.available ? (
+            // Suspense, because TileMap is a lazy chunk. The fallback reserves
+            // the same height the map will take, so the page below it does not
+            // jump when Leaflet arrives — the CLS lesson from Skeleton.tsx.
+            <Suspense
+              fallback={<div className="h-[26rem] w-full rounded-xl border border-line bg-surface" />}
+            >
+              <TileMap
+                universities={ontario}
+                home={home}
+                attribution={mapConfig.attribution}
+                content={content}
+              />
+            </Suspense>
+          ) : (
+            <CampusMap universities={ontario} home={home} />
+          )}
 
           {/* Anything the map could not place. Empty in practice — it exists so
               a new city in the dataset shows up as a visible gap rather than a
@@ -122,7 +221,11 @@ export default function MapView() {
                   >
                     <span className="min-w-0 truncate text-ink">{u.name}</span>
                     <span className="shrink-0 text-xs text-slate">
-                      {u.city}, {PROVINCE_LABELS[u.province] ? u.province : u.province}
+                      {/* Both branches of the old ternary were `u.province`,
+                          so the lookup did nothing. The code back was two
+                          letters either way; spelling the province out is what
+                          it was reaching for. */}
+                      {u.city}, {PROVINCE_LABELS[u.province] ?? u.province}
                     </span>
                   </Link>
                 </li>

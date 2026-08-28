@@ -56,6 +56,16 @@ export type SessionAccount = {
   id: string
   username: string
   createdAt: string
+  /**
+   * Whether this account may edit site content.
+   *
+   * Cached like the username, so the admin link renders on the first frame
+   * rather than after a round trip. THIS VALUE DECIDES NOTHING. It is read from
+   * localStorage, which the person holding the browser can edit; flipping it
+   * gets you an admin screen whose every save is refused, because UniServer
+   * re-reads the database on each write. Rendering, not permission.
+   */
+  isAdmin: boolean
 }
 
 type StoredSession = SessionAccount & {
@@ -78,6 +88,9 @@ function readSession(): StoredSession | null {
       id: parsed.id,
       username: parsed.username,
       createdAt: parsed.createdAt ?? new Date().toISOString(),
+      // Anything other than a stored `true` is not an admin. A session written
+      // by an older build has no such field at all, and false is the safe read.
+      isAdmin: parsed.isAdmin === true,
       token: parsed.token,
       since: parsed.since ?? new Date().toISOString(),
     }
@@ -116,7 +129,12 @@ export function activeToken(): string | null {
 export function cachedAccount(): SessionAccount | null {
   const session = readSession()
   if (!session) return null
-  return { id: session.id, username: session.username, createdAt: session.createdAt }
+  return {
+    id: session.id,
+    username: session.username,
+    createdAt: session.createdAt,
+    isAdmin: session.isAdmin,
+  }
 }
 
 export function startSession(account: SessionAccount, token: string): void {

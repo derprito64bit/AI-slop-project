@@ -14,6 +14,7 @@
 //                  shortlist, the courses, the notes and the tags
 //   /api/data      the same anonymous telemetry as before: field, province, a
 //                  five-point average band, ambition, match count
+//   /api/map/tiles which part of a map is on screen — see the note below
 //
 // The exact average used to be the one number the site promised never to upload.
 // A profile that follows you to another device is what an account is for, so it
@@ -28,8 +29,28 @@
 //   - Still no email, no real name, no age, no school. An account is a username
 //     the student invented. That rule did not move.
 //
-// WHAT NEVER LEAVES: nothing else. There is no analytics, no third party, and no
-// field on the wire that is not listed above.
+// WHAT NEVER LEAVES: nothing else. There is no analytics and no field on the
+// wire that is not listed above.
+//
+// STILL NO THIRD PARTY, and the map is why that sentence needed re-checking
+// rather than re-stating. The dashboard draws a real basemap now, and tiles come
+// from somebody else's surveyed data — but the browser asks OUR server for them
+// and our server asks the provider. A student's IP and every pan and zoom they
+// make stay between the browser and UniServer; the provider sees one service.
+// Pointing Leaflet straight at a tile host would have been three lines shorter
+// and would have made the claim above false. It also keeps the provider key out
+// of a static bundle, where it would be public by definition.
+
+/** Editable prose about one university. Never a number — see the server README. */
+export type UniversityContent = {
+  universityId: string
+  description: string
+  blurb: string
+  links: Array<{ label: string; url: string }>
+  updatedAt: string | null
+  /** Admin-only. Absent from the public response — it is an admin's username. */
+  updatedBy?: string
+}
 //
 // THE PASSWORD. It is sent, in the request body, over TLS, to /api/auth/signup
 // and /api/auth/login, and the server hashes it on arrival with scrypt and stores
@@ -55,6 +76,15 @@ export type RemoteAccount = {
   id: string
   username: string
   createdAt: string
+  /**
+   * Whether this account may edit site content.
+   *
+   * Sent so the client knows whether to render the admin route. It is NOT a
+   * permission: every write route re-reads the database for itself, so a browser
+   * that flips this in localStorage gets an admin screen it cannot save from.
+   * Optional because a server that predates the field simply omits it.
+   */
+  isAdmin?: boolean
 }
 
 /** The profile as the server returns it — same shape the dashboard uses. */
@@ -64,6 +94,15 @@ export type RemoteProfile = {
     province: string
     average: number | null
     ambition: string
+    /** a city, never an address — see SurveyAnswers in profile.ts */
+    homeCity?: string
+    coop?: string
+    /**
+     * Expected year of graduation. Stored in the private profile, and
+     * deliberately absent from the /api/data telemetry below — that endpoint's
+     * rows must stay unlinkable to a person.
+     */
+    gradYear?: number | null
   } | null
   shortlist: string[]
   courses: string[]
@@ -297,8 +336,89 @@ export async function submitSurvey(answers: SurveyTelemetry): Promise<unknown> {
     method: 'POST',
     body: { ...answers, submittedAt: new Date().toISOString() },
   })
-  console.log('Sent data')
   return result
+}
+
+/* ------------------------------------------------------- university copy --- */
+
+/**
+ * Editable prose about the universities.
+ *
+ * PUBLIC — no token. It is what an admin wrote to be published, every student
+ * needs it, and none of it is private. The whole collection arrives in one call:
+ * 39 schools of a few paragraphs each is smaller than one program page, and it
+ * means one request rather than one per school.
+ *
+ * The short deadline is the point. This is decoration on top of a dataset that
+ * is already on the device, so a sleeping server must cost a paragraph and not a
+ * page — `loadUniversityContent` turns any failure into an empty map.
+ */
+export async function fetchUniversityContent(token?: string): Promise<UniversityContent[]> {
+  const { universities } = await request<{ universities: UniversityContent[] }>(
+    '/api/universities',
+    // The token is optional and the route is public either way. Sending one
+    // only changes the SHAPE: an admin also gets `updatedBy`, which the panel
+    // shows as "last edited by". Students are not sent the list of admin
+    // usernames, so the site never publishes who to try to break into.
+    { token, timeoutMs: 20_000 },
+  )
+  return universities ?? []
+}
+
+/** Save one university's copy. Admin only — the server checks, not us. */
+export async function saveUniversityContent(
+  token: string,
+  universityId: string,
+  content: { description: string; blurb: string; links: Array<{ label: string; url: string }> },
+): Promise<UniversityContent> {
+  const { university } = await request<{ university: UniversityContent }>(
+    `/api/universities/${encodeURIComponent(universityId)}`,
+    { method: 'PUT', token, body: content, timeoutMs: 25_000 },
+  )
+  return university
+}
+
+/**
+ * Remove one university's copy entirely.
+ *
+ * Different from saving an empty description, and the difference shows: a blank
+ * record still says "last edited by X", which reads as somebody having
+ * deliberately emptied it. Deleting restores "nobody has written this yet".
+ */
+export async function deleteUniversityContent(token: string, universityId: string): Promise<void> {
+  await request<void>(`/api/universities/${encodeURIComponent(universityId)}`, {
+    method: 'DELETE',
+    token,
+  })
+}
+
+/* -------------------------------------------------------------- the map --- */
+
+export type MapConfig = { available: boolean; attribution: string }
+
+/**
+ * Whether a real basemap can be drawn at all.
+ *
+ * `available: false` is an ordinary answer, not a failure: with no tile provider
+ * configured the dashboard keeps the hand-drawn SVG map it has always had. Asked
+ * once, up front, because discovering it through a grid of broken tiles is a
+ * worse experience than never promising the tiles.
+ *
+ * Short timeout and no retry — if this does not answer promptly the fallback is
+ * the right thing to show anyway.
+ */
+export async function fetchMapConfig(): Promise<MapConfig> {
+  return request<MapConfig>('/api/map/config', { timeoutMs: 8_000 })
+}
+
+/**
+ * The template Leaflet needs, pointed at our own proxy.
+ *
+ * Leaflet substitutes {z}/{x}/{y} itself. The provider's real URL and its key
+ * live on the server; this side never knows either.
+ */
+export function tileUrlTemplate(): string {
+  return `${API_BASE}/api/map/tiles/{z}/{x}/{y}`
 }
 
 /** Whether the service is up, for the "server is asleep" states. */

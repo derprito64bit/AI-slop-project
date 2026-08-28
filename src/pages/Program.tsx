@@ -24,9 +24,10 @@ import {
   type CyclePoint,
   type DecisionSlice,
 } from '../lib/analytics'
-import { loadPrograms, loadUniversities, loadStats } from '../lib/dataSource'
+import { loadPrograms, loadUniversities, loadStats, loadUniversityContent } from '../lib/dataSource'
 import { findProgram, similarPrograms, difficultyBand, DIFFICULTY_LABELS } from '../lib/search'
 import { getProgramInfo, getUniversityInfo, type ProgramInfo, type Source } from '../data/program-info'
+import type { UniversityContent } from '../lib/api'
 import type { CommunityStat, Program as ProgramType, University } from '../data/types'
 
 export default function Program() {
@@ -37,11 +38,18 @@ export default function Program() {
     stats: CommunityStat[]
   } | null>(null)
   const [error, setError] = useState(false)
+  // Editable prose about the school, if the server had any and was awake.
+  // Deliberately a SEPARATE state and a separate await from the dataset above:
+  // this comes from a free-tier service that is asleep most of the time, and
+  // the program page must not wait on it or fail with it. It arrives late or
+  // never, and either is fine.
+  const [content, setContent] = useState<Record<string, UniversityContent>>({})
 
   useEffect(() => {
     Promise.all([loadPrograms(), loadUniversities(), loadStats()])
       .then(([programs, universities, stats]) => setData({ programs, universities, stats }))
       .catch(() => setError(true))
+    loadUniversityContent().then(setContent)
   }, [])
 
   // These sit above the early returns so the hook order never changes between
@@ -157,6 +165,7 @@ export default function Program() {
                 info={info}
                 uniInfo={uniInfo}
                 cycleRange={cycleRange}
+                content={content[program.universityId]}
               />
             ),
           },
@@ -216,7 +225,7 @@ export default function Program() {
 /* ------------------------------------------------------------------ tabs */
 
 function GeneralTab({
-  program, school, city, province, info, uniInfo, cycleRange,
+  program, school, city, province, info, uniInfo, cycleRange, content,
 }: {
   program: ProgramType
   school: string
@@ -225,9 +234,50 @@ function GeneralTab({
   info: ProgramInfo | null
   uniInfo: ReturnType<typeof getUniversityInfo>
   cycleRange: string
+  /** editable prose from the admin panel, when a person has written some */
+  content?: UniversityContent
 }) {
   return (
     <>
+      {/* WRITTEN BY A PERSON, and labelled as such.
+          Everything else on this page is derived — a median, a count, a
+          requirement read off an official page with the date attached. This is
+          somebody's prose, so it is visually separate and says whose it is. It
+          can hold no number: the server's schema has no field for one, which is
+          what stops an edit here ever contradicting the dataset.
+          Absent for most schools, and that is the ordinary state. */}
+      {/* `> 0`, not a bare `.length`. `'' || 0` is `0`, and React renders a
+          numeric child as text — so the falsy-length form printed a literal "0"
+          above the facts table for any school whose record has a blurb and
+          nothing else. That is not a contrived state: the blurb is the first
+          field in the admin form and the only one the map uses. */}
+      {content && (content.description !== '' || content.links.length > 0) && (
+        <section className="mb-6 rounded-xl border border-line bg-surface p-5">
+          <h2 className="text-sm font-600 uppercase tracking-wider text-slate">About {school}</h2>
+          {content.description && (
+            <p className="mt-2 whitespace-pre-line leading-relaxed text-slate">
+              {content.description}
+            </p>
+          )}
+          {content.links.length > 0 && (
+            <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1">
+              {content.links.map((l) => (
+                <li key={l.url}>
+                  <a
+                    href={l.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sm text-brand-600 underline underline-offset-2 hover:text-brand-700"
+                  >
+                    {l.label} ↗
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
       <dl className="grid gap-px overflow-hidden rounded-xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-3">
         <Fact label="University" value={school} />
         <Fact label="Location" value={city ? `${city}${province ? `, ${province}` : ''}` : undefined} />
@@ -273,8 +323,8 @@ function AnalyticsTab({
           without being misleading. We show a range once at least five students have reported
           an offer.
         </p>
-        <Link to="/community" className="mt-4 inline-block text-sm font-600 text-brand-600 hover:text-brand-700">
-          Applied here? Add your result →
+        <Link to="/profile/database" className="mt-4 inline-block text-sm font-600 text-brand-600 hover:text-brand-700">
+          How the reporting works →
         </Link>
       </div>
     )
