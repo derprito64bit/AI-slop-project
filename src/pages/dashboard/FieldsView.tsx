@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { ListSkeleton, LoadingNote } from '../../components/Skeleton'
+import UniversityMark from '../../components/UniversityMark'
+import { ListSkeleton, FetchingNote } from '../../components/Skeleton'
 import { FIELD_LABELS } from '../../lib/profile'
 import { useDashboard } from './context'
 import type { Program } from '../../data/types'
@@ -8,26 +9,44 @@ import type { Program } from '../../data/types'
 // The way in for a student who does not yet know what to search for.
 //
 // Search only helps once you have a word to type. This is the other door:
-// thirteen subject areas, each with the size of the field and the range of
-// averages admitted students reported inside it, so "how competitive is
-// engineering, really" has an answer before you have picked a single program.
+// subject areas, each with the size of the field and the range of averages
+// admitted students reported inside it, so "how competitive is engineering,
+// really" has an answer before you have picked a single program.
+//
+// ORDERED BY HOW MUCH DATA WE HOLD, not by how many programs exist. Program
+// count ranked the fields by how many rows a university calendar happens to
+// contain, which put Business above Health on 118 fewer reports and told a
+// student to start where the site knows least. Reports are the honest measure
+// of which card is worth opening.
+//
+// THE SCHOOLS ARE SHOWN AS MARKS, not as three truncated program names. The
+// old card printed the same size of grey text four times over and a student had
+// to read all of it to learn anything; a row of logos answers "is my school in
+// here" at a glance, and that is the actual question. Marks come from
+// UniversityMark, which draws crest art at this size and a monogram otherwise —
+// so every school renders, with or without a logo file.
 //
 // Every card links into Programs with the field pre-selected, which works
 // because that view keeps its filters in the URL.
+
+/** Schools shown as marks before the row becomes a crowd. */
+const MAX_MARKS = 8
 
 type FieldSummary = {
   key: string
   label: string
   programs: number
+  reports: number
   withData: number
   /** median of the per-program medians — the middle of the field */
   midMedian: number | null
   lowMedian: number | null
   highMedian: number | null
-  top: Program[]
+  /** schools with at least one chartable program here, most-reported first */
+  schools: Array<{ id: string; name: string; reports: number }>
 }
 
-function summarise(programs: Program[]): FieldSummary[] {
+function summarise(programs: Program[], uniName: Map<string, string>): FieldSummary[] {
   const byField = new Map<string, Program[]>()
   for (const p of programs) {
     const list = byField.get(p.field)
@@ -41,68 +60,86 @@ function summarise(programs: Program[]): FieldSummary[] {
       // Only programs with a usable median can describe a range. A field's
       // spread built from programs below the reporting threshold would be a
       // number with nothing behind it.
-      const medians = list
-        .filter((p) => !p.insufficientData && typeof p.accepted?.median === 'number')
-        .map((p) => p.accepted!.median)
-        .sort((a, b) => a - b)
+      const chartable = list.filter(
+        (p) => !p.insufficientData && typeof p.accepted?.median === 'number',
+      )
+      const medians = chartable.map((p) => p.accepted!.median).sort((a, b) => a - b)
+
+      // Schools are drawn from the CHARTABLE programs only. A mark here is a
+      // claim that we have something to show you at that school in this field;
+      // sourcing it from every program would put a logo against a school whose
+      // only entry says "not enough data yet".
+      const schoolReports = new Map<string, number>()
+      for (const p of chartable) {
+        schoolReports.set(p.universityId, (schoolReports.get(p.universityId) ?? 0) + p.totalReports)
+      }
 
       return {
         key,
         label: FIELD_LABELS[key],
         programs: list.length,
+        reports: list.reduce((n, p) => n + p.totalReports, 0),
         withData: medians.length,
         midMedian: medians.length ? medians[Math.floor(medians.length / 2)] : null,
         lowMedian: medians.length ? medians[0] : null,
         highMedian: medians.length ? medians[medians.length - 1] : null,
-        top: [...list].sort((a, b) => b.totalReports - a.totalReports).slice(0, 3),
+        schools: [...schoolReports.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .map(([id, reports]) => ({ id, name: uniName.get(id) ?? id, reports })),
       }
     })
     .filter((f) => f.programs > 0)
-    .sort((a, b) => b.programs - a.programs)
+    .sort((a, b) => b.reports - a.reports)
 }
 
 export default function FieldsView() {
   const { data, uniName } = useDashboard()
-  const fields = useMemo(() => (data ? summarise(data.programs) : []), [data])
+  const fields = useMemo(
+    () => (data ? summarise(data.programs, uniName) : []),
+    [data, uniName],
+  )
 
   return (
     <>
       <header className="mb-6">
         <h1 className="font-display text-display-2 font-600 text-ink">Fields</h1>
         <p className="mt-2 max-w-2xl text-slate">
-          Thirteen subject areas, and what admitted students reported inside each one. A place to
-          start when you don&rsquo;t have a program name to search for yet.
+          Subject areas, ordered by how much students have reported in each — so the first card is
+          the one we can tell you most about. A place to start when you don&rsquo;t have a program
+          name to search for yet.
         </p>
       </header>
 
       {!data ? (
         <>
-          <LoadingNote>Loading fields…</LoadingNote>
+          <FetchingNote>Loading fields…</FetchingNote>
           <ListSkeleton rows={4} />
         </>
       ) : (
         <ul className="grid gap-4 lg:grid-cols-2">
           {fields.map((f) => (
-            // min-w-0: grid items default to min-width:auto, and the program
-            // names below are nowrap-truncated, so without it the longest one
-            // sets the width of the whole page on a phone.
+            // min-w-0: grid items default to min-width:auto, and the marks row
+            // below scrolls, so without it the widest row sets the width of the
+            // whole page on a phone.
             <li key={f.key} className="min-w-0 rounded-xl border border-line bg-paper p-5">
-              <div className="flex items-baseline justify-between gap-3">
-                <h2 className="font-600 text-ink">{f.label}</h2>
-                <span className="text-sm text-slate [font-variant-numeric:tabular-nums]">
-                  {f.programs.toLocaleString()} program{f.programs === 1 ? '' : 's'}
-                </span>
-              </div>
+              {/* The hierarchy is the point of this card. One thing is large
+                  (the field), one number is large (the median, which is what
+                  you came for), and everything else is small and grey. The
+                  previous version set all four lines at the same size, which is
+                  why it read as a paragraph rather than a summary. */}
+              <h2 className="font-display text-lg font-600 text-ink">{f.label}</h2>
 
               {f.midMedian !== null ? (
                 <>
-                  <p className="mt-3 text-sm text-slate">
-                    Typical reported median{' '}
-                    <strong className="font-600 text-ink [font-variant-numeric:tabular-nums]">
+                  <p className="mt-2 flex items-baseline gap-2">
+                    <span className="font-display text-3xl font-600 text-brand-600 [font-variant-numeric:tabular-nums]">
                       {f.midMedian}%
-                    </strong>
-                    , across {f.lowMedian}–{f.highMedian}% for the {f.withData} programs with
-                    enough reports.
+                    </span>
+                    <span className="text-xs text-slate">typical reported median</span>
+                  </p>
+                  <p className="mt-1 text-xs text-slate [font-variant-numeric:tabular-nums]">
+                    {f.lowMedian}–{f.highMedian}% across {f.withData} of{' '}
+                    {f.programs.toLocaleString()} programs · {f.reports.toLocaleString()} reports
                   </p>
                   {/* Where the middle sits within the field's own range. Not a
                       chart, just a mark on a line — enough to see whether a
@@ -121,27 +158,36 @@ export default function FieldsView() {
                   </div>
                 </>
               ) : (
-                <p className="mt-3 text-sm text-slate">
-                  No program in this field has enough reports yet to describe a range.
+                <p className="mt-2 text-sm text-slate">
+                  {f.programs.toLocaleString()} program{f.programs === 1 ? '' : 's'}, and no single
+                  one has enough reports yet to describe a range.
                 </p>
               )}
 
-              {f.top.length > 0 && (
-                <ul className="mt-4 space-y-1">
-                  {f.top.map((p) => (
-                    <li key={p.id} className="truncate text-sm">
-                      <Link
-                        to={`/program/${p.universityId}/${p.slug}`}
-                        className="text-slate hover:text-brand-600"
-                      >
-                        {p.name}{' '}
-                        <span className="text-xs">
-                          · {uniName.get(p.universityId) ?? p.universityId}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
-                </ul>
+              {f.schools.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-[11px] font-600 uppercase tracking-wider text-slate">
+                    {f.schools.length} school{f.schools.length === 1 ? '' : 's'} with data here
+                  </p>
+                  {/* Overflow scrolls rather than wrapping to a third line: the
+                      cards sit in a two-up grid and one tall card drags its
+                      whole row taller. */}
+                  <ul className="mt-2 flex gap-1.5 overflow-x-auto pb-1">
+                    {f.schools.slice(0, MAX_MARKS).map((s) => (
+                      <li key={s.id} title={`${s.name} — ${s.reports.toLocaleString()} reports`}>
+                        <Link to={`/profile/programs?field=${f.key}&uni=${s.id}`}>
+                          <UniversityMark id={s.id} name={s.name} size={28} />
+                          <span className="sr-only">{s.name}</span>
+                        </Link>
+                      </li>
+                    ))}
+                    {f.schools.length > MAX_MARKS && (
+                      <li className="flex items-center pl-1 text-xs text-slate">
+                        +{f.schools.length - MAX_MARKS}
+                      </li>
+                    )}
+                  </ul>
+                </div>
               )}
 
               {/* Absolute, not relative: a relative link from /profile/fields
