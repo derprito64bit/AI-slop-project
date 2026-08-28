@@ -90,10 +90,16 @@ src/
 ```
 npm run dev          dev server on :5173
 npm run build        typecheck + production build
-npm test             79 tests
+npm run lint         oxlint — catches rules-of-hooks before they ship
+npm test             282 tests
 npm run data:build   regenerate dataset from data/raw/
 npm run data:check   same, but report only — does not write the dataset
 npm run shots        screenshot the dev server (see below)
+npm run sweep        135 headless checks against the built site
+npm run sweep:sections  26 more, on the merged /about + /community tool
+npm run probe:motion    watches a view swap for blank frames
+npm run logos        refresh the university marks (see fetch-logos.mjs)
+npm run logos:check  contact sheet of every mark at 24/32/48/64, both themes
 ```
 
 **Visual checks.** `npm run shots` captures `/`, `/explore` and a program page
@@ -289,8 +295,9 @@ by volume; deliberately not auto-merged — "Engineering I" and "Engineering I
 |---|---|
 | **Home** (`/`) | Complete. Hero + **typeahead search** (`HeroSearch.tsx` — suggests programs as you type, keyboard-navigable combobox, loads the catalogue on first focus so the Home bundle stays clean), stats band with scroll-zoom, university logo band, pinned full-screen roadmap, program cards, two carousels, CTA. |
 | **Explore** (`/explore`) | **Interim.** Search works over all 2,436 programs; results are 3-per-row cards linking to program pages, 30 at a time behind a "Show more", with a live result count. Every program is reachable — low-data ones render "not enough data yet" rather than being hidden. **No filter UI yet** — that is the remaining gap. |
-| **Program** (`/program/:universityId/:slug`) | Complete. Four tabs: General, Analytics, Requirements, Extras. Analytics carries the distribution histogram, the range readout, median by admission cycle, an offers-vs-rejections comparison (gated), the decision mix bar, and similar programs. |
-| **Profile / Community / About** | Still `Placeholder` stubs. |
+| **Program** (`/program/:universityId/:slug`) | Complete. Three tabs: General, Analytics, Requirements — Extras was deleted, having been empty on all 2,436 programs. Analytics carries the distribution histogram, the range readout, median by admission cycle, an offers-vs-rejections comparison (gated), the decision mix bar, and similar programs. |
+| **Dashboard** (`/profile`) | Complete, and now the largest surface on the site: twelve tools behind one shell — Overview, My list, Balance, Courses, Compare, Programs, Fields, Map, Applications, Deadlines, The data, Account. The Overview has a real empty state; see `DASHBOARD-NEXT.md` for what is still thin. |
+| **`/about` and `/community`** | Gone as pages. Both redirect to `/profile/database`, which merged the methodology and the reporting-bias argument into one tool — they were arguing the same point from opposite ends of two URLs. |
 
 Also built: dark mode (defaults to light, remembers choice), paper/grid
 textures, `.container-page` scaling for large monitors, fluid `clamp()` type,
@@ -404,13 +411,14 @@ and pastes the requirements text. Structuring and citing it takes seconds.
 
 ### Housekeeping
 
-12. PR #3 (wireframe-only) is still open and now redundant — its content is in
-    `main`. Safe to close.
-13. The `wireframe/` folder is the original grey-box HTML mockup. Superseded by
-    the React app; keep or delete as preferred.
-14. `feature/*` branches from the wireframe era (`feature/explore`,
-    `feature/profile`, `feature/community`, `feature/about`) predate React and
-    contain nothing useful. Delete rather than build on them.
+12. ~~PR #3~~ — merged, not open. Nothing to close.
+13. The `wireframe/` folder is the original grey-box HTML mockup, still present
+    and superseded by the React app. Keep or delete as preferred.
+14. The wireframe-era `feature/*` branches (`explore`, `profile`, `community`,
+    `about`) predate React and contain nothing useful. All four are merged and
+    were pruned **locally**, but **still exist on the remote** — delete them
+    there rather than building on them. `origin/account` is the same story: an
+    obsolete orphan whose content landed in PR #24.
 
 ---
 

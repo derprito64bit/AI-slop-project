@@ -3,10 +3,8 @@
 Read `HANDOFF.md` first for the project as a whole (rules, data pipeline,
 architecture). This file is only about **where things stand now**.
 
-Rewritten 2026-08-27, updated 2026-08-28. **Everything below is merged and
-deployed** — that is the main difference from the last version of this file,
-which said the opposite and stayed saying it for a day after it stopped being
-true.
+Rewritten 2026-08-28 at the end of a long session. **Everything below is merged
+and deployed**, and every claim in it was probed rather than assumed.
 
 ---
 
@@ -15,168 +13,196 @@ true.
 | | |
 |---|---|
 | `origin/main` | deployed and live at https://derprito64bit.github.io/AI-slop-project/ |
-| Working state | **no open PRs, no unmerged work** |
-| Backend | `TheKeems/UniServer`, cloned alongside this repo. Accounts are deployed; the content and map routes are not — see §3 |
+| Working state | **no open PRs, no unmerged work**, both repos clean |
+| Backend | `TheKeems/UniServer` — accounts live, content and map routes **not deployed**; see §3 |
 
-Merged since the last rewrite: PR #29 (backend content + admin + tiles), #30
-(the real basemap), #31 (`CLAUDE.md` and the dashboard backlog), #32 (the empty
-Overview, and the Laurier crest).
+Twelve PRs merged this session: **#32** the empty Overview, **#33** the handoff
+refresh, **#34** university crests, **#35** the copy audit, **#36** the course
+matcher, **#37–38** housekeeping, **#39** crest extraction, **#40** elevation and
+the sidebar, **#41** chart motion, **#42** interaction states, **#43** page
+rhythm.
+
+Two remote branches are unmerged and correctly so: `gh-pages` is the deploy
+target, and `origin/account` is an obsolete orphan whose content landed in #24.
 
 **Baseline, measured against a production build served at the deploy base:**
 
 ```
 npm run lint            0 errors
-npm test                282 pass          (was 268)
-npm run sweep           135 of 135        (was 132 of 132)
+npm test                282 pass          (was 246 at the start of the session)
+npm run sweep           135 of 135        (was 125 of 125)
 npm run sweep:sections  26 of 26
 npm run probe:motion    minVisible 0.55, 0 dark frames
+                        — the charts row reports 1; the panel swap never dips
 cd ../UniServer && npm test               133 pass
 ```
 
 **Both sweeps default to the LIVE site.** Point them at a local build with
-`SWEEP_BASE=http://localhost:4200/AI-slop-project`, and remember the preview
-caches its file list at startup — restart it after every rebuild.
+`SWEEP_BASE=http://localhost:4200/AI-slop-project`.
 
-**A green local sweep does not prove an asset exists.** `vite preview` serves
-`index.html` for unknown paths, so a missing logo file returns 200 locally; the
-Laurier 404s survived a green local run that way. Check the live site or the
-filesystem. The sweep also ignores failures on `/api/universities` and
-`/api/map/config` specifically, because the site is built to survive losing
-them; any *other* API failure still counts.
+**Two verification traps cost real confidence this session** and are both in
+`CLAUDE.md`: a stale `vite preview` will happily verify the wrong build (`pkill`
+does not reliably kill it, and without `--strictPort` the replacement moves to
+the next port while `SWEEP_BASE` keeps hitting the old one — eight had
+accumulated); and `vite preview` answers 200 with `index.html` for a missing
+file, so a green *local* sweep never proves an asset exists.
 
-**Vitest excludes `.claude/worktrees`.** Without that it runs every suite once
-per worktree and the totals multiply — two stale worktrees turned 246 tests into
-740, which passes green and hides which copy actually failed.
+---
 
 ## 2. What was built
 
-**Navigation.** `/community`, `/about` and the `Global posts` tab are gone,
-merged into one dashboard tool at `/profile/database`. The old URLs redirect.
-That tool is exempt from the dashboard's first-run gate — the methodology has to
-be readable before someone decides whether to trust the site.
+### The dashboard's empty state (#32, #36)
 
-**Backend (`TheKeems/UniServer`).** New `universitycontents` collection holding
-**prose only**; `isAdmin` on accounts; `GET /api/universities` (public),
-`PUT`/`DELETE /api/universities/:id` (admin); a map tile proxy at
-`/api/map/tiles/:z/:x/:y`. Full detail in that repo's README.
+`/profile` used to greet a new student with four zeros and two apologies. It now
+shows a three-step start path, the real summary for the field they named, and
+the six most-reported programs with a Keep control on each.
 
-**Admin panel** at `/admin` — not in the navbar, renders the 404 page without
-the flag. The client gate is cosmetic by design; `requireAdmin` re-reads the
-database on every write.
+**Two things worth not undoing.** The empty state is gated on
+`profile.shortlist.length`, not `kept.length` — `kept` resolves against the lazy
+catalogue and is `[]` on the first paint of *every* visit, so gating on it
+flashes the onboarding path at every returning student. And the dashboard uses
+`KeepControl` (controlled) rather than the default `KeepButton`, which writes to
+localStorage behind the shell's back and would leave the empty state on screen
+after a click.
 
-**The map** draws real tiles through our own proxy when `TILE_URL_TEMPLATE` is
-set, and falls back to the original hand-drawn SVG when it is not. The fallback
-is not a placeholder — it is what covers an unconfigured provider, a provider
-outage, and a sleeping Render instance.
+`src/lib/courseNeeds.ts` rolls the whole shortlist up — which courses it names,
+which the student holds, which one the most programs want, and **which ticked
+course nothing on the list asks for**. `choiceKey` canonicalises a choice rule so
+the same 2-of-3 science requirement from two programs is one row rather than two
+(`Requirement.codes` follows the order the university wrote them, and both
+orderings are in the dataset). `listNeeds` is computed **once** in
+`DashboardShell` and put on the context; it used to be walked five times per
+render.
 
-**Survey** went from 4 questions to 8, with a typeahead replacing the chip
-grids. New answers: home city, co-op, graduating year, and Grade 12 courses.
+### University marks (#34, #39)
 
-**Dashboard**: charted overview, Fields ranked by reports, required/recommended
-courses split, Compare gained "You still need".
+**38 of 39 schools have a mark; 29 of those draw at any size**, covering 92.7% of
+every report the site holds — up from 8.6%. `scripts/fetch-logos.mjs` holds the
+provenance: every mark names its source URL and what it depicts.
 
-**Logos**: `UniversityMark` no longer forces a monogram below 48px for every
-school — `CREST_MARKS` in that file lists ids whose square file is crest art and
-therefore legible small. Laurier's seal landed in PR #32, which was the last
-real 404 on the site. TMU's brand kit has no crest, so its wide wordmark sits in
-`public/images/universities/` with the other lockups and it stays a monogram in
-listings.
+The eight biggest schools shipped a crest-plus-name **lockup**, illegible at
+24px, so they drew monograms despite having artwork. The crest is cropped out of
+each; originals live in `scripts/lockups/` because the script overwrites its own
+output. Toronto, York and Guelph have no shield-only asset published anywhere —
+cropping is the only honest fix for them, not a shortcut.
 
-**The empty dashboard** (PR #32). `/profile` used to greet a new student with
-four zeros and two apologies. It now shows a three-step start path, the real
-summary for the field they named, and the six most-reported programs with a Keep
-control on each. Two things worth not undoing: the empty state is gated on
-`profile.shortlist.length` rather than `kept.length`, because `kept` resolves
-against the lazy catalogue and is `[]` on the first paint of every visit; and
-the dashboard uses `KeepControl` (controlled) rather than the default
-`KeepButton`, which writes to localStorage behind the shell's back and would
-leave the empty state on screen after a click.
+Trent is the deliberate gap: its crest is a white knockout, invisible on a light
+tile, and it has no arms of its own.
+
+### Copy (#35)
+
+An audit that started from one wrong denominator found a **Rule 1 violation in
+the site's headline** ("Find where you actually get in" — a probability claim in
+the largest type on the site), a compare-table row that read as an acceptance
+rate, four unconditional privacy promises that stopped being true when profiles
+started syncing, and Home copy describing a budget question and a fit-ranking
+that do not exist. Also two behavioural bugs: "Delete everything" never cleared
+the tracker, and Balance could not tell "never answered" from "declined the
+average".
+
+### The design system (#40–43)
+
+This is new architecture a new session needs to know exists.
+
+**Elevation.** `--shadow-sm/DEFAULT/md/lg` in `src/index.css`, built on
+`--p-shadow` (a colour that flips with the theme) and `--p-shadow-boost`. Before
+this, all nine shadows were hand-written `rgba(20,24,31,…)` — the *light* ink —
+so elevation silently did not exist in dark mode. **Do not add an arbitrary
+`shadow-[...]` value; use the ladder.**
+
+**Interaction.** `.card-lift` is the one hover for anything card-shaped
+(transform + box-shadow, 200ms). Five idioms and three shadow values collapsed
+into it. Buttons and the most-pressed controls have an `active:` scale — there
+was no pressed state anywhere on the site before.
+
+**Rhythm.** `ui/Section.tsx` finally does something: `pad` names the three
+spacing cases (`section` py-20, `band` py-16, `none`) and `tone` the three
+background steps, and a tinted tone always bleeds and draws its hairline. The
+rule is also written beside `container-page` in `src/index.css`. `display-4`
+fills the hole between `display-3` and `text-xl` that was leaving some `h3`s at
+16px.
+
+**Chart motion.** Charts animate transforms, not layout properties — the repo
+measured that pattern at 565ms of style recalculation against 18ms. Hover has its
+own transition (`DURATION.hover`) and never inherits the entrance or its stagger:
+the last decision-mix segment went from 180ms-before-it-responds and 1.1s to
+settle, to 11ms and 140ms. `chartDelay()` replaced five ad-hoc stagger steps.
+
+`probe:motion` now walks a chart route. It previously measured every animated
+surface **except** the one with the most animation on it.
+
+---
 
 ## 3. Before any of this is useful to a student
 
-1. **Deploy UniServer's new routes.** Accounts are live —
-   `/api/health` answers `{"ok":true,"database":"connected"}` — but the content
-   and map halves of §2 are not on Render: `/api/universities` and
-   `/api/map/config` both still 404 (probed 2026-08-28). Until they ship the
-   site degrades exactly as designed — no editable prose, SVG map — but the
-   admin panel cannot save. **This is the top item; four of the five below
-   depend on it.**
+None of these are code. They are the whole remaining critical path.
+
+1. **Deploy UniServer's new routes.** Accounts are live — `/api/health` answers
+   `{"ok":true,"database":"connected"}` — but the content and map halves are not
+   on Render: `/api/universities` and `/api/map/config` both still **404**
+   (re-probed 2026-08-28). The code is merged on that repo's `main`; what has
+   not happened is a deploy. Until it ships the site degrades exactly as
+   designed — no editable prose, SVG map — but **the admin panel cannot save**.
+   Four of the five items below depend on this one.
 2. **Pick a tile provider.** `TILE_URL_TEMPLATE` is unset, so the map is the SVG
    one. **Do not point it at `tile.openstreetmap.org`** — their tile policy does
-   not allow a proxy in front of it, and it is only used in the local dev
-   instructions. Use MapTiler, Stadia or Thunderforest.
+   not allow a proxy in front of it. Use MapTiler, Stadia or Thunderforest.
 3. **Promote yourself to admin**, by hand, in the database. There is no route
    that does it and that is deliberate:
    `db.accounts.updateOne({ usernameKey: 'you' }, { $set: { isAdmin: true } })`
 4. **Set `ALLOWED_ORIGINS` on Render.** Still unset; CORS still falls back to `*`.
 5. **Settle the UniServer licence.** Still none, so all-rights-reserved by
    default. The only item on this list that gets harder with time.
-6. **Decide the logo licensing question.** The square marks are institutional
-   coats of arms and wordmarks, used to identify each school's programs. That is
-   ordinary nominative use and no university has been asked, which is fine for a
-   student project and is worth a deliberate decision before it is not. Nothing
-   breaks if one has to be pulled — `UniversityMark` falls back to a monogram
-   per school, with no code change.
+6. **Decide the logo licensing question.** 39 institutional marks used to
+   identify each school's programs — ordinary nominative use, and no university
+   has been asked. A recorded decision rather than an oversight. Pulling any one
+   mark is a one-line deletion and the monogram returns on its own.
 
-## 4. Traps that cost real time in this session
+---
 
-- **`vite preview` serves index.html for missing files, with a 200.** So a
-  missing image "loads", the sweep sees no failure, and you conclude the logos
-  are fine. They are not — check against the live site or the file system.
-- **Leaflet's CSS arrives in the lazy chunk**, i.e. after `index.css`, so it
-  wins every specificity tie. The map rendered as a white box in dark mode until
-  the rules were scoped under `.theme-map`, and the attribution strip stayed
-  white after that because Leaflet writes
-  `.leaflet-container .leaflet-control-attribution` — 0,2,0, the same as the
-  scoped rule. That one needs three classes.
-- **`{x.length && <div/>}` renders a literal `0`.** It shipped in
-  `Program.tsx` and printed a bare "0" above the facts table for any school with
-  a blurb and no description — which is the *first* thing an admin fills in.
-  Every other length guard in the codebase uses an explicit comparison.
-- **A combobox that only closes on outside-pointerdown never closes for a
-  keyboard user.** Tabbing out left the list floating and blanked the chosen
-  answer, because the input renders `open ? query : label`.
-- **`req.path` inside a router mounted at `/api` has the prefix stripped**, so a
-  deliberately-indistinguishable 404 was distinguishable after all.
-- **Node's `fetch` + `res.setHeader` ordering matters.** Setting the
-  content-type and a week of `immutable` caching *before* awaiting the body
-  means a failed read is served and cached as a broken image.
-- The animation-frame traps from the previous handoff all still apply, plus:
-  **a hidden browser pane does not composite frames**, so `AnimatePresence
-  mode="wait"` never finishes its exit and the survey looks stuck. That is the
-  harness, not the app — the headless sweeps are the real check.
+## 4. What to build next
 
-## 5. What to build next
+**`DASHBOARD-NEXT.md` holds the backlog in priority order.** P1 shipped in #32
+and P4 in #41; **P2 and P3 are what remain**:
 
-The dashboard's tools all work, and its views were nearly blank for a student
-who had just arrived — the rich ones read the dataset, the empty ones read the
-student's list. **`DASHBOARD-NEXT.md`** measures that and sets out the backlog
-in priority order.
+- **P2 — the other blank tools.** Compare is the starkest: its empty state fires
+  for *one* staged program as well as none, so a student who staged one gets no
+  acknowledgement they did anything. Balance, Courses, Applications and Deadlines
+  all still answer "you have nothing" rather than "here is what this will look
+  like once you have used it".
+- **P3 — three answers collected and barely read.** `gradYear` is read by
+  nothing at all outside the survey and sync plumbing; `homeCity` only by the
+  map; `coop` only filters Programs. The rail shows four of the eight answers,
+  which is why its heading now says "Some of your answers".
 
-**P1, the Overview, is done** (PR #32). **P2 is next**: Compare, Balance,
-Courses, Applications and Deadlines all still answer "you have nothing" rather
-than "here is what this will look like once you have used it". Compare is the
-starkest — its empty state is one sentence, and it fires for one staged program
-as well as none, so a student who staged one gets no acknowledgement that they
-did. P3 is the three survey answers that are collected, stored, synced and then
-barely read: `gradYear` is read by nothing at all outside the survey and sync
-plumbing.
+Two smaller things, both flagged rather than fixed because they are decisions
+rather than defects:
 
-`CLAUDE.md` holds the rules that do not bend and the verification baseline, and
-is loaded into every session.
+- **`xl:` is used zero times.** Nothing about content layout responds above
+  `lg:`, so on a 2560px monitor Explore is still three columns in a 1728px
+  container.
+- **`ProgramsView` and `ListView` still carry inline copies** of the Keep button
+  markup rather than using `KeepControl`. A clean follow-up with its own sweep
+  run.
 
-## 6. Still true from before
+---
 
-The rules have not moved: no probability of admission, no PII, no fact from a
-search summary, and the dataset stays in the spreadsheet → `npm run data:build`
-→ static JSON pipeline. The new content collection holds no numbers, so nothing
-an admin types can contradict a median.
+## 5. Still true from before
 
-`sync.ts` still whitelists profile fields in **both** directions, and there are
-now four places a new survey answer has to be added — `SurveyAnswers`,
+The four rules have not moved: no probability of admission, no PII, no fact from
+a search summary, and the dataset stays in the spreadsheet →
+`npm run data:build` → static JSON pipeline. The server's content collection
+holds no numbers, so nothing an admin types can contradict a median.
+
+`sync.ts` still whitelists profile fields in **both** directions, and a new
+survey answer is still a four-place change — `SurveyAnswers`,
 `applyRemoteProfile`, `RemoteProfile`, and UniServer's `answersSchema` +
 `cleanAnswers`. Miss one and the answer is erased from the device on the next
-sign-in elsewhere. There are tests on both sides asserting the full key set.
+sign-in elsewhere. Tests on both sides assert the full key set.
 
-Motion settings, the CSS-not-JS scroll reveals, and the `vite-preview` launch
-config are all unchanged and all still load-bearing.
+`src/lib/tracker.ts` stays outside the profile. The one place it is now cleared
+is `deleteAccount`, because "Delete everything" has to mean everything.
+
+Motion tokens live in `src/lib/motion.ts` and nowhere else. The CSS-not-JS scroll
+reveals, the `ENTER_FROM = 0.55` floor, and the `vite-preview` launch config are
+all unchanged and all still load-bearing.
