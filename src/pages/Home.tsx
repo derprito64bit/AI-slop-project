@@ -206,7 +206,7 @@ export default function Home() {
               <Reveal key={`${f.universityId}-${f.slug}`} delay={i * 0.04}>
                 <Link
                   to={`/program/${f.universityId}/${f.slug}`}
-                  className="group block h-full overflow-hidden rounded-2xl border border-line bg-paper transition-all hover:-translate-y-1 hover:shadow-[0_12px_36px_rgba(20,24,31,0.08)]"
+                  className="group block h-full overflow-hidden rounded-2xl border border-line bg-paper transition-all hover:-translate-y-1 hover:shadow-md"
                 >
                   {/* Same logo band as the Explore cards — fills the top edge to edge. */}
                   <UniversityBanner id={f.universityId} name={f.school} className="aspect-[16/9]" />
@@ -307,7 +307,7 @@ function PhotoFrame({
   logo?: string
 }) {
   return (
-    <div className="rounded-md border border-line bg-paper p-1.5 shadow-[0_12px_40px_rgba(20,24,31,0.12)]">
+    <div className="rounded-md border border-line bg-paper p-1.5 shadow-md">
       {logo ? (
         <img
           src={`${import.meta.env.BASE_URL}images/universities/square/${logo}.png`}

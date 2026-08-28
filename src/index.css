@@ -38,6 +38,17 @@
      and contrast checks on the light surface. Don't swap it for a UI token
      without re-running the palette validator. */
   --p-chart: #3f5bd9;
+
+  /* Shadow colour, as bare channels so alpha can be composed per step.
+     Elevation used to be nine hand-written `rgba(20,24,31,...)` values, which
+     is this ink — so every one of them was a LIGHT-MODE shadow hard-coded into
+     a themed site, and on the near-black dark surface they were a black glow on
+     black. Invisible. There was no token, so there was nowhere to fix it. */
+  --p-shadow: 20 24 31;
+  /* Dark needs more alpha for the same read: a shadow works by darkening what
+     is behind it, and there is far less headroom below #0f1216 than below
+     #fdfcf8. One multiplier keeps the ladder itself theme-agnostic. */
+  --p-shadow-boost: 1;
 }
 
 /* Dark palette */
@@ -64,6 +75,9 @@
      (0.43–0.77). The UI brand-500 step sits at 0.688 — just above it — so the
      chart uses its own validated value rather than flipping the UI colour. */
   --p-chart: #6b82ee;
+
+  --p-shadow: 0 0 0;
+  --p-shadow-boost: 2.2;
 }
 
 @theme inline {
@@ -99,6 +113,25 @@
      tokens in lib/motion.ts so hovers settle at the same pace as everything
      else — at 150ms a hover reads as a state flip rather than a transition. */
   --default-transition-duration: 320ms;
+
+  /* Elevation.
+     One ladder, four steps, both themes — replacing nine one-off arbitrary
+     values. The steps come from the design-system skill's primitive tokens;
+     what is local is `--p-shadow-boost`, without which none of them register in
+     dark mode.
+
+       sm       a resting input or pill
+       DEFAULT  a card that can be hovered
+       md       that card, hovered
+       lg       something genuinely floating: a dropdown, a toast */
+  --shadow-sm: 0 1px 2px 0
+    rgb(var(--p-shadow) / calc(0.05 * var(--p-shadow-boost)));
+  --shadow: 0 1px 3px 0 rgb(var(--p-shadow) / calc(0.07 * var(--p-shadow-boost))),
+    0 1px 2px -1px rgb(var(--p-shadow) / calc(0.07 * var(--p-shadow-boost)));
+  --shadow-md: 0 8px 24px -4px rgb(var(--p-shadow) / calc(0.09 * var(--p-shadow-boost))),
+    0 2px 6px -2px rgb(var(--p-shadow) / calc(0.06 * var(--p-shadow-boost)));
+  --shadow-lg: 0 18px 50px -8px rgb(var(--p-shadow) / calc(0.14 * var(--p-shadow-boost))),
+    0 4px 12px -4px rgb(var(--p-shadow) / calc(0.08 * var(--p-shadow-boost)));
 
   /* Breakpoints beyond Tailwind's 2xl (1536px), for large desktop monitors. */
   --breakpoint-3xl: 120rem; /* 1920px */

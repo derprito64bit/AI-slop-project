@@ -33,7 +33,7 @@ export default function AuthShell({
           {blurb && <p className="mt-3 text-sm leading-relaxed text-slate">{blurb}</p>}
         </div>
 
-        <div className="mt-8 rounded-2xl border border-line bg-paper p-6 shadow-[0_10px_40px_rgba(20,24,31,0.06)] sm:p-8">
+        <div className="mt-8 rounded-2xl border border-line bg-paper p-6 shadow sm:p-8">
           {children}
         </div>
 
