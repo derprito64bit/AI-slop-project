@@ -39,6 +39,40 @@ const EXTENSIONS = ['png', 'svg'] as const
 const CREST_MARKS = new Set<string>([
   // Wilfrid Laurier — circular crest, reads down to about 20px.
   'laurier',
+  // Everything below was judged on the contact sheet from
+  // `npm run logos:check`, which draws every mark at 24/32/48/64 on both the
+  // light and the dark surface. The test is not "is this a crest" — it is "at
+  // 24px, can you still tell which school this is".
+  'tmu', // escutcheon: yellow field, blue chevron. Unmistakable at 24.
+  'carleton', // black shield, red maple leaf. The strongest of the set.
+  'mcgill', // red-on-white shield, three martlets still countable at 32.
+  'ubc', // blue and gold shield, holds its blocking at 24.
+  'dalhousie', // gold seal. Detail goes at 24, but a gold roundel is distinctive.
+  'calgary', // red shield, heavy blocking. Survives 24 easily.
+  'laurentian', // blue and white shield with a gold sun. The cleanest of the set.
+  'nipissing', // blue shield, strong white waves.
+  'ubc-okanagan', // the UBC shield — see the note in fetch-logos.mjs.
+  'mount-allison', // gold escutcheon, three white books. Reads at 20.
+  'unb', // red shield. Strong at 24.
+  'smu', // maroon brand shield, not heraldry, but square and high-contrast.
+  'kings-college', // blue and white saltire shield.
+  'acadia', // blue and white shield, clean blocking.
+  'regina', // green shield — the only green in the set, which is half of why it works.
+  // DELIBERATELY NOT HERE, having looked at every one of them at 24px:
+  //   brock, alberta, windsor, concordia, victoria, lakehead, rmc, stfx
+  //     — full heraldic ACHIEVEMENTS: crest, helm, mantling, supporters and a
+  //       motto scroll. Beautiful at 64 and an indistinct blob at 24, because
+  //       the shield is only a third of the artwork.
+  //   ontario-tech, polytechnique
+  //     — fine linework; a smudge below 48.
+  //   ocad
+  //     — a lettering monogram. Square, but it is TEXT, and text at 24px is the
+  //       exact thing the 48px floor exists to stop.
+  // Every one of those is correct square art and renders properly at 48 and up,
+  // which is all the 48px floor asks. The monogram is genuinely more useful
+  // than an illegible logo, and that is why this set is opt-in rather than
+  // "has a file". If a shield-only variant of any of them turns up, it is a
+  // one-line change here plus a new URL in fetch-logos.mjs.
 ])
 
 /**
@@ -133,7 +167,14 @@ export default function UniversityMark({
           return next
         })
       }
-      className={`${box} border border-line bg-paper object-contain p-1`}
+      // max-w-none is load-bearing. Tailwind's preflight sets
+      // `img { max-width: 100% }`, so inside a SHRINKING flex item the image is
+      // capped at the shrunken parent rather than at `size` — the Fields marks
+      // row squeezed 28px marks down to 10px and they read as blank tiles. The
+      // monogram branch is a <div> and was never affected, so the bug only
+      // showed on schools that actually had artwork, which for a long time was
+      // just Laurier.
+      className={`${box} max-w-none border border-line bg-paper object-contain p-1`}
       style={style}
     />
   )
