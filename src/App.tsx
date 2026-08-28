@@ -8,8 +8,6 @@ import Home from './pages/Home'
 import Placeholder from './pages/Placeholder'
 import ExplorePreview from './pages/ExplorePreview'
 import Program from './pages/Program'
-import About from './pages/About'
-import Community from './pages/Community'
 import Survey from './pages/Survey'
 import SignIn from './pages/SignIn'
 import SignUp from './pages/SignUp'
@@ -25,7 +23,8 @@ import FieldsView from './pages/dashboard/FieldsView'
 import MapView from './pages/dashboard/MapView'
 import ApplicationsView from './pages/dashboard/ApplicationsView'
 import DeadlinesView from './pages/dashboard/DeadlinesView'
-import PostsView from './pages/dashboard/PostsView'
+import DatabaseView from './pages/dashboard/DatabaseView'
+import AdminShell from './pages/admin/AdminShell'
 
 /**
  * The key that decides when a page transition fires.
@@ -93,15 +92,24 @@ export default function App() {
                 <Route path="fields" element={<FieldsView />} />
                 <Route path="map" element={<MapView />} />
                 <Route path="account" element={<AccountView />} />
-                {/* Not live yet: real layout, mock content, visible banner. */}
+                {/* The old /about and /community pages, merged. Reachable
+                    without a saved profile — see the gate in DashboardShell. */}
+                <Route path="database" element={<DatabaseView />} />
                 <Route path="applications" element={<ApplicationsView />} />
                 <Route path="deadlines" element={<DeadlinesView />} />
-                <Route path="posts" element={<PostsView />} />
               </Route>
-              <Route path="/community" element={<Community />} />
-              {/* Both of these were the shared Placeholder page until they had
-                  something to say. `Placeholder` now serves the 404 alone. */}
-              <Route path="/about" element={<About />} />
+              {/* Redirects, not 404s. Both were in the navbar of a deployed
+                  site for months, so they are in the sitemap and in whatever
+                  anyone has linked or bookmarked. `replace` so the back button
+                  doesn't bounce off the old URL and straight back here. */}
+              <Route path="/about" element={<Navigate to="/profile/database" replace />} />
+              <Route path="/community" element={<Navigate to="/profile/database" replace />} />
+              {/* Deliberately absent from NAV_LINKS and from every link on the
+                  site. AdminShell renders the 404 page for anyone without the
+                  flag, so an ordinary visitor who guesses the URL learns
+                  nothing — and the flag itself decides only what is drawn. The
+                  server checks the database on every write. */}
+              <Route path="/admin" element={<AdminShell />} />
               <Route
                 path="*"
                 element={<Placeholder title="Page not found" blurb="That page doesn’t exist yet. Head back home to keep exploring." />}

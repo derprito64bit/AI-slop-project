@@ -34,12 +34,17 @@ import type { Program, University } from '../../data/types'
 //   Plan       the list I am building          (built)
 //   Discover   how I find more to put on it    (built)
 //   Track      what I have to actually do      (built)
-//   Community  what everyone else found        (not live yet)
+//   Understand where all of this came from     (built)
 //
-// Global posts is still a placeholder on purpose — real layout, mock content,
-// and a banner saying so — because it needs a server and moderation before a
-// single real post can appear. Track became real once its blocker turned out
-// to be a design question rather than missing infrastructure: see lib/tracker.ts.
+// There was a fifth group, Community, holding a single "Global posts" item:
+// real layout, mock content, a banner saying so. It is gone. A feed needs a
+// server and needs moderation for an audience that is mostly minors, and
+// neither was any closer than the day it was drawn — meanwhile it sat in the
+// sidebar duplicating the idea of the /community page. Understand is what
+// replaced both: the data, its bias, and what it cannot tell you, in one place.
+//
+// Track became real once its blocker turned out to be a design question rather
+// than missing infrastructure: see lib/tracker.ts.
 
 const COLLAPSE_KEY = 'acceptiversity.dash.collapsed'
 
@@ -114,11 +119,20 @@ export default function DashboardShell() {
 
   // Nothing stored at all — offer both doors rather than an empty chrome.
   //
-  // Account is the one exception. Somebody who has just created an account and
-  // kept nothing yet still needs a page to change their password or sign out on,
-  // and bouncing them to "answer four questions" instead is a dead end.
-  const isAccountRoute = pathname.endsWith('/account')
-  if (!profile && !isAccountRoute) return <FirstRun signedIn={Boolean(user)} />
+  // Two exceptions, and both are about not stranding somebody who has a real
+  // reason to be on a page before they have a profile:
+  //
+  //   account   somebody who has just created an account and kept nothing yet
+  //             still needs a page to change their password or sign out on,
+  //             and bouncing them to "answer four questions" is a dead end.
+  //   database  the methodology. It used to be /about, a public page reachable
+  //             from the navbar; it is now a dashboard tool, and gating it
+  //             behind a saved profile would mean a first-time visitor — or
+  //             anyone following the /about redirect — cannot read how the
+  //             numbers were made before deciding whether to trust them. That
+  //             is precisely backwards.
+  const isOpenRoute = pathname.endsWith('/account') || pathname.endsWith('/database')
+  if (!profile && !isOpenRoute) return <FirstRun signedIn={Boolean(user)} />
 
   // Empty rather than null for the account route, so every view can still assume
   // the full shape. Nothing is written until the student changes something.
@@ -154,7 +168,7 @@ export default function DashboardShell() {
         { to: 'programs', label: 'Programs', icon: '⌕' },
         { to: 'fields', label: 'Fields', icon: '◈' },
         { to: 'map', label: 'Map', icon: '◎' },
-        { to: '/survey', label: shown.answers ? 'Change answers' : 'Answer 4 questions', icon: '✎' },
+        { to: '/survey', label: shown.answers ? 'Change answers' : 'Answer the questions', icon: '✎' },
       ],
     },
     {
@@ -165,10 +179,18 @@ export default function DashboardShell() {
       ],
     },
     {
-      label: 'Community',
-      items: [{ to: 'posts', label: 'Global posts', icon: '☷', soon: true }],
+      label: 'Understand',
+      items: [{ to: 'database', label: 'The data', icon: '▤' }],
     },
   ]
+
+  // The only link to /admin anywhere on the site, and it exists solely so an
+  // admin does not have to remember a URL. It is not what protects the route —
+  // AdminShell renders a 404 without the flag, and UniServer re-reads the
+  // database on every write. This is a convenience, and appears for nobody else.
+  if (user?.isAdmin) {
+    groups.push({ label: 'Admin', items: [{ to: '/admin', label: 'Site content', icon: '✎' }] })
+  }
 
   return (
     <div className="container-page py-8">
@@ -354,7 +376,7 @@ export default function DashboardShell() {
             ) : (
               <>
                 <p className="mt-2 text-sm leading-relaxed text-slate">
-                  You haven&rsquo;t answered the four questions. Balance and matching need an
+                  You haven&rsquo;t answered the questions yet. Balance and matching need an
                   average to compare against.
                 </p>
                 <Button to="/survey" className="mt-4">
@@ -446,7 +468,7 @@ function FirstRun({ signedIn }: { signedIn: boolean }) {
           : 'Everything stays on this device unless you make an account.'}
       </p>
       <div className="mt-8 flex flex-wrap gap-3">
-        <Button to="/survey">Answer four questions</Button>
+        <Button to="/survey">Answer the questions</Button>
         <Button to="/explore" variant="secondary">
           Just let me browse
         </Button>
