@@ -3,8 +3,10 @@
 Read `HANDOFF.md` first for the project as a whole (rules, data pipeline,
 architecture). This file is only about **where things stand now**.
 
-Rewritten 2026-08-27. **Nothing below is merged or deployed yet** — that is the
-main difference from the last version of this file.
+Rewritten 2026-08-27, updated 2026-08-28. **Everything below is merged and
+deployed** — that is the main difference from the last version of this file,
+which said the opposite and stayed saying it for a day after it stopped being
+true.
 
 ---
 
@@ -12,27 +14,39 @@ main difference from the last version of this file.
 
 | | |
 |---|---|
-| Site | all work is **uncommitted** on `claude/review-update-recommendations-01764a` |
-| Backend | `TheKeems/UniServer`, cloned to `C:/Users/Aaron/Documents/GitHub/UniServer`, also **uncommitted** |
-| Live site | still the previous build — none of this has shipped |
+| `origin/main` | deployed and live at https://derprito64bit.github.io/AI-slop-project/ |
+| Working state | **no open PRs, no unmerged work** |
+| Backend | `TheKeems/UniServer`, cloned alongside this repo. Accounts are deployed; the content and map routes are not — see §3 |
+
+Merged since the last rewrite: PR #29 (backend content + admin + tiles), #30
+(the real basemap), #31 (`CLAUDE.md` and the dashboard backlog), #32 (the empty
+Overview, and the Laurier crest).
 
 **Baseline, measured against a production build served at the deploy base:**
 
 ```
 npm run lint            0 errors
-npm test                246 pass          (was 226)
-npm run sweep           125 of 125        (was 116 of 118)
+npm test                268 pass          (was 246)
+npm run sweep           132 of 132        (was 125 of 125)
 npm run sweep:sections  26 of 26
 npm run probe:motion    minVisible 0.55, 0 dark frames
 cd ../UniServer && npm test               133 pass
 ```
 
-**The sweep is green now, and one of the two old failures is only masked.**
-`vite preview` serves `index.html` for unknown paths, so a missing logo file
-returns 200 locally. The Laurier/TMU square-logo 404s are still real on GitHub
-Pages until the files land — see §2. The sweep also now ignores failures on
-`/api/universities` and `/api/map/config` specifically, because the site is
-built to survive losing them; any *other* API failure still counts.
+**Both sweeps default to the LIVE site.** Point them at a local build with
+`SWEEP_BASE=http://localhost:4200/AI-slop-project`, and remember the preview
+caches its file list at startup — restart it after every rebuild.
+
+**A green local sweep does not prove an asset exists.** `vite preview` serves
+`index.html` for unknown paths, so a missing logo file returns 200 locally; the
+Laurier 404s survived a green local run that way. Check the live site or the
+filesystem. The sweep also ignores failures on `/api/universities` and
+`/api/map/config` specifically, because the site is built to survive losing
+them; any *other* API failure still counts.
+
+**Vitest excludes `.claude/worktrees`.** Without that it runs every suite once
+per worktree and the totals multiply — two stale worktrees turned 246 tests into
+740, which passes green and hides which copy actually failed.
 
 ## 2. What was built
 
@@ -63,17 +77,30 @@ courses split, Compare gained "You still need".
 
 **Logos**: `UniversityMark` no longer forces a monogram below 48px for every
 school — `CREST_MARKS` in that file lists ids whose square file is crest art and
-therefore legible small. **`laurier` is already in that set and its file is not
-saved yet**, so Laurier costs two failed requests per session until you add
-`public/images/universities/square/laurier.png`. TMU's brand kit has no crest;
-its wide wordmark belongs in `public/images/universities/tmu.png`, and it stays
-a monogram in listings.
+therefore legible small. Laurier's seal landed in PR #32, which was the last
+real 404 on the site. TMU's brand kit has no crest, so its wide wordmark sits in
+`public/images/universities/` with the other lockups and it stays a monogram in
+listings.
+
+**The empty dashboard** (PR #32). `/profile` used to greet a new student with
+four zeros and two apologies. It now shows a three-step start path, the real
+summary for the field they named, and the six most-reported programs with a Keep
+control on each. Two things worth not undoing: the empty state is gated on
+`profile.shortlist.length` rather than `kept.length`, because `kept` resolves
+against the lazy catalogue and is `[]` on the first paint of every visit; and
+the dashboard uses `KeepControl` (controlled) rather than the default
+`KeepButton`, which writes to localStorage behind the shell's back and would
+leave the empty state on screen after a click.
 
 ## 3. Before any of this is useful to a student
 
-1. **Deploy UniServer.** Nothing in §2's backend half exists on Render yet.
-   Until then the site degrades exactly as designed — no editable prose, SVG
-   map — but the admin panel cannot save.
+1. **Deploy UniServer's new routes.** Accounts are live —
+   `/api/health` answers `{"ok":true,"database":"connected"}` — but the content
+   and map halves of §2 are not on Render: `/api/universities` and
+   `/api/map/config` both still 404 (probed 2026-08-28). Until they ship the
+   site degrades exactly as designed — no editable prose, SVG map — but the
+   admin panel cannot save. **This is the top item; four of the five below
+   depend on it.**
 2. **Pick a tile provider.** `TILE_URL_TEMPLATE` is unset, so the map is the SVG
    one. **Do not point it at `tile.openstreetmap.org`** — their tile policy does
    not allow a proxy in front of it, and it is only used in the local dev
@@ -84,7 +111,12 @@ a monogram in listings.
 4. **Set `ALLOWED_ORIGINS` on Render.** Still unset; CORS still falls back to `*`.
 5. **Settle the UniServer licence.** Still none, so all-rights-reserved by
    default. The only item on this list that gets harder with time.
-6. **Save the two logo files** (§2).
+6. **Decide the logo licensing question.** The square marks are institutional
+   coats of arms and wordmarks, used to identify each school's programs. That is
+   ordinary nominative use and no university has been asked, which is fine for a
+   student project and is worth a deliberate decision before it is not. Nothing
+   breaks if one has to be pulled — `UniversityMark` falls back to a monogram
+   per school, with no code change.
 
 ## 4. Traps that cost real time in this session
 
@@ -116,10 +148,19 @@ a monogram in listings.
 
 ## 5. What to build next
 
-The dashboard's tools all work and seven of its twelve views are nearly blank
-for a student who has just arrived — the rich ones read the dataset, the empty
-ones read the student's list. **`DASHBOARD-NEXT.md`** measures that and sets out
-the backlog in priority order, starting with the Overview.
+The dashboard's tools all work, and its views were nearly blank for a student
+who had just arrived — the rich ones read the dataset, the empty ones read the
+student's list. **`DASHBOARD-NEXT.md`** measures that and sets out the backlog
+in priority order.
+
+**P1, the Overview, is done** (PR #32). **P2 is next**: Compare, Balance,
+Courses, Applications and Deadlines all still answer "you have nothing" rather
+than "here is what this will look like once you have used it". Compare is the
+starkest — its empty state is one sentence, and it fires for one staged program
+as well as none, so a student who staged one gets no acknowledgement that they
+did. P3 is the three survey answers that are collected, stored, synced and then
+barely read: `gradYear` is read by nothing at all outside the survey and sync
+plumbing.
 
 `CLAUDE.md` holds the rules that do not bend and the verification baseline, and
 is loaded into every session.
