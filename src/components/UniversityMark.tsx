@@ -8,11 +8,11 @@ import { useState } from 'react'
 // no code change needed.
 //
 // PNG IS TRIED FIRST because every file in that directory is a .png. With svg
-// first, each of the eight real marks cost a guaranteed 404 before the browser
-// asked for the file that exists — about ten failed requests per page, which is
-// console noise on every screen and a wasted round trip on a phone. Nothing
-// breaks either way; the fallback always caught it. If a .svg is ever added,
-// put it first for that school by renaming the .png away.
+// first, each real mark cost a guaranteed 404 before the browser asked for the
+// file that exists — dozens of failed requests per page, which is console noise
+// on every screen and a wasted round trip on a phone. Nothing breaks either
+// way; the fallback always caught it. If a .svg is ever added, put it first for
+// that school by renaming the .png away.
 //
 // Note this is deliberately separate from the wide wordmarks in
 // public/images/universities/, which the Home logo band uses. Wordmarks are
@@ -23,10 +23,12 @@ const EXTENSIONS = ['png', 'svg'] as const
 /**
  * Schools whose square file is CREST OR ICON art rather than a wordmark lockup.
  *
- * This replaced a blanket `size < 48` rule, which existed because all eight
- * files in that directory were lockups — "University of Waterloo" set in three
- * lines is an unreadable grey smudge at 36px, so every listing on the site drew
- * a monogram instead and the logos only ever appeared on program pages.
+ * This replaced a blanket `size < 48` rule, which existed because the only
+ * files in that directory then were lockups — "University of Waterloo" set in
+ * three lines is an unreadable grey smudge at 36px, so every listing on the
+ * site drew a monogram instead and the logos only ever appeared on program
+ * pages. Those eight lockups have since had their crests cropped out, which is
+ * why they are in the set below rather than excluded by it.
  *
  * The rule was right about the files and wrong about the reason: a crest is
  * legible at 24px. So the threshold is per school now. An id in this set draws
@@ -52,17 +54,43 @@ const CREST_MARKS = new Set<string>([
   'laurentian', // blue and white shield with a gold sun. The cleanest of the set.
   'nipissing', // blue shield, strong white waves.
   'ubc-okanagan', // the UBC shield — see the note in fetch-logos.mjs.
+  // The eight that shipped a CREST-PLUS-NAME LOCKUP and therefore drew a
+  // two-letter monogram in every listing despite having artwork. Between them
+  // they are 84% of every report the site holds, so they were most of the
+  // placeholder text left on it. The crest was cropped out of the lockup each
+  // already had — see the `crop` boxes in fetch-logos.mjs — except Toronto,
+  // whose crest is about 1:2 and became a sliver in a square tile, so it takes
+  // the published arms instead.
+  'waterloo',
+  'mcmaster',
+  'western',
+  'toronto',
+  'queens',
+  'ottawa', // the portico device, not heraldry — it exists only in the lockup
+  'york', // likewise the red U block
+  'guelph',
   'mount-allison', // gold escutcheon, three white books. Reads at 20.
   'unb', // red shield. Strong at 24.
   'smu', // maroon brand shield, not heraldry, but square and high-contrast.
   'kings-college', // blue and white saltire shield.
   'acadia', // blue and white shield, clean blocking.
   'regina', // green shield — the only green in the set, which is half of why it works.
+  // These six were full achievements and are now the escutcheon alone, either
+  // from Commons' `<University> Escutcheon` series or from the school's own
+  // brand shield. Same institutions, a third of the artwork, and legible where
+  // the achievement was mud.
+  'alberta', // green shield, open book and wheat sheaves.
+  'windsor', // blue and white, a large W. The clearest of the six.
+  'lakehead', // red chief over blue and white waves.
+  'concordia', // black shield, gold sun. Unmistakable.
+  'victoria', // blue shield, three red martlets over an open book.
   // DELIBERATELY NOT HERE, having looked at every one of them at 24px:
-  //   brock, alberta, windsor, concordia, victoria, lakehead, rmc, stfx
+  //   brock, rmc, stfx
   //     — full heraldic ACHIEVEMENTS: crest, helm, mantling, supporters and a
   //       motto scroll. Beautiful at 64 and an indistinct blob at 24, because
-  //       the shield is only a third of the artwork.
+  //       the shield is only a third of the artwork. Searched for an escutcheon
+  //       for all three and none exists under any spelling; StFX publishes a
+  //       clean brand shield on a host that 403s every script.
   //   ontario-tech, polytechnique
   //     — fine linework; a smudge below 48.
   //   ocad
