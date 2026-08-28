@@ -469,7 +469,7 @@ export default function Survey() {
                               role="checkbox"
                               aria-checked={on}
                               onClick={() => toggleCourse(c.code)}
-                              className={`rounded-full border px-3.5 py-2 text-sm transition-colors ${
+                              className={`rounded-full border px-3.5 py-2 text-sm transition-[scale,transform,background-color,border-color,color] active:scale-[0.97] ${
                                 on
                                   ? 'border-brand-500 bg-brand-500 text-white'
                                   : 'border-line bg-paper text-ink hover:border-brand-300'
@@ -551,7 +551,7 @@ export default function Survey() {
                 >
                   Skip
                 </button>
-                <Button type="submit" disabled={sending} className={sending ? 'opacity-60' : ''}>
+                <Button type="submit" disabled={sending}>
                   {isLast ? (sending ? 'Building your list…' : 'Show my matches') : 'Next'}
                 </Button>
               </div>
@@ -639,7 +639,7 @@ function Cards({
             role="radio"
             aria-checked={selected}
             onClick={() => onChange(o.value)}
-            className={`rounded-xl border p-4 text-left transition-colors ${
+            className={`rounded-xl border p-4 text-left transition-[scale,transform,background-color,border-color,color] active:scale-[0.99] ${
               selected ? 'border-brand-500 bg-brand-50' : 'border-line bg-paper hover:border-brand-300'
             }`}
           >

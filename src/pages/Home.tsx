@@ -206,7 +206,7 @@ export default function Home() {
               <Reveal key={`${f.universityId}-${f.slug}`} delay={i * 0.04}>
                 <Link
                   to={`/program/${f.universityId}/${f.slug}`}
-                  className="group block h-full overflow-hidden rounded-2xl border border-line bg-paper transition-all hover:-translate-y-1 hover:shadow-md"
+                  className="card-lift group block h-full overflow-hidden rounded-xl border border-line bg-paper"
                 >
                   {/* Same logo band as the Explore cards — fills the top edge to edge. */}
                   <UniversityBanner id={f.universityId} name={f.school} className="aspect-[16/9]" />

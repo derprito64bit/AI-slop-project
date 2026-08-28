@@ -125,7 +125,7 @@ export default function SignIn() {
           </p>
         )}
 
-        <Button type="submit" disabled={busy} className={busy ? 'opacity-60' : ''}>
+        <Button type="submit" disabled={busy}>
           {busy ? 'Signing you in…' : 'Sign in'}
         </Button>
         {busy && (

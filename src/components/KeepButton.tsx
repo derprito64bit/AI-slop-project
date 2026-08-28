@@ -40,7 +40,7 @@ export function KeepControl({
       onClick={onClick}
       aria-pressed={kept}
       aria-label={kept ? 'Remove from your list' : 'Keep this program'}
-      className={`shrink-0 rounded-full border font-600 transition-colors ${
+      className={`shrink-0 rounded-full border font-600 transition-[scale,transform,background-color,border-color,color] active:scale-[0.96] ${
         size === 'sm' ? 'px-3 py-1 text-xs' : 'px-4 py-2 text-sm'
       } ${
         kept

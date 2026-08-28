@@ -411,6 +411,43 @@ body {
   box-shadow: 0 6px 24px rgb(0 0 0 / 0.12);
 }
 
+/* One hover for anything that behaves like a card.
+   
+   There were five idioms for this and three shadow values: the Home featured
+   card lifted 4px with `transition-all`, the Explore card had a shadow and no
+   lift at all, the similar-programs card lifted 2px over 300ms, and the
+   carousel tile lifted over 700ms. Two of those — Home's and Explore's — are
+   documented in UniversityBanner as deliberately matching, and did not.
+   
+   Transform and box-shadow only, so it stays on the compositor, and 200ms
+   ease-out because that is where every rule source puts a transform.
+   
+   The pressed state is new. `grep "active:"` across the whole site returned
+   nothing before this: a card could be clicked and never acknowledged it. */
+.card-lift {
+  transition:
+    transform 200ms var(--ease-out-soft),
+    box-shadow 200ms var(--ease-out-soft);
+}
+.card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+/* Settles back through the resting position rather than bouncing past it —
+   overshoot on a card reads as sloppy, the same reason charts do not use it. */
+.card-lift:active {
+  transform: translateY(0) scale(0.995);
+  transition-duration: 90ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-lift,
+  .card-lift:hover,
+  .card-lift:active {
+    transform: none;
+  }
+}
+
 /* Respect users who prefer no motion — disable transitions/animations */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
