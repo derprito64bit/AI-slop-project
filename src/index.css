@@ -144,6 +144,13 @@
    margin on each side of a 2560px monitor — fine on a laptop, far
    too narrow on a 27".
    ============================================================ */
+/* SECTION RHYTHM, for anyone adding a page.
+
+   A browsable page section is `py-20`; a band inside a page is `py-16`; a
+   centred task page (survey, sign-in) is `py-16`, because its column is narrow
+   and the same padding reads as more there. This was ad hoc before — Explore
+   was py-20 and the program page py-16, and a student moves between those two
+   constantly, so the whole page appeared to shift by 16px on every click. */
 .container-page {
   width: 100%;
   margin-inline: auto;
@@ -178,6 +185,18 @@
   font-size: clamp(1.5rem, 1.1rem + 1vw, 2.25rem);
   line-height: 1.2;
 }
+/* The step between display-3 and Tailwind's text-xl.
+   
+   There was nothing here, so subsection headings fell back to whatever fixed
+   size the author reached for — text-lg on Home, text-xl in Roadmap, and a bare
+   font-600 on the Explore and Home card titles, which left an h3 rendering at
+   16px. Fluid like the rest of the scale, so it tracks them on a wide screen
+   instead of pinning while everything around it grows. */
+.text-display-4 {
+  font-size: clamp(1.125rem, 1rem + 0.4vw, 1.5rem);
+  line-height: 1.3;
+}
+
 /* Body copy that should also grow a little on very wide screens. */
 .text-lead {
   font-size: clamp(1rem, 0.94rem + 0.28vw, 1.25rem);

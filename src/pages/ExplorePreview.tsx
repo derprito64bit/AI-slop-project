@@ -9,6 +9,7 @@ import { useRevealOnScroll } from '../lib/revealOnScroll'
 import { loadCatalogue } from '../lib/dataSource'
 import { queryPrograms, difficultyBand, DIFFICULTY_LABELS } from '../lib/search'
 import type { Program, University } from '../data/types'
+import Section from '../components/ui/Section'
 
 // Interim Explore page: proves the data pipeline end-to-end (lazy load →
 // search → render) while the full filtered browse UI is built. Deliberately
@@ -64,7 +65,7 @@ export default function ExplorePreview() {
     <div className="relative">
       {/* graph-paper texture, decorative only */}
       <div className="bg-grid pattern-fade pointer-events-none absolute inset-0 -z-10" aria-hidden="true" />
-      <section className="container-page py-20">
+      <Section>
       <Eyebrow>Explore</Eyebrow>
       <h1 className="mt-2 font-display text-display-1 font-600 text-ink">Find your programs.</h1>
 
@@ -212,7 +213,7 @@ export default function ExplorePreview() {
           </p>
         </>
       )}
-      </section>
+      </Section>
     </div>
   )
 }
