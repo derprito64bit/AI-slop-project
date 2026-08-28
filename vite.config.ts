@@ -15,6 +15,11 @@ export default defineConfig(({ command }) => ({
     // The backend and its suite live in their own repo (TheKeems/UniServer), so
     // there is nothing server-side for vitest to pick up here. Kept explicit
     // because the defaults are otherwise invisible.
-    exclude: ['**/node_modules/**', '**/dist/**'],
+    //
+    // `.claude/worktrees` is a whole checkout of this repo per worktree, so
+    // without it vitest runs every suite once per worktree and the totals
+    // silently multiply — two stale worktrees turned 246 tests into 740, which
+    // reads as a passing run and hides which copy actually failed.
+    exclude: ['**/node_modules/**', '**/dist/**', '**/.claude/**'],
   },
 }))

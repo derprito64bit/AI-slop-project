@@ -2,9 +2,8 @@ import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import UniversityMark from '../../components/UniversityMark'
 import { ListSkeleton, FetchingNote } from '../../components/Skeleton'
-import { FIELD_LABELS } from '../../lib/profile'
+import { summarise } from '../../lib/fields'
 import { useDashboard } from './context'
-import type { Program } from '../../data/types'
 
 // The way in for a student who does not yet know what to search for.
 //
@@ -31,66 +30,6 @@ import type { Program } from '../../data/types'
 
 /** Schools shown as marks before the row becomes a crowd. */
 const MAX_MARKS = 8
-
-type FieldSummary = {
-  key: string
-  label: string
-  programs: number
-  reports: number
-  withData: number
-  /** median of the per-program medians — the middle of the field */
-  midMedian: number | null
-  lowMedian: number | null
-  highMedian: number | null
-  /** schools with at least one chartable program here, most-reported first */
-  schools: Array<{ id: string; name: string; reports: number }>
-}
-
-function summarise(programs: Program[], uniName: Map<string, string>): FieldSummary[] {
-  const byField = new Map<string, Program[]>()
-  for (const p of programs) {
-    const list = byField.get(p.field)
-    if (list) list.push(p)
-    else byField.set(p.field, [p])
-  }
-
-  return Object.keys(FIELD_LABELS)
-    .map((key) => {
-      const list = byField.get(key) ?? []
-      // Only programs with a usable median can describe a range. A field's
-      // spread built from programs below the reporting threshold would be a
-      // number with nothing behind it.
-      const chartable = list.filter(
-        (p) => !p.insufficientData && typeof p.accepted?.median === 'number',
-      )
-      const medians = chartable.map((p) => p.accepted!.median).sort((a, b) => a - b)
-
-      // Schools are drawn from the CHARTABLE programs only. A mark here is a
-      // claim that we have something to show you at that school in this field;
-      // sourcing it from every program would put a logo against a school whose
-      // only entry says "not enough data yet".
-      const schoolReports = new Map<string, number>()
-      for (const p of chartable) {
-        schoolReports.set(p.universityId, (schoolReports.get(p.universityId) ?? 0) + p.totalReports)
-      }
-
-      return {
-        key,
-        label: FIELD_LABELS[key],
-        programs: list.length,
-        reports: list.reduce((n, p) => n + p.totalReports, 0),
-        withData: medians.length,
-        midMedian: medians.length ? medians[Math.floor(medians.length / 2)] : null,
-        lowMedian: medians.length ? medians[0] : null,
-        highMedian: medians.length ? medians[medians.length - 1] : null,
-        schools: [...schoolReports.entries()]
-          .sort((a, b) => b[1] - a[1])
-          .map(([id, reports]) => ({ id, name: uniName.get(id) ?? id, reports })),
-      }
-    })
-    .filter((f) => f.programs > 0)
-    .sort((a, b) => b.reports - a.reports)
-}
 
 export default function FieldsView() {
   const { data, uniName } = useDashboard()
