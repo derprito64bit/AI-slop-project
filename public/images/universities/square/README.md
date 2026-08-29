@@ -22,8 +22,12 @@ one, rename the school's `.png` away so the SVG is found first.
 ## Format
 
 - **256x256**, which is what `scripts/fetch-logos.mjs` produces.
-- **Square-ish artwork**: a shield, crest, seal or icon. Not a horizontal
-  wordmark unless nothing else exists.
+- **Whatever the school actually publishes.** A shield, crest, seal or icon
+  where there is one; the full lockup where the lockup is the mark. This used
+  to say "not a horizontal wordmark unless nothing else exists", and obeying it
+  meant cropping crests out of eight lockups and shipping a mark no university
+  publishes. A wide lockup is letterboxed into the square, never stretched or
+  cut.
 - Transparent background where the art is self-contained and coloured.
 - **Composite onto white if the art is dark-on-transparent.** Dark lettering or
   black line-art disappears completely against the dark theme's surface — the
@@ -41,8 +45,11 @@ npm run logos -- --write mcgill  # just that school
 npm run logos:check              # contact sheet at 24/32/48/64, light and dark
 ```
 
-Every mark's source URL lives in `SOURCES` in `scripts/fetch-logos.mjs`, so a
+Every mark's provenance lives in `SOURCES` in `scripts/fetch-logos.mjs`, so a
 wrong or rebranded logo is a diff somebody can see rather than a mystery PNG.
+Most entries are a URL. The eight lockups are the exception: they were supplied
+as files, live in `scripts/lockups/`, and that folder's README says so plainly
+rather than inventing a URL for them.
 
 ## Which schools may draw art below 48px
 
@@ -61,13 +68,20 @@ it is the first place to look — Alberta, Windsor, Concordia, Victoria and
 Lakehead all moved off the full achievement that way. Only **Brock, RMC and
 St. FX** are still on one, and no escutcheon for those exists under any spelling.
 
-**Where no shield is published anywhere, crop one out of the lockup.** Eight
-schools shipped a crest-plus-name lockup, which is illegible small — so those
-eight drew a two-letter monogram in every listing despite having artwork, and
-between them they are 84% of every report held. `fetch-logos.mjs` cuts the crest
-out with a `crop` box, and the originals live in `scripts/lockups/` because the
-script overwrites its own output. Toronto, York and Guelph have no shield-only
-asset anywhere, so cropping is the only honest fix for them.
+**Where no shield is published anywhere, use the lockup whole.** Eight schools
+ship a crest-plus-name lockup and nothing else — between them 84% of every
+report held. For a while `fetch-logos.mjs` cropped the crest out of each with a
+`crop` box. That was legible and it was the wrong trade: the result is a mark
+none of those universities publishes, and at a glance it reads as damage. The
+crop boxes are gone and the files in `scripts/lockups/` are now used whole.
+
+**So four of the eight are faint below about 36px** — `toronto` (2.8:1),
+`mcmaster`, `waterloo` and `guelph`. They are still in `CREST_MARKS` on
+purpose: the mark is `aria-hidden` decoration, the school's name is set in text
+beside it everywhere it appears, and the alternative is the wall of two-letter
+tiles that set exists to remove. `western`, `york`, `queens` and `ottawa` are
+legible by 28px and are not a judgement call. Deleting any of the four from
+`CREST_MARKS` gives it the 48px floor back and changes nothing else.
 
 Run `npm run logos:check` and answer one question per row: **at 24px, can you
 still tell which school this is?** An illegible logo is worse than a monogram,
