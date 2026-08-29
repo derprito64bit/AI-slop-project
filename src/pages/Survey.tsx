@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion } from 'motion/react'
 import Eyebrow from '../components/ui/Eyebrow'
 import Button from '../components/ui/Button'
@@ -10,6 +10,7 @@ import { loadCatalogue } from '../lib/dataSource'
 import { submitSurvey } from '../lib/api'
 import { useAuth } from '../lib/authContext'
 import { COURSES } from '../lib/courses'
+import { STEPS, stepIndexFromParam, type StepId } from '../lib/surveySteps'
 import { CITY_POINTS } from '../data/campus-locations'
 import {
   AMBITION_LABELS,
@@ -79,17 +80,11 @@ const EMPTY: SurveyAnswers = {
 const MIN_AVERAGE = 40
 const MAX_AVERAGE = 100
 
-export const STEPS = [
-  'field',
-  'coop',
-  'province',
-  'homeCity',
-  'average',
-  'courses',
-  'gradYear',
-  'ambition',
-] as const
-export type StepId = (typeof STEPS)[number]
+// The question order lives in lib/surveySteps.ts, so that the dashboard's deep
+// links into the survey — and their test — do not have to import this page.
+// Re-exported because this is still where a reader looks for it.
+export { STEPS }
+export type { StepId }
 
 /**
  * Clear one answer, because the student skipped that question.
@@ -172,6 +167,7 @@ const LEGACY_HOME_KEY = 'acceptiversity.map.home'
 
 export default function Survey() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
   // Only used to tell the truth about where the average goes — the survey
   // itself behaves identically signed in or out.
   const { user } = useAuth()
@@ -196,7 +192,18 @@ export default function Survey() {
     return typeof a === 'number' ? String(a) : ''
   })
   const [error, setError] = useState<string>()
-  const [step, setStep] = useState(0)
+  // `?step=average` opens on that question instead of question one, because a
+  // dashboard tool that needs one answer should ask for that answer. The
+  // student who had already been through the survey and skipped only the
+  // average was being sent back to the start and made to pass four questions
+  // they had answered to reach the one they were asked for.
+  //
+  // A LAZY INITIALISER, deliberately: this seeds where the survey opens and
+  // then has no further say. Reading the param on every render would drag the
+  // student back to `average` the moment they pressed Next, and keeping the URL
+  // in step with their position would put an entry in history per question, so
+  // Back would walk the survey backwards instead of leaving it.
+  const [step, setStep] = useState(() => stepIndexFromParam(searchParams.get('step')))
   // 1 = moving forward, -1 = going back. Drives which way the cards slide, so
   // Back visibly reverses instead of replaying the same entrance.
   const [dir, setDir] = useState(1)

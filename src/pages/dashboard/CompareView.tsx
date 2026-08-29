@@ -1,11 +1,20 @@
-import CompareTable from '../../components/CompareTable'
+import CompareTable, { CompareEmpty } from '../../components/CompareTable'
 import { useDashboard } from './context'
 import type { Program } from '../../data/types'
 
-// Side by side. Chosen from the list rather than here, so the picking happens
-// where the programs already are.
+// Side by side.
+//
+// Staging normally happens on My list, where the programs already are, and this
+// page was only ever the output. That made it the one tool that showed a new
+// student nothing at all: a sentence telling them to go to another page and
+// come back, with no way to find out what would be waiting when they did. So
+// the zero state stages from here too — see CompareEmpty.
+//
+// The branch is here rather than inside the table because the empty state needs
+// the shortlist and `toggleCompare`, and CompareTable receives neither. It
+// keeps its own guard for anything under two programs regardless.
 export default function CompareView() {
-  const { compare, byId, uniName, toggleCompare, profile } = useDashboard()
+  const { compare, byId, uniName, toggleCompare, profile, kept, data } = useDashboard()
   const programs = compare.map((id) => byId.get(id)).filter((p): p is Program => !!p)
 
   return (
@@ -18,12 +27,22 @@ export default function CompareView() {
         </p>
       </header>
 
-      <CompareTable
-        programs={programs}
-        taking={profile.courses}
-        uniName={uniName}
-        onRemove={toggleCompare}
-      />
+      {programs.length === 0 ? (
+        <CompareEmpty
+          kept={kept}
+          hasList={profile.shortlist.length > 0}
+          loaded={data !== null}
+          uniName={uniName}
+          onStage={toggleCompare}
+        />
+      ) : (
+        <CompareTable
+          programs={programs}
+          taking={profile.courses}
+          uniName={uniName}
+          onRemove={toggleCompare}
+        />
+      )}
     </>
   )
 }

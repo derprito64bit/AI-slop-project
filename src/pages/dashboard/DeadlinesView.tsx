@@ -66,14 +66,42 @@ export default function DeadlinesView() {
           <p className="font-600 text-ink">Nothing on your list yet.</p>
           <p className="mt-2 max-w-lg text-sm leading-relaxed text-slate">
             Deadlines hang off the programs you have kept. Keep a few and you can start recording
-            dates against them.
+            dates against them — each one you record looks like this.
           </p>
+          <div className="mt-5 max-w-md">
+            <DateAnatomy />
+          </div>
           <Button to="/profile/programs" className="mt-5">
             Browse programs
           </Button>
         </div>
       ) : (
         <>
+          {/* The timeline has nothing in it yet. It used to render as nothing at
+              all, which left a student who had kept programs looking at a page
+              whose headline feature was invisible — and no way to tell whether
+              the tool was empty or broken. This shows the shape of an entry and
+              points at the control that makes one. It still asserts no date:
+              see DateAnatomy. */}
+          {timeline.length === 0 && (
+            <section className="mb-10 rounded-xl border border-line bg-surface p-5">
+              <h2 className="font-display text-display-3 font-600 text-ink">What&rsquo;s next</h2>
+              <p className="mt-2 max-w-lg text-sm leading-relaxed text-slate">
+                Empty until you record a date. We will not fill it in for you, for the reason
+                above — but here is what one of yours will look like.
+              </p>
+              <div className="mt-5 max-w-md">
+                <DateAnatomy />
+              </div>
+              <p className="mt-4 text-sm leading-relaxed text-slate">
+                Press <span className="font-600 text-ink">+ Add a date</span> on any of your{' '}
+                {kept.length} kept program{kept.length === 1 ? '' : 's'} below. Where we hold a
+                verified admissions page for the school, the source field starts filled in with
+                it.
+              </p>
+            </section>
+          )}
+
           {/* The timeline: everything, in the order it happens. This is the view
               that answers "what is next", which per-program lists cannot. */}
           {timeline.length > 0 && (
@@ -237,6 +265,44 @@ export default function DeadlinesView() {
 }
 
 /* ------------------------------------------------------------- helpers --- */
+
+/**
+ * One timeline entry with nothing in it — the shape of a record, not a record.
+ *
+ * NO DATE IS DRAWN HERE, not even a greyed-out example one, and that is not
+ * squeamishness. A plausible date sitting in the position a real one occupies
+ * is exactly the failure this page is built around: the reader who skims it,
+ * writes it down and does not come back does not get a second chance if it is
+ * wrong. So every slot names what goes in it instead of showing a value.
+ *
+ * The rail, the dot and the type sizes are the real timeline's, dashed and
+ * unfilled, so the student recognises it when their own first date lands there.
+ * Text rather than a picture of one, so a screen reader gets the same answer.
+ */
+function DateAnatomy() {
+  return (
+    <>
+      <div className="relative border-l border-dashed border-line pl-6">
+        <span
+          aria-hidden="true"
+          className="absolute -left-[0.4rem] top-1 h-3 w-3 rounded-full border-2 border-dashed border-line bg-paper"
+        />
+        <p className="text-xs font-600 uppercase tracking-wider text-slate">
+          The date, as you read it
+        </p>
+        <p className="mt-1 font-600 text-ink">
+          What it is for &mdash; &ldquo;supplementary due&rdquo;
+        </p>
+        <p className="mt-0.5 text-sm text-slate">The program on your list it belongs to</p>
+        <p className="mt-1 text-xs text-brand-600">the page you read it on</p>
+      </div>
+      <p className="mt-4 text-xs leading-relaxed text-slate">
+        Dates from every program sort into this one list in the order they fall, and grey out once
+        they pass. Nothing appears here that you did not type.
+      </p>
+    </>
+  )
+}
 
 /** "2026-02-01" -> "1 Feb 2026", without constructing a Date. */
 function formatDate(iso: string): string {
