@@ -57,8 +57,8 @@ target, and `origin/account` is an obsolete orphan whose content landed in #24.
 
 ```
 npm run lint            0 errors
-npm test                305 pass          (282 before the later session; 246 before both)
-npm run sweep           136 of 136        (135 before; +1 is the document-head honesty check)
+npm test                357 pass          (305 before P3; 282 before the marks; 246 before both)
+npm run sweep           151 of 151        (136 before P3; 135 before the document-head check)
 npm run sweep:sections  26 of 26
 npm run probe:motion    minVisible 0.55, 0 dark frames
                         — the charts row reports 1; the panel swap never dips
@@ -232,8 +232,11 @@ None of these are code. They are the whole remaining critical path.
 
 ## 4. What to build next
 
-**`DASHBOARD-NEXT.md` holds the backlog in priority order.** P1 shipped in #32
-and P4 in #41; **P2 and P3 are what remain**:
+**`DASHBOARD-NEXT.md` holds the backlog in priority order, and as of 2026-08-29
+it is finished** — P1 (#32), P2 and P3 (both on branches after #45), and P4
+across #41 and the `ListSpread`/`StackedBar` memos. What is left is §3 above,
+which is not code. Kept below because the reasoning still explains the shape of
+the dashboard:
 
 - ~~**P2 — the other blank tools.**~~ **DONE** on `feature/uncropped-marks`.
   Note the headline example this line used to give was already fixed when it was
@@ -260,11 +263,24 @@ and P4 in #41; **P2 and P3 are what remain**:
   2,436 programs carry a median the pipeline has already ruled too thin to
   publish and 1,419 rest on a single report. Anything gating on the median
   republishes one student's self-report as a distribution.
-- **P3 — three answers collected and barely read.** Re-verified 2026-08-28 and
-  all three still hold: `gradYear` is read by
-  nothing at all outside the survey and sync plumbing; `homeCity` only by the
-  map; `coop` only filters Programs. The rail shows four of the eight answers,
-  which is why its heading now says "Some of your answers".
+- ~~**P3 — three answers collected and barely read.**~~ **DONE.** All three are
+  read now and the rail shows all eight answers, so its heading is "Your
+  answers" rather than "Some of your answers".
+
+  **The `gradYear` idea in DASHBOARD-NEXT could not be built as written**, and
+  that is the part worth carrying forward. It wanted the Overview to name the
+  cycle that describes the student and how many reports it holds. The survey
+  offers 2026–2030; the newest cycle in the data is 2025-2026. Only one of the
+  five maps onto a cycle that exists. What shipped says how recent the data is
+  relative to them instead, which is true for all five — `src/lib/cycles.ts`,
+  fed by a new `summary.cycles` from the pipeline, because `stats.json` is
+  940kB and this is one sentence.
+
+  `homeCity` rolls the kept list up against home on **My list** —
+  `src/lib/nearHome.ts`, stating the schools it cannot place rather than
+  shrinking the denominator, since `CITY_POINTS` is Ontario-only. `coop` is in
+  the rail via a shared `COOP_LABELS` that the survey and the Programs filter
+  now read too.
 
 Two smaller things, both flagged rather than fixed because they are decisions
 rather than defects:
@@ -277,9 +293,22 @@ rather than defects:
   `DashboardShell.tsx:358` (`xl:block`, the rail), `ListView.tsx:85`,
   `OverviewView.tsx:160` and `ProgramsView.tsx:288`. Home also uses `2xl:`/`3xl:`
   on its parallax art. So the complaint stands and the count did not.
-- **`ProgramsView` and `ListView` still carry inline copies** of the Keep button
-  markup rather than using `KeepControl`. A clean follow-up with its own sweep
-  run.
+- ~~**`ProgramsView` and `ListView` still carry inline copies** of the Keep
+  button markup~~ — **DONE 2026-08-29.** Both now use `KeepControl`. The class
+  strings were already identical, so it was purely additive: both gained the
+  `aria-label` and the `active:` pressed state the copies lacked. Each got a
+  sweep check, because the failure this guards against is silent — a Keep that
+  writes to localStorage instead of calling `setProfile` leaves the row reading
+  "+ Keep" and passes every text-only assertion.
+
+**Found while doing the above, pre-existing, and NOT fixed:** `/profile/list`
+overflows horizontally at 375px — `scrollWidth` 564 against a 375 viewport. It
+reproduces identically on `origin/main`, so P3 neither caused nor worsened it.
+It is invisible to the sweep because the `no horizontal overflow` check runs
+against `/profile/programs` only, which is clean at all three widths. The
+overflowing nodes trace to the mobile tab bar, `NAV.-mx-6 > UL.flex` in
+`DashboardShell.tsx`. Worth a small PR that fixes it *and* widens that check to
+the other dashboard routes.
 
 ---
 

@@ -12,9 +12,12 @@ import {
   FIELD_LABELS,
   PROVINCE_LABELS,
   clearProfile,
+  coopLabel,
   loadProfile,
   type SavedProfile,
 } from '../../lib/profile'
+import { tickedCourses } from '../../lib/overview'
+import { CITY_POINTS } from '../../data/campus-locations'
 import { useAuth } from '../../lib/authContext'
 import type { DashboardContext } from './context'
 import type { Program, University } from '../../data/types'
@@ -361,13 +364,19 @@ export default function DashboardShell() {
               The rail itself stays transparent — giving it a surface too would
               nest one panel inside another for no gain. */}
           <div className="rounded-xl border border-line bg-surface p-4">
-            {/* "Some of your answers", because it is four of the eight — co-op,
-                home city, graduating year and courses are stored and not shown
-                here. Claiming "Your answers" made the missing four look like
-                questions that were never asked, so the only way to find out
-                otherwise was to reopen the survey. Showing all eight is P3 in
-                DASHBOARD-NEXT.md; until then the heading should not overclaim. */}
-            <Eyebrow>Some of your answers</Eyebrow>
+            {/* All eight, in the order the survey asks them (STEPS in
+                lib/surveySteps.ts). It used to be four, under the heading
+                "Some of your answers" — hedged on purpose, because claiming
+                "Your answers" while hiding co-op, home city, graduating year
+                and courses made those four look like questions that were never
+                asked, and reopening the survey was the only way to find out
+                otherwise. Now that all eight show, the heading can say so.
+
+                COURSES IS HERE despite living on `profile.courses` rather than
+                on `answers` — the survey asks it (step 6), so a student looking
+                for what they told us expects to find it. Do not "tidy" it out
+                because the object it comes from is different. */}
+            <Eyebrow>Your answers</Eyebrow>
             {shown.answers ? (
               <>
                 {/* Every question can be skipped, so every row here has to
@@ -382,9 +391,30 @@ export default function DashboardShell() {
                         : 'Anything'
                     }
                   />
+                  <Row label="Co-op" value={coopLabel(shown.answers.coop)} />
+                  {/* `?? province` rather than a bare lookup. PROVINCE_LABELS
+                      is not exhaustive over what can be stored: applyRemoteProfile
+                      validates `ambition` and `coop` and copies `province`
+                      straight through, so an unknown code rendered blank here. */}
                   <Row
                     label="Region"
-                    value={shown.answers.province ? PROVINCE_LABELS[shown.answers.province] : 'Anywhere'}
+                    value={
+                      shown.answers.province
+                        ? PROVINCE_LABELS[shown.answers.province] ?? shown.answers.province
+                        : 'Anywhere'
+                    }
+                  />
+                  {/* Checked against CITY_POINTS, not against truthiness. A city
+                      the map cannot place is functionally not an answer — the
+                      map's own dropdown renders blank for it — so echoing it
+                      back would show a value nothing on the site can use. */}
+                  <Row
+                    label="Home city"
+                    value={
+                      shown.answers.homeCity && CITY_POINTS[shown.answers.homeCity]
+                        ? shown.answers.homeCity
+                        : 'Rather not say'
+                    }
                   />
                   <Row
                     label="Average"
@@ -394,7 +424,25 @@ export default function DashboardShell() {
                         : 'Not given'
                     }
                   />
-                  <Row label="Net" value={AMBITION_LABELS[shown.answers.ambition].label} />
+                  <Row
+                    label="Courses"
+                    value={
+                      tickedCourses(shown) === 0 ? 'None ticked' : `${tickedCourses(shown)} ticked`
+                    }
+                  />
+                  <Row
+                    label="Graduating"
+                    value={
+                      typeof shown.answers.gradYear === 'number'
+                        ? String(shown.answers.gradYear)
+                        : 'Not given'
+                    }
+                  />
+                  {/* Same guard as Region, for the same reason. */}
+                  <Row
+                    label="Net"
+                    value={AMBITION_LABELS[shown.answers.ambition]?.label ?? 'Balanced'}
+                  />
                 </dl>
                 <Link
                   to="/survey"

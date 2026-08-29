@@ -387,11 +387,31 @@ const featured = programs
     sampleSize: p.sampleSize,
   }))
 
+// Reports per application cycle, oldest first.
+//
+// Emitted here rather than counted in the browser because stats.json is 940kB
+// and the dashboard wants ONE SENTENCE out of it — a student's graduating year
+// against the cycles the dataset actually holds. Loading a 940kB chunk on the
+// dashboard front door to print a sentence is the trade this avoids, and it is
+// Rule 4 either way: the number a student sees comes out of the pipeline.
+//
+// Four entries, about 150 bytes. summary.json is a static import that reaches
+// Home, so anything added here lands in the main bundle — keep it that small.
+//
+// DatabaseView still counts its own, deliberately. It needs withAverage and a
+// mean per cycle in the same pass it already makes for decisions, byUni and
+// byField, so it saves nothing by reading these. A test asserts the two agree.
+const cycleTotals = [...new Set(stats.map((r) => r.c))].sort().map((cycle) => ({
+  cycle,
+  reports: stats.filter((r) => r.c === cycle).length,
+}))
+
 const summary = {
   programs: programs.length,
   universities: universities.length,
   reports: programs.reduce((n, p) => n + p.totalReports, 0),
   programsWithCharts: programs.filter((p) => !p.insufficientData).length,
+  cycles: cycleTotals,
   featured,
 }
 

@@ -45,12 +45,23 @@ export type StartStep = {
  * takes all of ENG4U through SES4U, so requiring the full set would leave a
  * step that can never complete.
  */
+/**
+ * How many Grade 12 courses the student has ticked.
+ *
+ * Counted against the known list rather than taken as a length. A profile
+ * synced from a build with more courses in it would otherwise print "11 of 9",
+ * which reads as a bug in the page rather than as a stale client.
+ *
+ * Shared by the start path and the dashboard rail so the two cannot disagree
+ * about a number the student can see in both places at once.
+ */
+export function tickedCourses(profile: SavedProfile): number {
+  return profile.courses.filter((c) => COURSES.some((k) => k.code === c)).length
+}
+
 export function startSteps(profile: SavedProfile): StartStep[] {
   const kept = profile.shortlist.length
-  // Counted against the known list rather than taken as a length. A profile
-  // synced from a build with more courses in it would otherwise print
-  // "11 of 9", which reads as a bug in the page rather than a stale client.
-  const ticked = profile.courses.filter((c) => COURSES.some((k) => k.code === c)).length
+  const ticked = tickedCourses(profile)
 
   return [
     {

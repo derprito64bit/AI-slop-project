@@ -113,13 +113,15 @@ exactly like a broken build. Restart preview after every rebuild.
 npm run sweep && npm run sweep:sections && npm run probe:motion
 ```
 
-**Baseline as of 2026-08-28** — anything else failing is new:
+**Baseline as of 2026-08-29** — anything else failing is new. Every number here
+was measured on this machine in the session that wrote it; the previous version
+of this table was copied forward and was a full cycle stale.
 
 | | |
 |---|---|
-| `npm run lint` | 0 errors |
-| `npm test` | 282 pass |
-| `npm run sweep` | 135 of 135 |
+| `npm run lint` | 0 errors, 14 warnings |
+| `npm test` | 357 pass |
+| `npm run sweep` | 151 of 151 |
 | `npm run sweep:sections` | 26 of 26 |
 | `npm run probe:motion` | `minVisible 0.55` (the charts row reports `1`), `0 dark frames` |
 

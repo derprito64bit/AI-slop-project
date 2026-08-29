@@ -1,20 +1,22 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import {
-  toFilters,
-  matchPrograms,
-  averageBand,
-  loadProfile,
-  saveProfile,
-  clearProfile,
-  toggleShortlist,
-  toggleCourse,
-  updateProfile,
-  setNote,
-  toggleTag,
   allTags,
-  fitFor,
+  averageBand,
   balanceOf,
+  clearProfile,
+  COOP_LABELS,
+  coopLabel,
   EMPTY_PROFILE,
+  fitFor,
+  loadProfile,
+  matchPrograms,
+  saveProfile,
+  setNote,
+  toFilters,
+  toggleCourse,
+  toggleShortlist,
+  toggleTag,
+  updateProfile,
   type SurveyAnswers,
 } from './profile'
 import type { Program, University } from '../data/types'
@@ -279,5 +281,38 @@ describe('balanceOf', () => {
       { accepted: null },
     ]
     expect(balanceOf(88, list)).toEqual({ ambitious: 2, 'in-range': 1, comfortable: 1 })
+  })
+})
+
+describe('COOP_LABELS', () => {
+  it('covers exactly the three answers the survey can store', () => {
+    // Typed as Record<SurveyAnswers['coop'], …>, so a fourth survey option
+    // cannot ship without a label — but only if the keys are asserted too,
+    // since a Record does not stop a stray extra key from being added here.
+    expect(Object.keys(COOP_LABELS).sort()).toEqual(['', 'no', 'yes'])
+  })
+
+  it('says something in every one', () => {
+    for (const { label, hint } of Object.values(COOP_LABELS)) {
+      expect(label.length).toBeGreaterThan(0)
+      expect(hint.length).toBeGreaterThan(0)
+      expect(`${label} ${hint}`).not.toMatch(/odds|chance|probab|acceptance/i)
+    }
+  })
+})
+
+describe('coopLabel', () => {
+  it('names the answer', () => {
+    expect(coopLabel('yes')).toBe('Co-op only')
+    expect(coopLabel('no')).toBe('No co-op')
+    expect(coopLabel('')).toBe('Either')
+  })
+
+  it('reads a missing answer as no preference', () => {
+    // Not hypothetical: the sweep's own seed profile has no `coop` key, and
+    // isAnswers only requires `average` and `ambition`. A bare lookup would
+    // put `undefined` in the rail.
+    expect(coopLabel(undefined)).toBe('Either')
+    expect(coopLabel('nonsense' as never)).toBe('Either')
   })
 })

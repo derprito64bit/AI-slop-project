@@ -7,8 +7,8 @@ dashboard, in the order worth building it.
 Written 2026-08-28, after the map and admin work landed. Updated the same day at
 the end of a long session.
 
-**Status: P1 (#32), P2 (`feature/uncropped-marks`) and half of P4 (#41) are
-done. P3 and the `ListSpread` memo in P4 are what remain.** The measurements below were taken before any of that, so treat the
+**Status: P1, P2, P3 and P4 are all done.** The backlog this file describes is
+finished; what is left is in `HANDOFF-NEXT.md` §3 and is not code. The measurements below were taken before any of that, so treat the
 table as the argument for P2/P3 rather than as the current state — the Overview
 in particular is no longer one of the blank views.
 
@@ -168,30 +168,52 @@ Each should answer "what will this look like once I have used it?", not only
 
 ---
 
-## P3 — Use the three answers already being collected
+## P3 — Use the three answers already being collected — **DONE 2026-08-29**
 
-The survey grew to eight questions. Three of the new answers are stored, synced,
-and barely read.
+The survey grew to eight questions and three of the answers were stored, synced
+and barely read. All three are now read, and the rail shows all eight.
 
-- **`gradYear`** — nothing reads it at all. The Overview could say which
-  application cycle describes them and how many reports that cycle holds
-  (`stats.json` carries `c`). Keep it out of `/api/data`.
-- **`homeCity`** — only `MapView` uses it. "Four of your six schools are within
-  100km of Mississauga" belongs on the Overview or My list. `distanceKm`
-  (`src/data/campus-locations.ts`) and `CAMPUS_POINTS`
-  (`src/data/campus-points.ts`) both already exist.
-- **`coop`** — only filters Programs. The rail's "Your answers" block shows four
-  of seven answers; add the missing ones.
+- **`gradYear`** — **the idea written here did not survive contact with the
+  data, and that is the useful part of this entry.** It proposed the Overview
+  name "which application cycle describes them and how many reports that cycle
+  holds". The survey offers this year plus the next four — 2026 to 2030 — and
+  the newest cycle in `stats.json` is 2025-2026. So exactly one of the five
+  selectable years maps onto a cycle that exists; the other four map onto zero
+  rows. Four students in five would have been shown a blank, or another cycle's
+  numbers under the word "your".
+
+  What shipped instead says how *recent* the data is relative to them, which is
+  true for all five: "Your cycle is 2026-2027, which has no reports here yet.
+  The most recent one is 2025-2026, with 5,905 reports." `src/lib/cycles.ts`,
+  and the count comes from `summary.cycles`, which the pipeline now emits —
+  `stats.json` is 940kB and this is one sentence.
+- **`homeCity`** — now rolls the kept list up against home on **My list**
+  (not the Overview: `kept` is `[]` on the first paint of every visit and there
+  is no shortlist-only signal to gate on, so it would flash). `src/lib/nearHome.ts`.
+  It states the schools it cannot place rather than shrinking the denominator —
+  `CITY_POINTS` is Ontario-only — and carries the straight-line/city-centres
+  qualifier the map already uses.
+- **`coop`** — now in the rail, via a shared `COOP_LABELS` in `profile.ts` that
+  the survey and the Programs filter also read; there were three hand-written
+  copies of those three strings.
+
+One thing found on the way, worth knowing generally: **`accepted !== null` is
+not the reporting threshold — `insufficientData` is.** See the P2 note above.
 
 ---
 
 ## P4 — Polish, and the optimisations that are real
 
-- **`ListSpread`** in `src/components/ListCharts.tsx` filters and sorts in the
-  component body on every render. Wrap in `useMemo`. Small but real, and **still
-  open** — #41 changed how its dots animate but did not touch the `points`
-  computation. Note the early `return null` sits between the two blocks, so the
-  memo has to go above it or oxlint will (correctly) reject it.
+- ~~**`ListSpread`** filters and sorts in the component body on every render~~ —
+  **DONE 2026-08-29.** One `useMemo` above the early `return null`, folding in
+  the axis maths that used to sit below it: memoising that separately would have
+  put a hook after a conditional return, and `react/rules-of-hooks` is an
+  **error** in `.oxlintrc.json`, not a warning. `StackedBar` in the same file had
+  the identical shape and was not in this list; it is done too, and the real win
+  there was `shade()`, which was called twice per segment — once for the bar and
+  once for the legend — so the two agreed by coincidence rather than by
+  construction. Note the memo only pays off while callers pass a stable
+  `programs`; `OverviewView` passes the shell's memoised `kept`.
 - ~~**`gapFor` is walked twice**~~ — **DONE.** It was five times, not two:
   `gapCount` in `DashboardShell` (memoised on the whole `profile`, so renaming a
   tag re-parsed every requirement), `nextGap` in `OverviewView` (unmemoised, and
@@ -240,18 +262,32 @@ Then the `vite-preview` entry in `.claude/launch.json` (port 4200, base
 npm run sweep && npm run sweep:sections && npm run probe:motion
 ```
 
-Baseline to hold: 0 lint errors, 282 tests, sweep 135/135, sections 26/26,
+Baseline to hold: 0 lint errors, 357 tests, sweep 151/151, sections 26/26,
 motion `minVisible 0.55` and `0 dark frames` — the charts row reports `1`.
+Measured 2026-08-29. `CLAUDE.md` carries the same table; if the two disagree,
+re-measure rather than believing either.
 
 Two traps worth reading in `CLAUDE.md` before trusting a green run: a stale
 `vite preview` will verify the wrong build, and `vite preview` answers 200 for a
 missing file so a green *local* sweep never proves an asset exists.
 
-**`scripts/sweep.mjs` depends on the string `Programs kept` in five places**, not
-the four this file used to claim — the `VIEWS` `must` entry, `overview counts the
-seeded profile`, the accounts check, and `/\d+ programs? kept/i` twice in the
-`/list` block, which matches `ListView.tsx`'s header rather than a tile.
-`AccountView.tsx` renders the same label and is not asserted at all.
+**`scripts/sweep.mjs` depends on the exact string `Programs kept` in five
+places.** The count was right; the list this file used to give was not — it
+named `/\d+ programs? kept/i` twice in the `/list` block, when that regex
+appears once and is a *different*, lowercase string sourced from
+`ListView.tsx`'s header rather than from the tile. The five are:
+
+1. the `VIEWS` `must` entry for the overview
+2. `overview counts the seeded profile` — `/Programs kept\s*3/`
+3. `empty overview drops the row of zeros` — **negative**, `!/Programs kept/`
+4. `keeping from the overview ends the empty state` — `/Programs kept\s*1/`
+5. the accounts check — `/Programs kept\s*3/`, after a `seedOnce` round trip
+
+All five read `OverviewView.tsx`'s `<Stat label="Programs kept">`, so renaming
+that tile breaks them at once — and #3 is the dangerous one, because a rename
+makes a *negative* assertion pass forever. A sixth, `/list shows the kept
+programs`, is coupled to `ListView.tsx`'s lowercase header instead.
+`AccountView.tsx` renders the same label and is asserted nowhere.
 
 They all read a **populated** dashboard, so an empty-state-only change does not
 touch them — but the mechanism differs, and the correction matters if one ever

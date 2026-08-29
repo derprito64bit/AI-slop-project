@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { DURATION, EASE, chartDelay } from '../lib/motion'
 import { FIT_LABELS, fitFor, type Fit } from '../lib/profile'
@@ -35,8 +35,20 @@ export type Segment = { key: string; label: string; count: number }
  */
 export function StackedBar({ segments, label }: { segments: Segment[]; label: string }) {
   const reduced = useReducedMotion()
-  const shown = segments.filter((s) => s.count > 0)
-  const total = shown.reduce((n, s) => n + s.count, 0)
+  // Above the early return, not below it: a hook after `if (!total) return null`
+  // changes the hook order the moment `total` goes from 0 to non-zero, and
+  // react/rules-of-hooks is an ERROR here, not a warning.
+  //
+  // `fill` is precomputed because shade() was called twice per segment — once
+  // for the bar and once for the legend — and the two had to agree by
+  // coincidence rather than by construction.
+  const { shown, total } = useMemo(() => {
+    const kept = segments.filter((s) => s.count > 0)
+    return {
+      shown: kept.map((s, i) => ({ ...s, fill: shade(i, kept.length) })),
+      total: kept.reduce((n, s) => n + s.count, 0),
+    }
+  }, [segments])
   if (!total) return null
 
   return (
@@ -56,7 +68,7 @@ export function StackedBar({ segments, label }: { segments: Segment[]; label: st
             key={s.key}
             style={{
               width: `${(s.count / total) * 100}%`,
-              background: shade(i, shown.length),
+              background: s.fill,
               marginRight: i < shown.length - 1 ? 2 : 0,
               transformOrigin: 'left',
             }}
@@ -72,12 +84,12 @@ export function StackedBar({ segments, label }: { segments: Segment[]; label: st
         ))}
       </div>
       <ul className="mt-3 space-y-1">
-        {shown.map((s, i) => (
+        {shown.map((s) => (
           <li key={s.key} className="flex items-center gap-2 text-xs">
             <span
               aria-hidden="true"
               className="h-2 w-2 shrink-0 rounded-full"
-              style={{ background: shade(i, shown.length) }}
+              style={{ background: s.fill }}
             />
             <span className="min-w-0 flex-1 truncate text-slate">{s.label}</span>
             <span className="shrink-0 font-600 text-ink [font-variant-numeric:tabular-nums]">
@@ -139,21 +151,45 @@ export function ListSpread({
   const reduced = useReducedMotion()
   const [active, setActive] = useState<string | null>(null)
 
-  const points = programs
-    .filter((p) => !p.insufficientData && typeof p.accepted?.median === 'number')
-    .map((p) => ({ p, median: p.accepted!.median }))
-    .sort((a, b) => a.median - b.median)
-
-  const omitted = programs.length - points.length
-  if (!points.length) return null
-
+  // ONE memo, and it has to sit above `if (!points.length) return null`.
+  //
+  // The axis maths used to live below that early return, so memoising it
+  // separately would have put a hook after a conditional return — a
+  // rules-of-hooks ERROR, not a warning. Folding both halves into one memo is
+  // what makes the hoist legal; they take the same two inputs anyway.
+  //
   // The axis has to hold the programs AND the student's average, or the marker
   // for "you" lands outside the frame — which is exactly the case that matters
   // most, a list that sits entirely above where they are.
-  const values = [...points.map((d) => d.median), ...(average !== null ? [average] : [])]
-  const lo = Math.floor((Math.min(...values) - 1.5) / 2) * 2
-  const hi = Math.ceil((Math.max(...values) + 1.5) / 2) * 2
-  const span = Math.max(1, hi - lo)
+  //
+  // This only pays off while callers pass a stable `programs`. OverviewView
+  // passes `kept`, which the shell memoises; an inline .filter() at a call site
+  // would make this recompute every render and nothing would look wrong.
+  const { points, omitted, lo, hi, span } = useMemo(() => {
+    const pts = programs
+      .filter((p) => !p.insufficientData && typeof p.accepted?.median === 'number')
+      .map((p) => ({ p, median: p.accepted!.median }))
+      .sort((a, b) => a.median - b.median)
+    const values = [...pts.map((d) => d.median), ...(average !== null ? [average] : [])]
+    // Math.min() of nothing is Infinity; guarded because the caller renders
+    // nothing in that case but the memo still runs.
+    const min = values.length ? Math.min(...values) : 0
+    const max = values.length ? Math.max(...values) : 0
+    const loV = Math.floor((min - 1.5) / 2) * 2
+    const hiV = Math.ceil((max + 1.5) / 2) * 2
+    return {
+      points: pts,
+      omitted: programs.length - pts.length,
+      lo: loV,
+      hi: hiV,
+      span: Math.max(1, hiV - loV),
+    }
+  }, [programs, average])
+
+  if (!points.length) return null
+
+  // Not memoised: a closure over `lo`/`span` costs nothing to rebuild, and
+  // making it a third hook would buy nothing.
   const x = (v: number) => PAD_X + ((v - lo) / span) * (W - PAD_X * 2)
 
   const shown = points.find((d) => d.p.id === active) ?? null

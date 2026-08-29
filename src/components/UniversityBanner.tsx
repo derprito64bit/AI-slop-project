@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import UniversityMark from './UniversityMark'
+import { bannerFor } from '../lib/universityMarks'
 
 // Full-bleed university logo for the top band of a card.
 //
@@ -23,20 +24,6 @@ import UniversityMark from './UniversityMark'
 // rename its .png away.
 const EXTENSIONS = ['png', 'svg'] as const
 
-// Placeholder banner tints, drawn from the theme tokens so they follow
-// light/dark, and picked deterministically so a school always looks the same.
-const BANNERS = [
-  'from-brand-100 to-brand-50',
-  'from-cloud to-brand-100',
-  'from-brand-50 to-surface',
-  'from-surface to-cloud',
-]
-
-export function bannerFor(id: string): string {
-  let hash = 0
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0
-  return BANNERS[hash % BANNERS.length]
-}
 
 export default function UniversityBanner({
   id,

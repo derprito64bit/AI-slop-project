@@ -14,6 +14,7 @@ import { STEPS, stepIndexFromParam, type StepId } from '../lib/surveySteps'
 import { CITY_POINTS } from '../data/campus-locations'
 import {
   AMBITION_LABELS,
+  COOP_LABELS,
   FIELD_LABELS,
   PROVINCE_LABELS,
   averageBand,
@@ -364,19 +365,15 @@ export default function Survey() {
                         name="survey-coop"
                         value={answers.coop}
                         onChange={(v) => set('coop', v as SurveyAnswers['coop'])}
-                        options={[
-                          { value: '', label: 'Either', hint: 'Show me both.' },
-                          {
-                            value: 'yes',
-                            label: 'Co-op only',
-                            hint: 'Paid work terms built into the degree.',
-                          },
-                          {
-                            value: 'no',
-                            label: 'No co-op',
-                            hint: 'Straight through, usually a year shorter.',
-                          },
-                        ]}
+                        // Built from COOP_LABELS rather than written out, so
+                        // the survey, the Programs filter and the dashboard
+                        // rail cannot drift apart. Same shape as the ambition
+                        // step below.
+                        options={Object.entries(COOP_LABELS).map(([value, l]) => ({
+                          value,
+                          label: l.label,
+                          hint: l.hint,
+                        }))}
                       />
                     </Field>
                   )}

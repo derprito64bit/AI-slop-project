@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import UniversityMark from '../../components/UniversityMark'
+import { KeepControl } from '../../components/KeepButton'
 import Tag from '../../components/ui/Tag'
 import Combobox from '../../components/ui/Combobox'
 import { FitTag } from '../../components/BalanceCheck'
@@ -13,7 +14,7 @@ import {
   type ProgramFilters,
   type SortKey,
 } from '../../lib/search'
-import { FIELD_LABELS, PROVINCE_LABELS, isKept, toggleShortlist } from '../../lib/profile'
+import { COOP_LABELS, FIELD_LABELS, PROVINCE_LABELS, isKept, toggleShortlist } from '../../lib/profile'
 import { useDashboard } from './context'
 
 // Browse everything, with the filters the dataset actually supports.
@@ -170,9 +171,17 @@ export default function ProgramsView() {
           </span>
         </label>
 
-        <Select label="Co-op" value={coop} onChange={(v) => set({ coop: v })} anyLabel="Either">
-          <option value="yes">Co-op only</option>
-          <option value="no">No co-op</option>
+        {/* Labels from COOP_LABELS, not retyped — the survey asks the same
+            question and the rail echoes the answer, so all three read from one
+            place. `''` is the any-option and Select renders it itself. */}
+        <Select
+          label="Co-op"
+          value={coop}
+          onChange={(v) => set({ coop: v })}
+          anyLabel={COOP_LABELS[''].label}
+        >
+          <option value="yes">{COOP_LABELS.yes.label}</option>
+          <option value="no">{COOP_LABELS.no.label}</option>
         </Select>
 
         <Select
@@ -299,18 +308,12 @@ export default function ProgramsView() {
                       </Tag>
                     </span>
                   )}
-                  <button
-                    type="button"
-                    onClick={() => setProfile(toggleShortlist(p.id))}
-                    aria-pressed={kept}
-                    className={`shrink-0 rounded-full border px-3 py-1 text-xs font-600 transition-colors ${
-                      kept
-                        ? 'border-brand-500 bg-brand-50 text-brand-600'
-                        : 'border-line text-slate hover:border-brand-300 hover:text-ink'
-                    }`}
-                  >
-                    {kept ? '✓ Kept' : '+ Keep'}
-                  </button>
+                  {/* KeepControl, not the default KeepButton: that one writes
+                      to localStorage itself, so the shell's `kept` would not
+                      see the click and the row would keep saying "+ Keep".
+                      This was an inline copy of KeepControl's markup — same
+                      classes, minus the aria-label and the pressed state. */}
+                  <KeepControl kept={kept} onToggle={() => setProfile(toggleShortlist(p.id))} />
                 </li>
               )
             })}
