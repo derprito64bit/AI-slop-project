@@ -7,6 +7,7 @@ import { FetchingNote, ListSkeleton } from '../../components/Skeleton'
 import { FitLegend, ListSpread, StackedBar, type Segment } from '../../components/ListCharts'
 import { COURSE_NAMES } from '../../lib/courses'
 import { bestNextCourse } from '../../lib/courseNeeds'
+import { cycleNote, cycleStanding } from '../../lib/cycles'
 import { fieldSummaryFor, summarise } from '../../lib/fields'
 import { catalogueTotals, featuredCards, startSteps, type StartStep } from '../../lib/overview'
 import {
@@ -137,6 +138,10 @@ export default function OverviewView() {
     return fieldSummaryFor(summarise(data.programs, uniName), profile.answers?.field ?? '')
   }, [listEmpty, data, uniName, profile.answers?.field])
 
+  // Reads summary.json, which is a static import — no catalogue, no lazy chunk,
+  // so it is right on the first paint and cannot flash like `kept` does.
+  const cycle = cycleNote(cycleStanding(profile.answers?.gradYear))
+
   // Distinguishes "no field to show" from "the field is still loading", so the
   // dataset-wide fallback does not flash before the field summary replaces it.
   const fieldPending = listEmpty && !data && Boolean(profile.answers?.field)
@@ -148,6 +153,23 @@ export default function OverviewView() {
         <p className="mt-2 max-w-2xl text-slate">
           Everything you&rsquo;ve kept, checked and compared — and what&rsquo;s worth doing next.
         </p>
+        {/* Their graduating year, finally read by something.
+            
+            It says how RECENT the data is relative to them, not what their
+            cycle holds — for four of the five graduating years the survey
+            offers, their cycle holds nothing at all. See the note at the top of
+            lib/cycles.ts for why the backlog's original wording was dropped.
+
+            In the header rather than in a card: it is context for the whole
+            page, it is true whether or not anything is kept, and sitting above
+            the empty/populated swap keeps it clear of the sweep check that
+            asserts the empty overview has no row of zeros. */}
+        {cycle !== null && (
+          <div className="mt-4 max-w-2xl border-l-2 border-line pl-4">
+            <p className="text-sm leading-relaxed text-slate">{cycle.line}</p>
+            <p className="mt-1 text-xs leading-relaxed text-slate">{cycle.note}</p>
+          </div>
+        )}
       </header>
 
       {/* ------------------------------------------------------- numbers --- */}

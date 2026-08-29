@@ -42,6 +42,37 @@ const SEED = JSON.stringify({
  * programs, so every one of them exercises the populated dashboard and the
  * whole empty branch shipped untested.
  */
+/**
+ * The three answers P3 surfaces, actually filled in.
+ *
+ * SEED carries none of `coop`, `homeCity` or `gradYear`, and that is worth
+ * keeping rather than fixing: `isAnswers` only requires `average` and
+ * `ambition`, so a stored profile really can be missing them, and every check
+ * that runs against SEED is therefore also a test that the new rows degrade to
+ * their fallbacks instead of rendering "undefined".
+ *
+ * This one is the other half. Mississauga with McMaster (41km), Waterloo (72km)
+ * and Queen's (262km) gives a rollup with a known answer: 2 of 3 within 100km.
+ * gradYear 2027 lands on a cycle the dataset does not hold, which is the state
+ * four of the five selectable years produce.
+ */
+const P3_SEED = JSON.stringify({
+  answers: {
+    field: 'engineering',
+    province: 'ON',
+    average: 88,
+    ambition: 'balanced',
+    coop: 'yes',
+    homeCity: 'Mississauga',
+    gradYear: 2027,
+  },
+  shortlist: ['mcmaster::engineering-i-co-op', 'waterloo::computer-science', 'queens::commerce'],
+  courses: ['ENG4U', 'MHF4U'],
+  notes: {},
+  tags: {},
+  savedAt: '2026-08-19T00:00:00.000Z',
+})
+
 const NEW_SEED = JSON.stringify({
   answers: { field: 'engineering', province: 'ON', average: 88, ambition: 'balanced' },
   shortlist: [],
@@ -530,6 +561,100 @@ async function sweepDashboard() {
     await p4.close()
   }
 
+  // ---------------------------------------------------------------- P3 ---
+  //
+  // The rail. It lives INSIDE <main>, and the sweep runs at 1512px which is
+  // above the xl: breakpoint that reveals it, so its text is in the body
+  // string of every check above. That is the reason these assertions are cheap
+  // and also the reason a careless rail row can break an unrelated check.
+  {
+    const { page: p6 } = await open('/profile', { seed: SEED })
+    const body = await text(p6)
+    const labels = ['Studying', 'Co-op', 'Region', 'Home city', 'Average', 'Courses', 'Graduating', 'Net']
+    const missing = labels.filter((l) => !body.includes(l))
+    check('dashboard', 'rail shows all eight answers', missing.length === 0, missing.join(','))
+    // Case-insensitive: Eyebrow uppercases through CSS, and innerText returns
+    // the RENDERED text, so the heading arrives as "YOUR ANSWERS".
+    check('dashboard', 'rail no longer hedges its heading',
+      /Your answers/i.test(body) && !/Some of your answers/i.test(body),
+      body.match(/[A-Z ]*YOUR ANSWERS/)?.[0] ?? 'heading not found')
+    // SEED has no coop/homeCity/gradYear at all, so this is the direct test
+    // that every new row is a total function. "null%" is the bug it descends
+    // from — a skipped average once rendered exactly that.
+    check('dashboard', 'rail renders no undefined or null',
+      !/\bundefined\b|\bnull\b/.test(body), body.match(/\S*(undefined|null)\S*/)?.[0] ?? '')
+    await p6.close()
+  }
+
+  // gradYear, read by something at last. The student's own cycle holds nothing
+  // — four of the five selectable years are like that — so the check is that
+  // the count is attached to the newest cycle and not to theirs.
+  {
+    const { page: p7 } = await open('/profile', { seed: P3_SEED })
+    const body = await text(p7)
+    const line = body.match(/Your cycle is[^\n]*/)?.[0] ?? ''
+    check('dashboard', 'overview reads the graduating year', /2026-2027/.test(line), line)
+    check('dashboard', 'cycle line names the most recent cycle instead', /2025-2026/.test(line), line)
+    check('dashboard', 'cycle line puts no report count on an empty cycle',
+      /no reports here yet/.test(line) && !/2026-2027, with/.test(line), line)
+    await p7.close()
+  }
+
+  // homeCity, likewise — it used to be read only by the map's dropdown.
+  {
+    const { page: p8 } = await open('/profile/list', { seed: P3_SEED })
+    const body = await text(p8)
+    check('dashboard', 'list places the kept programs against home',
+      /2 of your 3 kept programs are within 100km of Mississauga/.test(body),
+      body.match(/\d+ of (your|the)[^\n]*/)?.[0] ?? 'no rollup')
+    check('dashboard', 'distance says it is straight-line from city centres',
+      /Straight-line/.test(body) && /city centres/.test(body))
+    // The rollup renders above the card list, and '/list shows the kept
+    // programs' matches the FIRST /\d+ programs? kept/i in the whole of
+    // <main>. If the rollup ever starts with that shape it silently steals it.
+    check('dashboard', 'distance rollup does not shadow the kept-count header',
+      body.match(/\d+ programs? kept/i)?.[0] === '3 programs kept',
+      body.match(/\d+ programs? kept/i)?.[0] ?? 'no header')
+    await p8.close()
+  }
+
+  // The two migrated Keep controls. Both used to be inline markup with no
+  // aria-label, so the selector below could not see them at all — and the
+  // failure they guard against is silent: a Keep that writes to localStorage
+  // instead of calling setProfile leaves the row saying "+ Keep" and passes
+  // every text check.
+  {
+    const { page: p9 } = await open('/profile/programs', { seed: NEW_SEED })
+    const keep = await p9.$('main button[aria-label="Keep this program"]')
+    check('dashboard', 'programs rows offer a labelled keep control', Boolean(keep))
+    if (keep) {
+      await keep.click()
+      await wait(500)
+      const pressed = await p9.evaluate(() => {
+        const b = document.querySelector('main button[aria-pressed="true"]')
+        return b ? b.innerText.trim() : ''
+      })
+      check('dashboard', 'keeping from programs updates the row itself',
+        /Kept/.test(pressed), pressed || 'no pressed control')
+    }
+    await p9.close()
+  }
+  {
+    const { page: p10 } = await open('/profile/list', { seed: NEW_SEED })
+    const before = await text(p10)
+    const keep = await p10.$('main button[aria-label="Keep this program"]')
+    check('dashboard', 'list suggestions offer a labelled keep control', Boolean(keep),
+      before.match(/From your answers/)?.[0] ?? 'no suggestions section')
+    if (keep) {
+      await keep.click()
+      await wait(500)
+      const after = await text(p10)
+      check('dashboard', 'keeping a suggestion updates the list header',
+        /1 program kept/.test(after), after.match(/\d+ programs? kept/i)?.[0] ?? 'header unchanged')
+    }
+    await p10.close()
+  }
+
   // The list-level course rollup — the sentence the per-program cards cannot
   // give, because it is about the list rather than about one program.
   {
@@ -713,10 +838,30 @@ async function sweepCross() {
   // The rule the whole product rests on. The disclaimers legitimately contain
   // these phrases, so a hit only counts when it is not one of them.
   const claims = /\b(your odds|real odds|true odds|acceptance rate|chance of admission|admission chances)\b/i
+  // Extended when /profile joined this loop: the dashboard disclaims in the
+  // negative-noun form ("not a chance of admission") rather than the sentence
+  // form the earlier pages use, and three real disclaimers were being read as
+  // three violations. Kept as explicit phrasings rather than a loose
+  // (not|never).{0,20}chance pattern, which would start excusing real claims
+  // that happen to sit near the word "not".
   const disclaimer =
-    /not an acceptance rate|not your odds|none of this is an admission chance|never an admission|never tell you your chances/i
-  for (const path of ['/', '/explore', '/survey', '/profile/database']) {
-    const { page: p } = await open(path)
+    /not an acceptance rate|not your odds|none of this is an admission chance|never an admission|never tell you your chances|not a chance of admission|never as a chance of admission|or a chance of admission/i
+  // The dashboard pages need a seed or they render the first-run gate instead
+  // of themselves, which is why they were left out of this loop originally —
+  // and why /profile and /profile/list had NO Rule 1 coverage at all until P3
+  // put a cycle sentence on one and a distance rollup on the other. Neither
+  // carries a disclaimer phrase, so anything that trips `claims` there has no
+  // escape hatch and fails, which is the intent.
+  const honestyPaths = [
+    ['/', undefined],
+    ['/explore', undefined],
+    ['/survey', undefined],
+    ['/profile/database', undefined],
+    ['/profile', P3_SEED],
+    ['/profile/list', P3_SEED],
+  ]
+  for (const [path, seed] of honestyPaths) {
+    const { page: p } = await open(path, seed ? { seed } : {})
     const body = await text(p)
     const hit = body.match(claims)
     const claimed = Boolean(hit) && !disclaimer.test(body)

@@ -168,6 +168,34 @@ export const AMBITION_LABELS: Record<Ambition, { label: string; hint: string }> 
   reach: { label: 'Ambitious', hint: 'Include programs well above your average.' },
 }
 
+/**
+ * The co-op answer, in words.
+ *
+ * Shaped like AMBITION_LABELS above because it is the same kind of thing, and
+ * lives here for the same reason: the survey, the Programs filter and the
+ * dashboard rail all name these three options, and three hand-written copies
+ * of a label set is how one of them ends up saying something the others do not.
+ * The strings are the survey's own, unchanged.
+ */
+export const COOP_LABELS: Record<SurveyAnswers['coop'], { label: string; hint: string }> = {
+  '': { label: 'Either', hint: 'Show me both.' },
+  yes: { label: 'Co-op only', hint: 'Paid work terms built into the degree.' },
+  no: { label: 'No co-op', hint: 'Straight through, usually a year shorter.' },
+}
+
+/**
+ * Total, because the answer is not always one of the three.
+ *
+ * A profile stored before `coop` existed has no such key, and `isAnswers` does
+ * not require one — it checks `average` and `ambition` and nothing else. So the
+ * value reaching a label lookup can be `undefined`, and `COOP_LABELS[undefined]`
+ * is `undefined.label`. "No preference" is the right reading of a missing
+ * answer anyway: it is what an untouched form carries.
+ */
+export function coopLabel(coop: SurveyAnswers['coop'] | undefined): string {
+  return (coop && COOP_LABELS[coop]?.label) || COOP_LABELS[''].label
+}
+
 /** Turn survey answers into the filters `search.ts` already understands. */
 export function toFilters(a: SurveyAnswers): ProgramFilters {
   return {

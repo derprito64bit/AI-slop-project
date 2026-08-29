@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { initialsFor, toneFor } from '../lib/universityMarks'
 
 // Square university mark for program listings.
 //
@@ -135,30 +136,6 @@ const CREST_MARKS = new Set<string>([
  */
 const resolved = new Map<string, number>()
 
-/** Words that carry no identity in a school name. */
-const STOP = /^(university|universite|college|of|the|at|de)$/i
-
-/** "University of Waterloo" -> "WA", "Toronto Metropolitan University" -> "TM" */
-export function initialsFor(name: string): string {
-  const words = name
-    // Drop apostrophes rather than splitting on them, so "Queen's" stays one
-    // word and yields "QU" instead of "QS".
-    .replace(/[’'`]/g, '')
-    .replace(/[^\p{L}\p{N}\s-]/gu, ' ')
-    .split(/[\s-]+/)
-    .filter((w) => w && !STOP.test(w))
-
-  if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase()
-  if (words.length === 1) return words[0].slice(0, 2).toUpperCase()
-  return name.slice(0, 2).toUpperCase()
-}
-
-/** Stable per-school colour: the same school always gets the same tile. */
-function toneFor(id: string): number {
-  let hash = 0
-  for (let i = 0; i < id.length; i++) hash = (hash * 31 + id.charCodeAt(i)) >>> 0
-  return hash % 4
-}
 
 export default function UniversityMark({
   id,

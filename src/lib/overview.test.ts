@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { catalogueTotals, featuredCards, startSteps } from './overview'
+import { catalogueTotals, featuredCards, startSteps, tickedCourses } from './overview'
 import { COURSES } from './courses'
 import { EMPTY_PROFILE, type SavedProfile, type SurveyAnswers } from './profile'
 import PROGRAMS from '../data/generated/programs.json'
@@ -120,5 +120,26 @@ describe('catalogueTotals', () => {
     expect(t.programsWithCharts).toBeLessThanOrEqual(t.programs)
     expect(t.reports).toBeGreaterThan(t.programs)
     expect(t.universities).toBeGreaterThan(0)
+  })
+})
+
+describe('tickedCourses', () => {
+  it('counts the Grade 12 courses a student has ticked', () => {
+    expect(tickedCourses(profile({ courses: [] }))).toBe(0)
+    expect(tickedCourses(profile({ courses: ['ENG4U', 'MHF4U'] }))).toBe(2)
+  })
+
+  it('ignores a code this build has never heard of', () => {
+    // A profile synced from a build with more courses in it would otherwise
+    // let the rail print a count higher than the list it is counting against.
+    const stale = profile({ courses: ['ENG4U', 'ZZZ4U', 'NOT-A-CODE'] })
+    expect(tickedCourses(stale)).toBe(1)
+    expect(tickedCourses(stale)).toBeLessThanOrEqual(COURSES.length)
+  })
+
+  it('agrees with the start path, which shows the same number', () => {
+    const three = profile({ courses: ['ENG4U', 'MHF4U', 'SCH4U'] })
+    const step = startSteps(three).find((s) => s.key === 'courses')
+    expect(step?.value).toContain(String(tickedCourses(three)))
   })
 })

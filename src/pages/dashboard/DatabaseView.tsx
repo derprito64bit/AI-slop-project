@@ -106,9 +106,12 @@ export default function DatabaseView() {
       <section className="rounded-xl border border-line bg-paper p-6">
         <h2 className="font-600 text-ink">What the data is</h2>
         <p className="mt-3 leading-relaxed text-slate">
-          {/* No typed cycle count here: summary.json carries no cycle total and
-              stats.json gains one every year. The exact number is stated in the
-              cycles section below, where it is computed. */}
+          {/* No typed cycle count here: stats.json gains a cycle every year, and
+              the exact number is stated in the cycles section below where it is
+              computed. summary.json does now carry per-cycle totals — added for
+              the dashboard's graduating-year line — but this page keeps its own
+              rollup, because it needs withAverage and a mean in the same pass it
+              already makes. cycles.test.ts asserts the two agree. */}
           {SUMMARY.reports.toLocaleString()} anonymous reports from students across every
           application cycle we hold, covering {SUMMARY.programs.toLocaleString()} programs at{' '}
           {SUMMARY.universities} universities. Each record is one student saying what they applied

@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import UniversityMark from '../../components/UniversityMark'
+import { KeepControl } from '../../components/KeepButton'
 import { FitTag } from '../../components/BalanceCheck'
 import { allTags, matchPrograms, setNote, toggleShortlist, toggleTag } from '../../lib/profile'
+import { nearHome, nearHomeNote } from '../../lib/nearHome'
 import type { SavedProfile } from '../../lib/profile'
 import { useDashboard } from './context'
 import type { Program } from '../../data/types'
@@ -26,6 +28,15 @@ export default function ListView() {
           .filter((p) => !profile.shortlist.includes(p.id))
           .slice(0, 9)
       : []
+
+  // Null unless there is a placeable home city AND something kept to measure.
+  // `nearHome` does the validating — a synced homeCity is not checked against
+  // CITY_POINTS on the way in, so it can be any string.
+  const homeRoll =
+    profile.answers?.homeCity && data
+      ? nearHome(profile.answers.homeCity, kept, data.universities)
+      : null
+  const home = homeRoll ? nearHomeNote(homeRoll) : null
 
   return (
     <>
@@ -82,7 +93,27 @@ export default function ListView() {
           </p>
         </div>
       ) : (
-        <ul className="grid gap-4 xl:grid-cols-2">
+        <>
+          {/* WHERE THIS LIST IS, FROM WHERE THEY LIVE.
+              
+              `homeCity` was asked in the survey and read by exactly one place:
+              the map's "measure distances from" dropdown. So the answer did
+              nothing unless the student went looking for the map.
+
+              Inside the `data`-resolved branch on purpose. `kept` is [] on the
+              first paint of every visit — this needs resolved programs AND
+              data.universities, and there is no shortlist-only signal to gate
+              on, so anywhere above this it would flash. */}
+          {home !== null && (
+            <div className="mb-6 rounded-xl border border-line bg-surface p-4">
+              <p className="text-sm leading-relaxed text-ink">{home.headline}</p>
+              {home.extremes !== '' && (
+                <p className="mt-1 text-sm leading-relaxed text-slate">{home.extremes}</p>
+              )}
+              <p className="mt-2 text-xs leading-relaxed text-slate">{home.qualifier}</p>
+            </div>
+          )}
+          <ul className="grid gap-4 xl:grid-cols-2">
           {visible.map((p) => (
             <ProgramCard
               key={p.id}
@@ -95,7 +126,8 @@ export default function ListView() {
               onChange={setProfile}
             />
           ))}
-        </ul>
+          </ul>
+        </>
       )}
 
       {suggested.length > 0 && (
@@ -121,13 +153,13 @@ export default function ListView() {
                     {uniName.get(p.universityId)} · {p.accepted?.median}%
                   </span>
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => setProfile(toggleShortlist(p.id))}
-                  className="shrink-0 rounded-full border border-line px-3 py-1 text-xs font-600 text-slate transition-colors hover:border-brand-300 hover:text-ink"
-                >
-                  + Keep
-                </button>
+                {/* Always `kept={false}` — `suggested` is filtered to programs
+                    NOT on the shortlist (see above), so a row here cannot be
+                    kept and vanishes on the next render after a click. That is
+                    existing behaviour, not something the shared control
+                    introduced: do not "fix" it to isKept() and expect to see
+                    the ✓ Kept state, because the row is already gone. */}
+                <KeepControl kept={false} onToggle={() => setProfile(toggleShortlist(p.id))} />
               </li>
             ))}
           </ul>
