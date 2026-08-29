@@ -3,8 +3,36 @@
 Read `HANDOFF.md` first for the project as a whole (rules, data pipeline,
 architecture). This file is only about **where things stand now**.
 
-Rewritten 2026-08-28 at the end of a long session. **Everything below is merged
-and deployed**, and every claim in it was probed rather than assumed.
+Rewritten 2026-08-28 at the end of a long session, and **appended to later the
+same day** by the session on `feature/uncropped-marks` — see §0. Every claim was
+probed rather than assumed, and where a claim from the earlier pass turned out
+to be stale it has been corrected in place with the evidence, rather than
+quietly deleted.
+
+---
+
+## 0. The later session, in short
+
+Three things, all on `feature/uncropped-marks`:
+
+1. **The eight cropped crests are now the full lockups.** Guelph, McMaster,
+   Ottawa, Queen's, Toronto, Waterloo, Western and York had their crest cut out
+   of the lockup each school publishes. The crops were tight and correct, and
+   the mark they shipped is one no university publishes. Artwork supplied by
+   the maintainer; nothing is cropped now. §2 has the legibility trade.
+2. **A Rule 1 violation was live in `index.html` the whole time.** `<title>`,
+   `og:title`, `twitter:title` and the meta description all still read "Find
+   where you actually get in" — the exact claim #35 pulled out of the `<h1>`.
+   The audit read components; `index.html` is not one. The sweep now has a
+   fifth honesty check that reads the document head, so it cannot come back.
+3. **P2 is done** — Compare's zero state, Balance, Applications and Deadlines.
+   Details in §4.
+
+**Two claims in the 2026-08-28 pass were already stale when it was written**,
+which is the thing to take from this rather than the fixes: both were about work
+that had landed in an earlier PR of the same session. Compare's one-program
+empty state (fixed in #35) and the `xl:` count. Both are corrected below where
+they appear.
 
 ---
 
@@ -29,8 +57,8 @@ target, and `origin/account` is an obsolete orphan whose content landed in #24.
 
 ```
 npm run lint            0 errors
-npm test                282 pass          (was 246 at the start of the session)
-npm run sweep           135 of 135        (was 125 of 125)
+npm test                305 pass          (282 before the later session; 246 before both)
+npm run sweep           136 of 136        (135 before; +1 is the document-head honesty check)
 npm run sweep:sections  26 of 26
 npm run probe:motion    minVisible 0.55, 0 dark frames
                         — the charts row reports 1; the panel swap never dips
@@ -100,6 +128,48 @@ that do not exist. Also two behavioural bugs: "Delete everything" never cleared
 the tracker, and Balance could not tell "never answered" from "declined the
 average".
 
+### University marks, uncropped (`feature/uncropped-marks`)
+
+The eight schools whose mark is a **lockup** — crest plus the school's name —
+had that crest cropped out of them, so the site drew a mark none of those
+universities publishes. The crop boxes are gone; each is now the whole supplied
+file letterboxed into the square.
+
+The artwork was **supplied by the maintainer as files**, not downloaded, so
+those eight entries in `SOURCES` carry no URL and `scripts/lockups/README.md`
+says so instead of back-filling a plausible one. Four of the eight arrived with
+a transparent background, which is better than the white-composited 640×640
+files they replace. All eight are composited onto white on the way out: every
+one sets the school's name in dark type, which vanishes on the dark surface.
+
+**The legibility trade is the thing to understand before changing it.** Measured
+on `npm run logos:check`, against the crest marks as a control: `western` (ink
+is 0.94:1, nearly square), `york`, `queens` and `ottawa` read by 28px.
+`toronto` (2.8:1), `mcmaster`, `waterloo` and `guelph` are faint below about
+36px, and eleven of the fourteen `UniversityMark` call sites are below 48.
+
+All eight are in `CREST_MARKS` anyway. The mark is `aria-hidden` decoration and
+the school's name is set in text beside it everywhere it appears, so the
+alternative is the wall of two-letter monograms that set exists to remove.
+**Deleting any of the four from `CREST_MARKS` gives it the 48px floor back and
+changes nothing else** — monogram in tight rows, full lockup at 48px and up.
+
+### The title said the one thing the site must not (`index.html`)
+
+#35 pulled "Find where you actually get in" out of the `<h1>` as a Rule 1
+violation. It was still in `index.html` four times — `<title>`, `og:title`,
+`twitter:title` and the meta description — because that audit read components
+and `index.html` is not one.
+
+It is the worst place to have left it. The title is the browser tab, the search
+result and every shared link, so the claim the site is built never to make was
+the first thing it said to someone who had not arrived yet.
+
+The four `states no probability` sweep checks read document *text*, which is why
+they passed throughout. There is now a fifth that reads the head, and it was
+confirmed to fail on the old title before being kept — a check that cannot fail
+is not a check.
+
 ### The design system (#40–43)
 
 This is new architecture a new session needs to know exists.
@@ -165,12 +235,33 @@ None of these are code. They are the whole remaining critical path.
 **`DASHBOARD-NEXT.md` holds the backlog in priority order.** P1 shipped in #32
 and P4 in #41; **P2 and P3 are what remain**:
 
-- **P2 — the other blank tools.** Compare is the starkest: its empty state fires
-  for *one* staged program as well as none, so a student who staged one gets no
-  acknowledgement they did anything. Balance, Courses, Applications and Deadlines
-  all still answer "you have nothing" rather than "here is what this will look
-  like once you have used it".
-- **P3 — three answers collected and barely read.** `gradYear` is read by
+- ~~**P2 — the other blank tools.**~~ **DONE** on `feature/uncropped-marks`.
+  Note the headline example this line used to give was already fixed when it was
+  written: Compare's empty state has NOT fired for one staged program since #35
+  (`6847732`), which split it into two branches, the first of which names the
+  staged program. Courses was done too. What actually remained, and what
+  shipped:
+  - **Compare** stages from its own page — the two best-reported of your kept
+    programs, or `SUMMARY.featured` when the list is empty. `ROWS` is hoisted
+    out of the component so the empty state names the real rows.
+  - **Balance** deep-links to the question it needs (`/survey?step=average`;
+    the param is a step ID, never an index). It also grew a **third** empty
+    state that used to be a blank page — `BalanceCheck` returns null when no
+    kept program has a median, and 132 programs have none.
+  - **Applications** offers "Add your N kept programs to the tracker", only
+    while nothing is tracked. `withTracked` is a no-op for ids it already
+    holds, so a second press cannot reset a stage.
+  - **Deadlines** shows the shape of an entry and **no date**, not even a
+    greyed-out example. That is the one thing this page must never do.
+
+  One defect surfaced while building it and is worth knowing about generally:
+  **`accepted !== null` is not the reporting threshold, `insufficientData`
+  is.** build-data sets `accepted` whenever `sampleSize > 0`, so 1,935 of the
+  2,436 programs carry a median the pipeline has already ruled too thin to
+  publish and 1,419 rest on a single report. Anything gating on the median
+  republishes one student's self-report as a distribution.
+- **P3 — three answers collected and barely read.** Re-verified 2026-08-28 and
+  all three still hold: `gradYear` is read by
   nothing at all outside the survey and sync plumbing; `homeCity` only by the
   map; `coop` only filters Programs. The rail shows four of the eight answers,
   which is why its heading now says "Some of your answers".
@@ -178,9 +269,14 @@ and P4 in #41; **P2 and P3 are what remain**:
 Two smaller things, both flagged rather than fixed because they are decisions
 rather than defects:
 
-- **`xl:` is used zero times.** Nothing about content layout responds above
-  `lg:`, so on a 2560px monitor Explore is still three columns in a 1728px
-  container.
+- **Nothing in the content layout responds above `lg:`.** Measured at 2560px:
+  `container-page` caps at 1728px and Explore's program grid is still three
+  columns (`sm:grid-cols-2 lg:grid-cols-3`, no `xl:`). An earlier version of
+  this line said `xl:` was used zero times, which was wrong — there are four
+  uses, and all four are in the dashboard, not in the content grids:
+  `DashboardShell.tsx:358` (`xl:block`, the rail), `ListView.tsx:85`,
+  `OverviewView.tsx:160` and `ProgramsView.tsx:288`. Home also uses `2xl:`/`3xl:`
+  on its parallax art. So the complaint stands and the count did not.
 - **`ProgramsView` and `ListView` still carry inline copies** of the Keep button
   markup rather than using `KeepControl`. A clean follow-up with its own sweep
   run.

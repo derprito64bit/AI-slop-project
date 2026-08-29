@@ -21,22 +21,18 @@ import { useState } from 'react'
 const EXTENSIONS = ['png', 'svg'] as const
 
 /**
- * Schools whose square file is CREST OR ICON art rather than a wordmark lockup.
+ * Schools that draw their artwork at ANY size, instead of taking the 48px floor.
  *
  * This replaced a blanket `size < 48` rule, which existed because the only
  * files in that directory then were lockups — "University of Waterloo" set in
  * three lines is an unreadable grey smudge at 36px, so every listing on the
  * site drew a monogram instead and the logos only ever appeared on program
- * pages. Those eight lockups have since had their crests cropped out, which is
- * why they are in the set below rather than excluded by it.
+ * pages. A crest does not have that problem, so the threshold went per school.
  *
- * The rule was right about the files and wrong about the reason: a crest is
- * legible at 24px. So the threshold is per school now. An id in this set draws
- * its artwork at any size; everything else keeps the 48px floor.
- *
- * ADD AN ID HERE ONLY WHEN THAT SCHOOL'S FILE IS ACTUALLY SQUARE ART. Look at
- * it at 32px first. Getting this wrong does not break anything — it just puts
- * an illegible smudge in every program row, which is the state this replaced.
+ * ADD AN ID HERE ONLY AFTER LOOKING AT THAT SCHOOL'S FILE AT 32px, on the
+ * contact sheet `npm run logos:check` prints. Getting it wrong does not break
+ * anything — it just puts an illegible smudge in every program row, which is
+ * the state this replaced.
  */
 const CREST_MARKS = new Set<string>([
   // Wilfrid Laurier — circular crest, reads down to about 20px.
@@ -54,21 +50,44 @@ const CREST_MARKS = new Set<string>([
   'laurentian', // blue and white shield with a gold sun. The cleanest of the set.
   'nipissing', // blue shield, strong white waves.
   'ubc-okanagan', // the UBC shield — see the note in fetch-logos.mjs.
-  // The eight that shipped a CREST-PLUS-NAME LOCKUP and therefore drew a
-  // two-letter monogram in every listing despite having artwork. Between them
-  // they are 84% of every report the site holds, so they were most of the
-  // placeholder text left on it. The crest was cropped out of the lockup each
-  // already had — see the `crop` boxes in fetch-logos.mjs — except Toronto,
-  // whose crest is about 1:2 and became a sliver in a square tile, so it takes
-  // the published arms instead.
+  // ---------------------------------------------------------------------
+  // The eight whose file is a FULL LOCKUP — crest plus the school's name.
+  //
+  // These are the schools that used to draw a two-letter monogram in every
+  // listing despite having artwork, and between them they are 84% of every
+  // report the site holds. For a while the fix was to crop the crest out of
+  // each lockup, which made them legible at 24px and shipped a mark no
+  // university actually publishes. The crops are gone; the files are now the
+  // whole supplied artwork, letterboxed. See the "full lockups, uncropped"
+  // block in scripts/fetch-logos.mjs.
+  //
+  // THEY ARE ALL IN THIS SET, AND FOUR OF THEM ARE A JUDGEMENT CALL. Measured
+  // on the contact sheet, against the crest marks above as the control:
+  //
+  //   read fine small   western (ink is 0.94:1, nearly square), york (the red
+  //                     U block carries it), queens (the red wordmark), and
+  //                     ottawa (the portico outline) — all legible by 28px.
+  //   faint below ~36   toronto (2.8:1), york's opposite in shape; mcmaster
+  //                     (1.8:1, and the name is set in light slate); waterloo
+  //                     (1.5:1); guelph (the name is a grey bar until 36).
+  //
+  // Those four render as a pale tile in a 24-32px row. That is a real cost and
+  // it was accepted deliberately: the mark is decorative (aria-hidden), the
+  // school's name is always set in text beside it, and the alternative is the
+  // wall of two-letter tiles this set exists to remove.
+  //
+  // TO GIVE THE FAINT FOUR THE 48px FLOOR BACK, delete them from this set —
+  // nothing else changes. They then draw a monogram in tight rows and the full
+  // lockup at 48px and up (Overview featured, UniversityBanner, program hero).
   'waterloo',
   'mcmaster',
   'western',
   'toronto',
   'queens',
-  'ottawa', // the portico device, not heraldry — it exists only in the lockup
-  'york', // likewise the red U block
+  'ottawa',
+  'york',
   'guelph',
+  // ---------------------------------------------------------------------
   'mount-allison', // gold escutcheon, three white books. Reads at 20.
   'unb', // red shield. Strong at 24.
   'smu', // maroon brand shield, not heraldry, but square and high-contrast.

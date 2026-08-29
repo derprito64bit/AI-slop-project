@@ -10,6 +10,7 @@ import {
   loadTracker,
   setStatus,
   statusOf,
+  trackAll,
   untrack,
 } from '../../lib/tracker'
 import { useDashboard } from './context'
@@ -74,9 +75,38 @@ export default function ApplicationsView() {
         <div className="rounded-xl border border-line bg-surface p-6">
           <p className="font-600 text-ink">Nothing on your list yet.</p>
           <p className="mt-2 max-w-lg text-sm leading-relaxed text-slate">
-            This tracks the programs you have kept, so it starts there. Keep a few and they will
-            show up here to move through the stages.
+            This tracks the programs you have kept, so it starts there. Keep a few of the{' '}
+            {data.programs.length.toLocaleString()} in the catalogue and each one arrives here with
+            a rail like this.
           </p>
+
+          {/* The stages, drawn from STATUSES rather than described in a
+              sentence — it is the same list the real rail renders, so this
+              cannot advertise a tool the page does not have.
+              Plain <li>s, not the buttons: there is nothing to set a stage on
+              yet, and a disabled control that never enables is worse than a
+              legend. The dashed border marks an outcome, matching the live
+              rail's own convention. */}
+          <ol
+            className="mt-5 flex flex-wrap gap-1.5"
+            aria-label="The stages an application moves through"
+          >
+            {STATUSES.map((s) => (
+              <li
+                key={s}
+                className={`rounded-full border border-line px-3 py-1 text-xs font-600 text-slate ${
+                  IN_PROGRESS.includes(s) ? '' : 'border-dashed'
+                }`}
+              >
+                {STATUS_LABELS[s]}
+              </li>
+            ))}
+          </ol>
+          <p className="mt-3 max-w-lg text-xs leading-relaxed text-slate">
+            The first three are steps along the way; the dashed three are how it ended. Nothing
+            here is a prediction — you move each one yourself.
+          </p>
+
           <Button to="/profile/programs" className="mt-5">
             Browse programs
           </Button>
@@ -153,6 +183,25 @@ export default function ApplicationsView() {
                 Adding one here does not change your list — it only starts following where the
                 application is up to.
               </p>
+
+              {/* Offered only while NOTHING is tracked, and that is the whole
+                  reason it exists: the page is otherwise a wall of identical
+                  "+ Track" buttons before it can show anybody anything. Once a
+                  student has tracked some, the ones they left out are a
+                  decision rather than an oversight, and the per-row button is
+                  the right grain for changing their mind.
+                  `trackAll` is a no-op for ids it already holds, so a double
+                  press cannot reset a stage — see the note on `withTracked`. */}
+              {tracked.length === 0 && (
+                <Button
+                  type="button"
+                  onClick={() => setTracker(trackAll(kept.map((p) => p.id)))}
+                  className="mt-4"
+                >
+                  Add your {kept.length} kept program{kept.length === 1 ? '' : 's'} to the tracker
+                </Button>
+              )}
+
               <ul className="mt-4 grid gap-2 sm:grid-cols-2">
                 {untracked.map((p) => (
                   <li

@@ -7,15 +7,17 @@ dashboard, in the order worth building it.
 Written 2026-08-28, after the map and admin work landed. Updated the same day at
 the end of a long session.
 
-**Status: P1 is done (#32) and P4 is half done (#41). P2 and P3 are what
-remain.** The measurements below were taken before any of that, so treat the
+**Status: P1 (#32), P2 (`feature/uncropped-marks`) and half of P4 (#41) are
+done. P3 and the `ListSpread` memo in P4 are what remain.** The measurements below were taken before any of that, so treat the
 table as the argument for P2/P3 rather than as the current state — the Overview
 in particular is no longer one of the blank views.
 
-Start with **P2 → Compare**: its empty state fires for *one* staged program as
-well as none, so a student who staged one is told to "pick at least two" with no
-acknowledgement they did anything, and the staged program is invisible on the
-page.
+**Correction, 2026-08-28.** The sentence that used to be here — "start with
+Compare, its empty state fires for one staged program as well as none" — was
+already out of date the day it was written. `CompareTable.tsx` has had two
+separate empty states since #35 (`6847732`): the one-program branch names the
+staged program and says what adding a second does. What was actually left of
+Compare was the *zero*-staged branch, which was a single sentence.
 
 ---
 
@@ -126,7 +128,24 @@ person does not "fix" it by rendering an empty spread chart.
 
 ---
 
-## P2 — The other blank tools
+## P2 — The other blank tools — **DONE 2026-08-28**
+
+Shipped on `feature/uncropped-marks`. Kept below because the reasoning still
+argues for P3, and because two things went differently from what is written
+here.
+
+- **Compare's one-program case was already fixed** when this was written, in
+  #35. What was left was the zero-staged branch. It now stages from its own
+  page rather than sending the student to My list and back.
+- **The pre-stage suggestion needed a data gate nobody had noticed.**
+  `accepted !== null` is not the reporting threshold — `insufficientData` is —
+  so ranking or captioning kept programs by whether they have a median
+  republishes the 1,419 programs that rest on a single report as though they
+  carried a distribution. `compareStarters` and `reportDepth` both gate on
+  `insufficientData` now. Anything else that ranks programs by data depth
+  should too.
+- **Balance turned out to have three empty states, not two.** The third was a
+  blank page: `BalanceCheck` returns null when no kept program has a median.
 
 Each should answer "what will this look like once I have used it?", not only
 "you have nothing".

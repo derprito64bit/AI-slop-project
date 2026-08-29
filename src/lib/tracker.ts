@@ -132,6 +132,48 @@ export function untrack(programId: string): Tracker {
   return save(tracker)
 }
 
+/* ------------------------------------------------------------ bulk add --- */
+
+/**
+ * Merge a set of program ids into a tracker, leaving anything already there
+ * exactly as it was.
+ *
+ * Kept separate from `trackAll`, and given `now` as an argument, so the merge
+ * rule can be tested without a storage stand-in and without the clock. The rule
+ * is the whole point: an id ALREADY IN THE TRACKER IS RETURNED UNTOUCHED — same
+ * status, same deadlines, same `updatedAt`.
+ *
+ * That matters because of where it is called from. The dashboard offers this as
+ * one button over the student's entire kept list, and nothing stops it being
+ * pressed again after they keep one more program. Someone who has already moved
+ * two applications to `applied` and presses it a second time must not find them
+ * back at `researching` — that would be silent, and there is nothing to undo it
+ * from. Being a no-op for ids it already holds is also what makes the button
+ * safe to press twice.
+ */
+export function withTracked(
+  tracker: Tracker,
+  programIds: string[],
+  now = new Date().toISOString(),
+): Tracker {
+  const next = { ...tracker }
+  for (const id of programIds) {
+    // A falsy id would become a row keyed by '' that no program can ever match
+    // and no part of the UI can offer to remove.
+    if (!id || next[id]) continue
+    next[id] = { status: 'researching', deadlines: [], updatedAt: now }
+  }
+  return next
+}
+
+/**
+ * Start tracking every one of these that is not tracked yet, at the first
+ * stage — the same place the per-row "+ Track" button starts one.
+ */
+export function trackAll(programIds: string[]): Tracker {
+  return save(withTracked(loadTracker(), programIds))
+}
+
 /* ------------------------------------------------------------ deadlines --- */
 
 export function addDeadline(programId: string, deadline: Deadline): Tracker {

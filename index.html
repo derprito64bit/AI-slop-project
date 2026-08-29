@@ -4,20 +4,27 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Find where you actually get in — real university admission requirements, personalized to your profile." />
+    <!-- RULE 1 LIVES HERE TOO. Every string in this head said "find where you
+         actually get in" until 2026-08-28. That is the exact claim the site is
+         built not to make — see the note above STEPS in src/pages/Home.tsx —
+         and it survived the copy audit that removed it from the <h1> because
+         the audit read components and this file is not one. It is also the
+         worst place to leave it: the title is the browser tab, the search
+         result and every shared link. Describe the data, never the outcome. -->
+    <meta name="description" content="The averages admitted students actually reported, program by program — instead of the vague cutoffs official sites publish." />
     <meta name="theme-color" content="#3f5bd9" />
 
     <!-- Social sharing (Open Graph / Twitter). Add an og:image once we have artwork. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Acceptiversity" />
-    <meta property="og:title" content="Acceptiversity — find where you actually get in" />
+    <meta property="og:title" content="Acceptiversity — what it actually took to get in" />
     <meta
       property="og:description"
       content="Official sites give vague cutoffs. See real admission averages, personalized to your grades and interests."
     />
     <meta property="og:url" content="https://derprito64bit.github.io/AI-slop-project/" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Acceptiversity — find where you actually get in" />
+    <meta name="twitter:title" content="Acceptiversity — what it actually took to get in" />
     <meta
       name="twitter:description"
       content="Official sites give vague cutoffs. See real admission averages, personalized to your grades and interests."
@@ -29,7 +36,7 @@
       href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Inter:wght@400;500;600;700&display=swap"
       rel="stylesheet"
     />
-    <title>Acceptiversity — find where you actually get in</title>
+    <title>Acceptiversity — what it actually took to get in</title>
     <!-- Set theme before first paint to avoid a flash. Defaults to light;
          only uses a stored choice if the user has toggled before. -->
     <script>

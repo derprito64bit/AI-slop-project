@@ -8,7 +8,9 @@ import {
   removeDeadline,
   setStatus,
   statusOf,
+  trackAll,
   untrack,
+  withTracked,
 } from './tracker'
 import { saveProfile, loadProfile, EMPTY_PROFILE } from './profile'
 
@@ -66,6 +68,55 @@ describe('status', () => {
     const t = loadTracker()
     expect(statusOf(t, 'a::1')).toBeNull()
     expect(statusOf(t, 'a::2')).toBe('applying')
+  })
+})
+
+describe('bulk add', () => {
+  it('starts every untracked program at the first stage', () => {
+    trackAll(['a::1', 'a::2'])
+    const t = loadTracker()
+    expect([statusOf(t, 'a::1'), statusOf(t, 'a::2')]).toEqual(['researching', 'researching'])
+  })
+
+  // The button this exists for is offered over the WHOLE kept list, so it is
+  // pressed against work already done. Sending an applied program back to
+  // researching would be silent and there is nothing to undo it from.
+  it('does not touch a program the student has already moved', () => {
+    setStatus('a::1', 'applied')
+    addDeadline('a::1', { label: 'close', date: '2026-02-01', source: '' })
+    const before = loadTracker()['a::1']
+
+    trackAll(['a::1', 'a::2'])
+
+    expect(loadTracker()['a::1']).toEqual(before)
+    expect(statusOf(loadTracker(), 'a::2')).toBe('researching')
+  })
+
+  it('is idempotent — a second press adds nothing and resets nothing', () => {
+    trackAll(['a::1', 'a::2'])
+    setStatus('a::2', 'offer')
+    const before = loadTracker()
+
+    trackAll(['a::1', 'a::2'])
+
+    expect(loadTracker()).toEqual(before)
+  })
+
+  it('collapses a repeated id instead of writing it twice', () => {
+    const merged = withTracked({}, ['a::1', 'a::1'], '2026-01-01T00:00:00.000Z')
+    expect(Object.keys(merged)).toEqual(['a::1'])
+    expect(merged['a::1'].updatedAt).toBe('2026-01-01T00:00:00.000Z')
+  })
+
+  it('merges without mutating or saving — that is trackAll’s job', () => {
+    setStatus('a::1', 'applied')
+    const original = loadTracker()
+
+    const merged = withTracked(original, ['a::1', 'a::2'], '2026-01-01T00:00:00.000Z')
+
+    expect(Object.keys(original)).toEqual(['a::1'])
+    expect(Object.keys(merged).sort()).toEqual(['a::1', 'a::2'])
+    expect(statusOf(loadTracker(), 'a::2')).toBeNull()
   })
 })
 

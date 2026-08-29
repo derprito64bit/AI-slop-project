@@ -723,6 +723,32 @@ async function sweepCross() {
     check('honesty', `${path} states no probability`, !claimed, hit ? `"${hit[0]}"` : '')
     await p.close()
   }
+
+  // THE HEAD, NOT ONLY THE BODY. The four checks above read document text, so
+  // for months they passed while <title>, og:title, twitter:title and the meta
+  // description all said "Find where you actually get in" — the exact claim the
+  // copy audit had already pulled out of the <h1> in the largest type on the
+  // site. It survived because index.html is not a component and nothing here
+  // looked at it. That is the worst place to leave the claim, not the most
+  // harmless: the title is the browser tab, the Google result and every link
+  // anybody shares.
+  //
+  // These strings are baked into index.html and identical on every route, so
+  // one page load is the whole surface.
+  const { page: pHead } = await open('/')
+  const head = await pHead.evaluate(() => ({
+    title: document.title,
+    meta: [...document.querySelectorAll('meta[name], meta[property]')]
+      .map((m) => `${m.getAttribute('name') ?? m.getAttribute('property')}=${m.getAttribute('content') ?? ''}`),
+  }))
+  await pHead.close()
+  // Wider than `claims`: no disclaimer can ride along in a title, so anything
+  // promising an outcome counts, and the phrasing that actually shipped is the
+  // first thing named.
+  const headClaims = /where you (actually )?get in|your odds|acceptance rate|chance(s)? of (admission|getting in)|will you get in|get you in/i
+  const headText = [head.title, ...head.meta].join('  ')
+  const headHit = headText.match(headClaims)
+  check('honesty', 'document head states no probability', !headHit, headHit ? `"${headHit[0]}"` : head.title)
 }
 
 /* ------------------------------------------------------------------ run --- */

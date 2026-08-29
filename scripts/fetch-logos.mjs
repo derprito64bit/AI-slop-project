@@ -1,4 +1,4 @@
-// Fetch and square-crop the university marks in public/images/universities/square/.
+// Fetch and square the university marks in public/images/universities/square/.
 //
 //   node scripts/fetch-logos.mjs             report what it would do, write nothing
 //   node scripts/fetch-logos.mjs --write     download and write the PNGs
@@ -18,14 +18,19 @@
 // somebody can see rather than a mystery PNG. Re-running is how you refresh one.
 //
 // WHAT MAKES A GOOD SOURCE, in order:
-//   1. the coat of arms, crest or shield. Square by construction, and legible
-//      at 24px, which is the whole reason CREST_MARKS exists in UniversityMark.
-//   2. a square icon or monogram mark.
-//   3. a wide wordmark lockup, and only if nothing else exists. These stay OUT
-//      of CREST_MARKS: "University of Waterloo" set in three lines is a grey
-//      smudge at 36px, which is the state the 48px floor was added to fix.
+//   1. the school's own current mark, whatever shape it is. Prefer the file the
+//      university actually publishes over a heraldic variant found elsewhere.
+//   2. the coat of arms, crest or shield, for a school that publishes one on
+//      its own. Square by construction and legible at 24px.
+//   3. a square icon or monogram mark.
 // Never a campus photograph. Wikipedia's pageimages API returns one of those
 // for several schools, which is why nothing here is taken from it blindly.
+//
+// This list used to rank a crest above the published lockup, and the eight
+// entries under "the full lockups" below were cropped down to obey it. That
+// ordering optimised for the 24px tile and paid for it by shipping a mark no
+// university publishes. Legibility is now CREST_MARKS' problem, not the
+// artwork's.
 //
 // LICENSING. These are institutional arms and wordmarks used to identify each
 // school's programs — ordinary nominative use, and no university has been
@@ -33,14 +38,18 @@
 // HANDOFF-NEXT.md §3. Pulling one is a one-line deletion and the monogram comes
 // back on its own.
 //
-// EXTRACTING A CREST FROM A LOCKUP. Eight schools shipped a lockup — the crest
-// set beside or above the school's name — and a lockup is unreadable at 24px, so
-// those eight drew a two-letter monogram in every listing despite having
-// artwork. The crest inside them is perfectly good: the files are 640x640, so
-// the crest region is 150-300px, which is more than the 256 this writes. A
-// source with `crop` takes that region instead of the whole image, and `local`
-// reads the file already in the folder rather than fetching anything. Boundaries
-// came from an ink-band scan of each file, not from eyeballing.
+// LOCAL SOURCES. A source with `local` reads a file from scripts/lockups/
+// instead of fetching anything. That is how the eight schools whose mark is a
+// full lockup are built — the artwork was supplied rather than downloaded, so
+// there is no URL to record, and the file itself is the provenance. See the
+// block that starts "the full lockups, uncropped" in SOURCES.
+//
+// `crop` still works and nothing uses it. It takes a fractional region of the
+// source instead of the whole image, clipping rather than centring. It was
+// added to cut the crest out of those eight lockups and it did that correctly;
+// the reason it is unused is a design decision, not a defect, and it is kept
+// because the next mark that arrives buried in a sheet of other artwork will
+// want it.
 //
 // HOW THE SQUARING WORKS. Sources are a mix of SVG, PNG and JPEG at wildly
 // different aspect ratios, so each is rendered into a 256x256 transparent
@@ -198,64 +207,67 @@ const SOURCES = {
     // Named "Coat of arms of" on Commons but is escutcheon-only, and CC0.
   },
 
-  // --- crests extracted from the lockups these schools shipped with ----------
+  // --- the full lockups, uncropped -------------------------------------------
   //
-  // All eight had artwork and all eight still drew a two-letter monogram in
-  // every listing, because a crest-plus-name lockup is illegible at 24px and
-  // the 48px floor caught them. Between them they are 84% of every report the
-  // site holds, so this was most of the "placeholder text" left on the site.
+  // These eight ship a LOCKUP - the crest set beside or above the school's name
+  // - and for a while this script cropped the crest out of each, because a
+  // lockup is illegible at 24px and the 48px floor in UniversityMark caught
+  // them. The crops were tight and they were still damage: a shield cut out of
+  // the mark its owner publishes is not that mark, and on a page of program
+  // rows the seams showed.
   //
-  // The crest inside each is the school's own current mark, at 150-300px in a
-  // 640x640 file — better provenance than a heraldic variant fetched from
-  // elsewhere, and no new licensing surface, since the file already shipped.
-  // Boxes are tight ink bounds computed from each file, not eyeballed.
-  waterloo: {
-    local: 'waterloo.png',
-    depicts: 'arms',
-    crop: { x: 0.383, y: 0.449, w: 0.23, h: 0.262 },
-  },
-  mcmaster: {
-    local: 'mcmaster.png',
-    depicts: 'arms',
-    // Top edge sits BELOW the baseline of "McMaster", which runs right over
-    // the shield — an ink-bounds scan alone kept catching the "ter".
-    crop: { x: 0.645, y: 0.447, w: 0.19, h: 0.248 },
-  },
-  western: {
-    local: 'western.png',
-    depicts: 'arms',
-    crop: { x: 0.32, y: 0.203, w: 0.379, h: 0.465 },
-  },
+  // So the crop boxes are gone. Each of these is now the whole supplied file,
+  // letterboxed into the square - nothing cut off, nothing zoomed. The cost is
+  // real and it is deliberate: see the note above CREST_MARKS in
+  // src/components/UniversityMark.tsx for what a 3.2:1 lockup does in a 24px
+  // tile, and the contact sheet from `npm run logos:check` for the rest.
+  //
+  // PROVENANCE. Unlike every other entry here these carry no URL. They were
+  // supplied by the maintainer as files (dropped in ~/Downloads/logos on
+  // 2026-08-28) and copied into scripts/lockups/ under their school id -
+  // `uoft.png` became `toronto.png`, `uottawa.png` became `ottawa.png`. Where
+  // each was originally downloaded from was NOT recorded, and saying so is the
+  // honest version of that rather than a URL reconstructed after the fact.
+  // Four of the eight (queens, toronto, ottawa, waterloo) arrived with a
+  // transparent background, which is better artwork than the white-composited
+  // 640x640 files they replace; git history of scripts/lockups/ holds those.
+  //
+  // BACKGROUND IS WHITE, NOT TRANSPARENT, for all eight. Every one sets the
+  // school's name in dark type - navy, black, slate, crimson - and dark type on
+  // transparency is invisible on the dark surface. Same reason the two U of T
+  // campus wordmarks are composited, and what the marks already in this folder
+  // do.
+  waterloo: { local: 'waterloo.png', depicts: 'lockup', background: '#fff' },
+  mcmaster: { local: 'mcmaster.png', depicts: 'lockup', background: '#fff' },
+  western: { local: 'western.png', depicts: 'lockup', background: '#fff' },
   toronto: {
-    // NOT extracted. The crest inside the lockup is genuinely tall and narrow
-    // — about 1:2 — so cropped into a square it renders as a sliver a quarter
-    // the height of every shield beside it. The published arms are 180x180 and
-    // hold their detail at 24px, which is the whole test.
-    url: `${C.replace('/commons/', '/en/')}/0/04/Utoronto_coa.svg/500px-Utoronto_coa.svg.png`,
-    depicts: 'arms',
+    // Was the only one of the eight NOT extracted - the crest inside the lockup
+    // is about 1:2, so it cropped to a sliver, and this entry fetched the
+    // published 180x180 arms from Commons instead. That was the right answer to
+    // a question nobody is asking any more: the lockup is what U of T puts on
+    // things, so the lockup is what goes here.
+    local: 'toronto.png',
+    depicts: 'lockup',
+    background: '#fff',
   },
-  queens: {
-    local: 'queens.png',
-    depicts: 'arms',
-    crop: { x: 0.355, y: 0.215, w: 0.293, h: 0.359 },
-  },
+  queens: { local: 'queens.png', depicts: 'lockup', background: '#fff' },
   ottawa: {
+    // 250x212, the smallest input here by a distance, against a 256 canvas - so
+    // it draws about 1:1 and gains nothing from the inset. Legible, but this is
+    // the first one to replace if a larger file turns up.
     local: 'ottawa.png',
-    depicts: 'arms',
-    // Not heraldry — the portico device uOttawa uses as its mark. It exists
-    // nowhere except inside this lockup, which is the case extraction is for.
-    crop: { x: 0.25, y: 0.063, w: 0.5, h: 0.566 },
+    depicts: 'lockup',
+    background: '#fff',
   },
-  york: {
-    local: 'york.png',
-    depicts: 'arms',
-    // The red U block, likewise a brand device rather than arms.
-    crop: { x: 0.609, y: 0.352, w: 0.352, h: 0.258 },
-  },
+  york: { local: 'york.png', depicts: 'lockup', background: '#fff' },
   guelph: {
+    // Supplied on a light grey (#d9d9d9) card rather than on white, so this one
+    // draws a faint frame inside the tile that the other seven do not. Left in:
+    // trimming it is a crop, and the point of this block is that nothing here
+    // is cropped.
     local: 'guelph.png',
-    depicts: 'arms',
-    crop: { x: 0.402, y: 0.156, w: 0.199, h: 0.309 },
+    depicts: 'lockup',
+    background: '#fff',
   },
 
   ocad: {
@@ -334,11 +346,13 @@ const pause = (ms) => new Promise((r) => setTimeout(r, ms))
 const THROTTLE_MS = 500
 
 /**
- * Read one of the original lockups — the crest-extraction path.
+ * Read a supplied source file from scripts/lockups/.
  *
- * From scripts/lockups/, NOT from the output folder: this script overwrites
- * square/<id>.png with the crest it crops out, so reading the input from there
- * would crop its own output on the second run and zoom further in every time.
+ * From scripts/lockups/, NOT from the output folder. This script overwrites
+ * square/<id>.png, so an input read from there would be reprocessed on every
+ * run — harmless while nothing is cropped, and it silently zoomed further in
+ * on every run back when the eight lockups were being cropped. Keeping the
+ * input and the output in separate folders is what makes the step repeatable.
  */
 function readLocal(name) {
   return { buffer: readFileSync(join(ROOT, 'scripts/lockups', name)), type: 'image/png' }
