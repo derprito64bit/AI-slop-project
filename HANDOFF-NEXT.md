@@ -238,6 +238,31 @@ A three-audit sweep of the whole site turned these up. The rule violations and
 bugs from it shipped; these did not, and each is recorded with what is already
 known so nobody re-derives it.
 
+**Two animation ideas were built, measured and reverted. Both are recorded so
+nobody spends the afternoon again.**
+
+*Native scroll-driven CSS for the parallax* — rewriting `Parallax.tsx` on
+`animation-timeline: view()` so the browser runs it off the main thread instead
+of `useScroll` writing an inline transform every frame. It worked. It changed
+nothing measurable: alternating both builds in one session over a full scroll of
+Home gave script 92/89ms for the JS path against 90/90ms for the native one.
+There are only three parallaxes on the site, they are `hidden lg:block`
+decoration, and Home's cost is spread across the pinned roadmap and the
+marquees. The full note and numbers are in `src/components/Parallax.tsx`, where
+the next person to have the idea will find them. Worth revisiting only against a
+scroll-linked effect with many more elements.
+
+*View Transitions for an Explore-card-to-program-page morph* — `<Link
+viewTransition>` plus a shared `view-transition-name`. The browser supports it,
+the name was stamped on the right element and the receiving end matched, and the
+transition **never ran**: measured zero frames of `:active-view-transition`.
+The reason is that `viewTransition` is a **data-router** feature, and this app
+uses `<BrowserRouter>` with `<Routes>` (`main.tsx:18`), where the prop is
+silently ignored. Shipping it means migrating to `createBrowserRouter` +
+`RouterProvider` — route objects, loaders, error boundaries — which is an
+architecture change, not an animation. That migration is the prerequisite, and
+it should be judged on its own merits.
+
 **The program page's tab swap has a real blink.** Now that `probe:motion`
 watches the right element, `program -> analytics` reports `minVisible 0` with
 ~53 dark frames — roughly 230ms where the panel is invisible, on the most

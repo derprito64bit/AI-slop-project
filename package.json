@@ -16,7 +16,8 @@
     "sweep:sections": "node scripts/sweep-sections.mjs",
     "probe:motion": "node scripts/motion-probe.mjs",
     "logos": "node scripts/fetch-logos.mjs",
-    "logos:check": "node scripts/logo-check.mjs"
+    "logos:check": "node scripts/logo-check.mjs",
+    "probe:cost": "node scripts/probe-cost.mjs"
   },
   "dependencies": {
     "leaflet": "^1.9.4",

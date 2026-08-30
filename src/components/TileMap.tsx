@@ -225,15 +225,22 @@ export default function TileMap({
         .map((p) => [p.lat, p.lon] as [number, number])
 
       marker.on('click', () => {
+        // `animate: false` under reduced motion. Leaflet drives this pan-and-zoom
+        // itself, in JS, so neither <MotionConfig> nor the global CSS
+        // `transition-duration: 0.001ms` rule can reach it — this was the largest
+        // uncontrolled movement left on the site. Read at click time rather than
+        // captured, so toggling the OS setting takes effect without a remount.
+        const still = window.matchMedia('(prefers-reduced-motion: reduce)').matches
         if (campuses.length) {
           instance.flyToBounds(L.latLngBounds(campuses), {
             padding: [70, 70],
             // Never further out than the city/campus threshold, or clicking a
             // city would swap back to the very marks you just clicked.
             maxZoom: ZOOM_ON_PICK,
+            animate: !still,
           })
         } else {
-          instance.flyTo([group.point.lat, group.point.lon], ZOOM_ON_PICK)
+          instance.flyTo([group.point.lat, group.point.lon], ZOOM_ON_PICK, { animate: !still })
         }
       })
       marker.addTo(cityLayer.current)

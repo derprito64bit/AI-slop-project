@@ -15,6 +15,7 @@ import {
   type SortKey,
 } from '../../lib/search'
 import { COOP_LABELS, FIELD_LABELS, PROVINCE_LABELS, isKept, toggleShortlist } from '../../lib/profile'
+import { useRevealOnScroll } from '../../lib/revealOnScroll'
 import { useDashboard } from './context'
 
 // Browse everything, with the filters the dataset actually supports.
@@ -46,6 +47,7 @@ const PAGE = 24
 
 export default function ProgramsView() {
   const { data, profile, setProfile, average, uniName } = useDashboard()
+  const revealRef = useRevealOnScroll()
   const [params, setParams] = useSearchParams()
   const [shown, setShown] = useState(PAGE)
 
@@ -262,7 +264,7 @@ export default function ProgramsView() {
       ) : (
         <>
           <ul className="mt-5 grid gap-3">
-            {results.slice(0, shown).map((p) => {
+            {results.slice(0, shown).map((p, i) => {
               const band = difficultyBand(p)
               const kept = isKept(profile, p.id)
               return (
@@ -270,9 +272,19 @@ export default function ProgramsView() {
                 // min-width:auto, so without it the row cannot shrink below
                 // the full width of the program name and the whole page gets
                 // dragged wider than the phone it is on.
+                //
+                // reveal-item + revealRef is the CSS scroll reveal Explore
+                // uses, and this is the longer list of the two — up to 24 rows
+                // at a time, hundreds after "Show more". It has to be the CSS
+                // one rather than a motion variant: a JS reveal writes inline
+                // styles to every animating row every frame, measured at 565ms
+                // of style recalculation against 18ms. See lib/revealOnScroll.
+                // The stagger caps itself at eight rows, so row 60 does not
+                // wait its turn.
                 <li
                   key={p.id}
-                  className="flex min-w-0 items-center gap-3 rounded-xl border border-line bg-paper p-3"
+                  ref={revealRef(i)}
+                  className="reveal-item flex min-w-0 items-center gap-3 rounded-xl border border-line bg-paper p-3"
                 >
                   <UniversityMark
                     id={p.universityId}

@@ -1,4 +1,4 @@
-import { useRef, type ReactNode } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   motion,
   useScroll,
@@ -21,16 +21,28 @@ export type RoadmapStep = { n: string; title: string; body: string }
 // later. One combined path would have to fade in whole, which is the thing it
 // is meant to stop looking like.
 function Marker({ kind, delay = 0 }: { kind: 'dot' | 'flag' | 'check'; delay?: number }) {
+  // `pathLength` is not a transform, so <MotionConfig reducedMotion="user"> does
+  // NOT drop it — the flag still unfurled and the tick still drew themselves for
+  // someone who asked for no motion. Worse, this component's reduced-motion path
+  // routes to the inline variant, which is the one that renders these. Every
+  // other animated thing in this file branches on `reduced`; these two were
+  // missed because the property they animate is not one MotionConfig covers.
+  const reduced = useReducedMotion()
+  const draw = reduced
+    ? { initial: { pathLength: 1 }, whileInView: { pathLength: 1 }, transition: { duration: 0 } }
+    : null
   if (kind === 'flag')
     return (
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M5 21V4" />
         <motion.path
           d="M5 4l11 3-3 4 3 4-11 3"
-          initial={{ pathLength: 0 }}
-          whileInView={{ pathLength: 1 }}
+          initial={draw ? draw.initial : { pathLength: 0 }}
+          whileInView={draw ? draw.whileInView : { pathLength: 1 }}
           viewport={{ once: true, margin: '-60px' }}
-          transition={{ delay: delay + UNFURL_AFTER, duration: 0.6, ease: EASE.out }}
+          transition={
+            draw ? draw.transition : { delay: delay + UNFURL_AFTER, duration: 0.6, ease: EASE.out }
+          }
         />
       </svg>
     )
@@ -39,10 +51,12 @@ function Marker({ kind, delay = 0 }: { kind: 'dot' | 'flag' | 'check'; delay?: n
       <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <motion.path
           d="M5 12l4 4 10-10"
-          initial={{ pathLength: 0 }}
-          whileInView={{ pathLength: 1 }}
+          initial={draw ? draw.initial : { pathLength: 0 }}
+          whileInView={draw ? draw.whileInView : { pathLength: 1 }}
           viewport={{ once: true, margin: '-60px' }}
-          transition={{ delay: delay + UNFURL_AFTER, duration: 0.55, ease: EASE.out }}
+          transition={
+            draw ? draw.transition : { delay: delay + UNFURL_AFTER, duration: 0.55, ease: EASE.out }
+          }
         />
       </svg>
     )
@@ -51,6 +65,29 @@ function Marker({ kind, delay = 0 }: { kind: 'dot' | 'flag' | 'check'; delay?: n
 
 /** How long after a pin lands before its mark draws itself. */
 const UNFURL_AFTER = 0.26
+
+/**
+ * The section's own heading — shared, because only one variant used to have it.
+ *
+ * Home renders `<Roadmap pinned />` and nothing else for this section, and the
+ * heading lived inside PinnedRoadmap. So anyone routed to the inline variant
+ * got the three steps with no "How it works" and no title above them — which
+ * until now meant every reduced-motion visitor, and would now also mean every
+ * phone.
+ */
+function RoadmapHeading() {
+  return (
+    <div className="text-center">
+      <p className="text-sm font-500 uppercase tracking-wider text-brand-500">How it works</p>
+      {/* display-2, not display-1. A section heading at display-1 ties the
+          page h1 exactly, so the page had two things claiming to be its
+          title and the hierarchy read flat. */}
+      <h2 className="mt-2 font-display text-display-2 font-600 text-ink">
+        Three steps from “I have no idea” to a real shortlist.
+      </h2>
+    </div>
+  )
+}
 
 const KINDS: Array<'dot' | 'flag' | 'check'> = ['dot', 'flag', 'check']
 const PATH_D = 'M80,80 C 280,80 300,30 500,45 S 720,95 920,55'
@@ -64,10 +101,41 @@ const PATH_D = 'M80,80 C 280,80 300,30 500,45 S 720,95 920,55'
 // `pinned` prop to revert to the normal inline layout.
 export default function Roadmap({ steps, pinned = false }: { steps: RoadmapStep[]; pinned?: boolean }) {
   const reduced = useReducedMotion()
+  const narrow = useNarrow()
   // Reduced motion + pinned would be a tall empty scroll with no payoff — fall
   // back to the inline version.
-  if (pinned && !reduced) return <PinnedRoadmap steps={steps} />
+  //
+  // NARROW FALLS BACK TOO, and that one was a bug rather than a preference.
+  // The pinned layout puts its content in a `h-screen overflow-hidden` box.
+  // Above `sm:` the three steps sit in a row and fit; below it they stack, and
+  // an eyebrow + a display-2 heading + three cards of (numeral + h3 + body) +
+  // the scroll hint comes to roughly 780px inside a 667-812px box that cannot
+  // scroll. It was cut off top and bottom on every phone, on the third section
+  // of the home page. The winding path is already `hidden sm:block`, so below
+  // that breakpoint the pinned version was most of a screen of nothing anyway.
+  if (pinned && !reduced && !narrow) return <PinnedRoadmap steps={steps} />
   return <InlineRoadmap steps={steps} reduced={!!reduced} />
+}
+
+/**
+ * True below Tailwind's `sm` (640px), tracked live.
+ *
+ * A one-shot read at mount would leave the wrong variant on screen after a
+ * rotate or a resize, and this decides between a 300vh pinned track and an
+ * inline block — not something to get wrong until the next navigation.
+ */
+function useNarrow(): boolean {
+  const [narrow, setNarrow] = useState(
+    () => typeof window !== 'undefined' && window.matchMedia('(max-width: 639px)').matches,
+  )
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 639px)')
+    const onChange = () => setNarrow(mq.matches)
+    mq.addEventListener('change', onChange)
+    onChange()
+    return () => mq.removeEventListener('change', onChange)
+  }, [])
+  return narrow
 }
 
 // ---------- Reveal helper tied to a scroll-progress MotionValue ----------
@@ -104,29 +172,28 @@ function PinnedRoadmap({ steps }: { steps: RoadmapStep[] }) {
   // This reliably fills to the very end — unlike motion's pathLength, which
   // mis-measured with non-scaling-stroke + stretched preserveAspectRatio.
   // Completes by ~0.55 and clamps at full, so it's solidly drawn while pinned.
-  const revealW = useTransform(scrollYProgress, [0.05, 0.55], [0, 1000])
+  const revealW = useTransform(scrollYProgress, [0.05, 0.45], [0, 1000])
   const xs = steps.map((_, i) => ((i + 0.5) / steps.length) * 100)
   // Each step reveals in its own slice — all finished by ~0.55 and then held
   // (useTransform clamps at 1), so nothing is mid-fade at the end of the pin.
   const win = (i: number) => {
-    const start = 0.14 + i * (0.4 / steps.length)
-    return { start, end: start + 0.14 }
+    const start = 0.1 + i * (0.3 / steps.length)
+    return { start, end: start + 0.12 }
   }
 
   return (
     // Tall track: the sticky child stays full-screen while you scroll through it.
-    <section ref={ref} className="relative h-[300vh]">
+    //
+    // 220vh, down from 300vh. At 300 the section held the viewport for roughly
+    // 2,000px: the three steps arrived around the middle and had scrolled away
+    // again before the pin released, leaving a drawn line above half a screen
+    // of nothing. It needed a "KEEP SCROLLING" prompt to explain itself, which
+    // is the tell. The reveal windows below were retimed with it so the steps
+    // land earlier and are still there when the section lets go.
+    <section ref={ref} className="relative h-[220vh]">
       <div className="sticky top-0 flex h-screen flex-col justify-center overflow-hidden">
         <div className="container-page">
-          <div className="text-center">
-            <p className="text-sm font-500 uppercase tracking-wider text-brand-500">How it works</p>
-            {/* display-2, not display-1. A section heading at display-1 ties the
-                page h1 exactly, so the page had two things claiming to be its
-                title and the hierarchy read flat. */}
-            <h2 className="mt-2 font-display text-display-2 font-600 text-ink">
-              Three steps from “I have no idea” to a real shortlist.
-            </h2>
-          </div>
+          <RoadmapHeading />
 
           {/* Winding path + markers */}
           <div className="relative mt-16 hidden h-40 sm:block">
@@ -201,7 +268,8 @@ function InlineRoadmap({ steps, reduced }: { steps: RoadmapStep[]; reduced: bool
   const xs = steps.map((_, i) => ((i + 0.5) / steps.length) * 100)
 
   return (
-    <div ref={ref}>
+    <div ref={ref} className="container-page py-20">
+      <RoadmapHeading />
       {/* Desktop: winding path + markers */}
       <div className="relative mt-10 hidden h-28 md:block">
         <svg viewBox="0 0 1000 120" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
