@@ -2,7 +2,7 @@ import { useRef } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useScroll, useTransform, useReducedMotion } from 'motion/react'
 import Reveal from '../components/Reveal'
-import { DURATION, EASE } from '../lib/motion'
+import { HERO_ENTER } from '../lib/motion'
 import Parallax from '../components/Parallax'
 import CountUp from '../components/CountUp'
 import Carousel from '../components/Carousel'
@@ -61,6 +61,7 @@ const VALUES = [
 ]
 
 export default function Home() {
+  const heroStill = useReducedMotion()
   return (
     <>
       {/* ================= HERO ================= */}
@@ -98,28 +99,34 @@ export default function Home() {
         </div>
 
         <div className="relative z-10 container-page pb-24 pt-20 sm:pt-28">
+          {/* HERO_ENTER + a delay, and `initial={false}` when the visitor asked
+              for no motion — these five used to fade from opacity 0 over 850ms
+              regardless, because MotionConfig drops the y and keeps the fade. */}
           <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: DURATION.reveal, ease: EASE.out }}
+            variants={HERO_ENTER}
+            custom={0}
+            initial={heroStill ? false : 'initial'}
+            animate="animate"
             className="text-sm font-500 uppercase tracking-wider text-brand-500"
           >
             For Ontario high schoolers
           </motion.p>
 
           <motion.h1
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: DURATION.reveal, delay: 0.055, ease: EASE.out }}
+            variants={HERO_ENTER}
+            custom={0.055}
+            initial={heroStill ? false : 'initial'}
+            animate="animate"
             className="mt-4 max-w-3xl font-display text-display-1 font-600 text-ink"
           >
             Find what it <span className="text-brand-500">actually</span> took to get in.
           </motion.h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: DURATION.reveal, delay: 0.11, ease: EASE.out }}
+            variants={HERO_ENTER}
+            custom={0.11}
+            initial={heroStill ? false : 'initial'}
+            animate="animate"
             className="mt-6 max-w-xl text-lead text-slate"
           >
             Official sites give vague cutoffs. We show what admitted students actually
@@ -127,9 +134,10 @@ export default function Home() {
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: DURATION.reveal, delay: 0.16, ease: EASE.out }}
+            variants={HERO_ENTER}
+            custom={0.16}
+            initial={heroStill ? false : 'initial'}
+            animate="animate"
             className="mt-9 flex flex-wrap items-center gap-3"
           >
             <Button to="/profile">Build my profile</Button>
@@ -141,9 +149,10 @@ export default function Home() {
           {/* Quick search — suggests programs as you type, and falls through to
               Explore for the full result list. */}
           <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: DURATION.reveal, delay: 0.22, ease: EASE.out }}
+            variants={HERO_ENTER}
+            custom={0.22}
+            initial={heroStill ? false : 'initial'}
+            animate="animate"
           >
             <HeroSearch />
           </motion.div>

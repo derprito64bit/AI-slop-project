@@ -568,6 +568,11 @@ export default function OverviewView() {
 }
 
 /** One number, and the tool it belongs to. */
+// card-lift, not a hand-rolled `transition-colors hover:border-brand-300`.
+// These are Links inside cards — the same shape Explore, Home and the compare
+// table all lift — and they were the only clickable cards on the site that did
+// not. `.card-lift` is the one hover for anything card-shaped and it already
+// handles the pressed state and reduced motion.
 function Stat({
   label,
   value,
@@ -582,7 +587,7 @@ function Stat({
   return (
     <Link
       to={to}
-      className="rounded-xl border border-line bg-paper p-4 transition-colors hover:border-brand-300"
+      className="card-lift rounded-xl border border-line bg-paper p-4"
     >
       <dt className="text-sm text-slate">{label}</dt>
       <dd className="mt-1 font-display text-3xl font-600 text-ink [font-variant-numeric:tabular-nums]">
@@ -630,7 +635,7 @@ function StartPath({ steps }: { steps: StartStep[] }) {
           <li key={s.key} className="min-w-0">
             <Link
               to={s.to}
-              className="flex h-full min-w-0 items-center gap-3 rounded-xl border border-line bg-surface p-3 transition-colors hover:border-brand-300"
+              className="card-lift flex h-full min-w-0 items-center gap-3 rounded-xl border border-line bg-surface p-3"
             >
               <span
                 aria-hidden="true"

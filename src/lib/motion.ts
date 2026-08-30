@@ -163,6 +163,34 @@ export const VIEW_ENTER: Variants = {
   },
 }
 
+/**
+ * The landing page's opening sequence — one variant, a per-element delay.
+ *
+ * A LANDING HERO IS THE ONE PLACE opacity: 0 IS DEFENSIBLE, and this is where
+ * the ENTER_FROM rule genuinely does not apply. That floor exists because a
+ * view SWAP through zero leaves a hole where content already was: the eye sees
+ * content, nothing, then content again, and reads it as a blink. On first paint
+ * there is nothing to blink away from — the page is arriving, not being
+ * replaced — so a fade from zero is an entrance rather than a hole. CLAUDE.md
+ * states the rule unconditionally; this is the exception, written down.
+ *
+ * What was NOT defensible is that these five elements ignored reduced motion.
+ * MotionConfig drops the `y` and keeps the opacity, so someone who asked for no
+ * motion still watched the landing page fade up over 850ms. `initial={false}`
+ * at the call site skips the entrance outright, which is what they asked for.
+ *
+ * `custom` is the delay in seconds. Kept here rather than typed at five call
+ * sites so the rhythm of the sequence is one thing you can read and retime.
+ */
+export const HERO_ENTER: Variants = {
+  initial: (delay: number) => ({ opacity: 0, y: delay === 0 ? 10 : 12 }),
+  animate: (delay: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { duration: DURATION.reveal, delay, ease: EASE.out },
+  }),
+}
+
 /* ------------------------------------------------------------ stagger --- */
 
 /**

@@ -1,8 +1,13 @@
 import { useEffect, useState } from 'react'
+import { AnimatePresence, motion } from 'motion/react'
 import { NavLink as RouterNavLink, Link } from 'react-router-dom'
 import { NAV_LINKS, BRAND } from '../nav'
 import ThemeToggle from './ThemeToggle'
 import { useAuth } from '../lib/authContext'
+import { DURATION, EASE } from '../lib/motion'
+
+/** Never a fully transparent frame — see ENTER_FROM in lib/motion.ts. */
+const ENTER_FROM_MENU = 0.55
 
 // Shared top navigation. Sticky, turns solid once the user scrolls.
 //
@@ -82,8 +87,31 @@ export default function Navbar() {
         </div>
       </nav>
 
-      {/* Mobile menu */}
-      {open && (
+      {/* Mobile menu.
+          
+          It used to be a bare `{open && <ul>}` — the panel appeared and vanished
+          between one frame and the next, which on a phone reads as the page
+          having jumped rather than a menu having opened. AnimatePresence gives
+          it a height and an exit; `mode` is left alone because there is only
+          ever one panel.
+
+          height:auto animates a LAYOUT property, which this repo normally
+          refuses. It is the exception on purpose: the alternative for a
+          variable-length list is a transform that slides the panel out from
+          under the header and over the page content, and this menu pushes the
+          page down rather than covering it. One element, only on a tap, with
+          `overflow: hidden` so nothing spills — not the hundreds-of-cards case
+          the rule was written for. */}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            key="mobile-menu"
+            initial={{ height: 0, opacity: ENTER_FROM_MENU }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: ENTER_FROM_MENU }}
+            transition={{ duration: DURATION.quick, ease: EASE.out }}
+            className="overflow-hidden md:hidden"
+          >
         <ul className="flex flex-col gap-1 border-t border-line bg-paper px-6 py-3 md:hidden">
           {NAV_LINKS.map((l) => (
             <li key={l.to}>
@@ -105,7 +133,9 @@ export default function Navbar() {
             <AccountLink username={user?.username} onNavigate={() => setOpen(false)} mobile />
           </li>
         </ul>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </header>
   )
 }

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { AnimatePresence, motion } from 'motion/react'
+import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import Eyebrow from '../components/ui/Eyebrow'
 import Button from '../components/ui/Button'
 import Combobox, { type Option } from '../components/ui/Combobox'
@@ -591,6 +591,7 @@ export default function Survey() {
 
 /** Where you are, and how much is left. Both matter when deciding to bail. */
 function Progress({ step, total }: { step: number; total: number }) {
+  const pipsStill = useReducedMotion()
   return (
     <div>
       <div className="flex items-center justify-between text-xs">
@@ -599,13 +600,17 @@ function Progress({ step, total }: { step: number; total: number }) {
         </span>
         <span className="text-slate">Every question is optional</span>
       </div>
+      {/* duration 0 under reduced motion. MotionConfig drops transform and
+          layout animation but KEEPS colour, so these pips still crossfaded over
+          600ms for someone who asked for none — and there are eight of them
+          recolouring on every Next. */}
       <div className="mt-2 flex gap-1.5" aria-hidden="true">
         {Array.from({ length: total }, (_, i) => (
           <motion.span
             key={i}
             className="h-1 flex-1 rounded-full bg-surface"
             animate={{ backgroundColor: i <= step ? 'var(--color-brand-500)' : 'var(--color-line)' }}
-            transition={{ duration: DURATION.base }}
+            transition={{ duration: pipsStill ? 0 : DURATION.base }}
           />
         ))}
       </div>
