@@ -15,6 +15,17 @@ import { PAGE_ENTER } from '../lib/motion'
 export default function PageTransition({ children }: { children: ReactNode }) {
   useEffect(() => {
     window.scrollTo(0, 0)
+    // AND MOVE FOCUS, which this did not do. A keyboard user who activated a
+    // nav link was left with focus still in the header, and a screen reader
+    // was told nothing at all — the page changed under them silently. Focusing
+    // <main> puts the next Tab at the top of the new page and makes the
+    // heading the next thing announced.
+    //
+    // preventScroll because the line above already decided where the page
+    // sits; without it the browser scrolls to <main> and fights that.
+    // <main> carries tabIndex={-1} (Layout.tsx) purely so this can focus it —
+    // which also finally gives the skip link a real target.
+    document.getElementById('main')?.focus({ preventScroll: true })
   }, [])
 
   return (

@@ -82,6 +82,39 @@ describe('summary.cycles agrees with stats.json', () => {
   })
 })
 
+describe('summary.decisions agrees with stats.json', () => {
+  // OutcomeCompare prints two of these in a sentence a student reads. They used
+  // to be typed into the component, and they were right — which is the version
+  // that rots silently. This is what stops that.
+  const counted = new Map<string, number>()
+  for (const r of STATS as Array<{ d: string }>) counted.set(r.d, (counted.get(r.d) ?? 0) + 1)
+
+  it('names the same decisions', () => {
+    expect(Object.keys(SUMMARY.decisions).sort()).toEqual([...counted.keys()].sort())
+  })
+
+  it('counts each one exactly', () => {
+    for (const [decision, n] of Object.entries(SUMMARY.decisions)) {
+      expect(n, decision).toBe(counted.get(decision))
+    }
+  })
+
+  it('accounts for every report', () => {
+    const total = Object.values(SUMMARY.decisions).reduce((n, v) => n + v, 0)
+    expect(total).toBe((STATS as unknown[]).length)
+  })
+
+  it('still holds the two OutcomeCompare prints', () => {
+    // Named explicitly: if the pipeline ever stops emitting these keys the
+    // component renders "undefined reported offers", which no other test here
+    // would catch.
+    expect(typeof SUMMARY.decisions.offer).toBe('number')
+    expect(typeof SUMMARY.decisions.rejected).toBe('number')
+    expect(SUMMARY.decisions.offer).toBeGreaterThan(0)
+    expect(SUMMARY.decisions.rejected).toBeGreaterThan(0)
+  })
+})
+
 describe('cycleStanding', () => {
   it('knows the newest cycle from the rest', () => {
     const s = cycleStanding(2026, CYCLES)

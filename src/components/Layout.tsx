@@ -16,10 +16,22 @@ export default function Layout({ children }: { children: ReactNode }) {
       <a href="#main" className="skip-link">
         Skip to content
       </a>
-      {/* Above the nav, so nobody can screenshot a view without it. */}
-      <DemoBanner />
-      <Navbar />
-      <main id="main" className="flex-1">
+      {/* ONE sticky wrapper around both, not two sticky siblings.
+          They were `sticky top-0 z-40` and `sticky top-0 z-50` independently,
+          so once the page scrolled they pinned to the same line and the nav —
+          higher z, and opaque once scrolled — painted straight over the
+          banner. The banner exists precisely so nobody can screenshot a view
+          without it, and it was invisible on every scrolled screenshot.
+          Stacking them in one sticky box keeps the banner above the nav and
+          lets it be any height it likes. */}
+      <div className="sticky top-0 z-50">
+        <DemoBanner />
+        <Navbar />
+      </div>
+      {/* tabIndex={-1} makes this programmatically focusable without putting
+          it in the tab order. PageTransition focuses it on every route change,
+          and the skip link above finally lands somewhere real. */}
+      <main id="main" tabIndex={-1} className="flex-1 focus-visible:outline-none">
         {children}
       </main>
       <Footer />

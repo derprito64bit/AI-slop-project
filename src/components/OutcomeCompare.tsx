@@ -1,5 +1,6 @@
 import { DURATION, EASE } from '../lib/motion'
 import { motion, useReducedMotion } from 'motion/react'
+import SUMMARY from '../data/generated/summary.json'
 import type { Summary } from '../lib/analytics'
 
 // Offer vs rejection averages, as two range strips on a shared scale.
@@ -12,6 +13,9 @@ import type { Summary } from '../lib/analytics'
 // This view is the closest thing on the site to something that could be
 // misread as odds, so the sample sizes are printed on the strips themselves and
 // the caveat is not optional.
+
+/** Dataset-wide decision counts, straight from the pipeline. */
+const DECISIONS = SUMMARY.decisions
 
 type Props = {
   offers: Summary
@@ -127,11 +131,19 @@ export default function OutcomeCompare({ offers, rejections }: Props) {
         <span>{hi}%</span>
       </div>
 
+      {/* The two dataset-wide counts come from summary.json, not from this
+          file. They were typed by hand and they were CORRECT, which is the
+          dangerous version of this bug: the next `npm run data:build` moves
+          them and nothing fails. DatabaseView carries the previous instance —
+          a hard-coded 93% that had drifted to 92.6% by the time anyone
+          checked. Rule 4: nothing outside the pipeline holds a number a
+          student sees. */}
       <figcaption className="mt-4 rounded-lg border border-line bg-surface p-4 text-sm leading-relaxed text-slate">
         <strong className="font-600 text-ink">These two groups are not comparable in size.</strong>{' '}
         Students who get in report far more often than students who don’t — across the whole
-        dataset there are 9,607 reported offers against 434 rejections. Read this as “what averages
-        each group reported”, never as a chance of admission.
+        dataset there are {DECISIONS.offer.toLocaleString('en-CA')} reported offers against{' '}
+        {DECISIONS.rejected.toLocaleString('en-CA')} rejections. Read this as “what averages each
+        group reported”, never as a chance of admission.
       </figcaption>
     </figure>
   )

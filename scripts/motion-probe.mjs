@@ -30,10 +30,17 @@ await page.evaluateOnNewDocument((p) => {
   } catch {}
 }, PROFILE)
 
-/** Click a thing by its text, then watch `selector` every frame for `ms`. */
-async function probe(label, clickText, selector) {
+/**
+ * Click a thing by its text, then watch `selector` every frame for `ms`.
+ *
+ * `watch` picks the element WITHIN `selector` whose opacity is sampled, and
+ * defaults to the last direct div — which is the PageTransition/VIEW_ENTER
+ * wrapper for a route or tool swap. It is a parameter because that default was
+ * silently wrong for one probe: see the note above the charts probe below.
+ */
+async function probe(label, clickText, selector, watch = ':scope > div:last-of-type') {
   const result = await page.evaluate(
-    async (clickText, selector, ms) => {
+    async (clickText, selector, watch, ms) => {
       const el = document.querySelector(selector)
       const samples = []
       let running = true
@@ -41,9 +48,15 @@ async function probe(label, clickText, selector) {
       // main's children: the mobile nav sits there at opacity 1 permanently
       // and hides the dip completely. If this reaches ~0 the viewer sees the
       // page blink, even though the DOM was never empty.
+      //
+      // Returns null, not 0, when the watched element is absent. Those are
+      // different failures and conflating them hid one: AnimatePresence
+      // mode="wait" legitimately has frames with no panel mounted at all,
+      // which is a GAP, while a mounted panel at opacity 0 is a BLINK. Only
+      // the second is what ENTER_FROM exists to prevent.
       const visible = () => {
-        const anim = el.querySelector(':scope > div:last-of-type')
-        return anim ? Number(getComputedStyle(anim).opacity) : 0
+        const anim = el.querySelector(watch)
+        return anim ? Number(getComputedStyle(anim).opacity) : null
       }
       const tick = () => {
         if (!running) return
@@ -58,6 +71,7 @@ async function probe(label, clickText, selector) {
       await new Promise((r) => setTimeout(r, ms))
       running = false
 
+      const present = samples.filter((s) => s.op !== null)
       return {
         frames: samples.length,
         emptyFrames: samples.filter((s) => s.chars === 0).length,
@@ -65,13 +79,18 @@ async function probe(label, clickText, selector) {
         minHeight: Math.min(...samples.map((s) => s.h)),
         maxHeight: Math.max(...samples.map((s) => s.h)),
         // the darkest frame, and how many frames were near-invisible
-        minVisible: Number(Math.min(...samples.map((s) => s.op)).toFixed(2)),
-        darkFrames: samples.filter((s) => s.op < 0.25).length,
+        minVisible: present.length
+          ? Number(Math.min(...present.map((s) => s.op)).toFixed(2))
+          : null,
+        darkFrames: present.filter((s) => s.op < 0.25).length,
+        // frames where the watched element was not in the DOM at all
+        gapFrames: samples.length - present.length,
         path: location.pathname,
       }
     },
     clickText,
     selector,
+    watch,
     900,
   )
   console.log(`${label.padEnd(28)} ${JSON.stringify(result)}`)
@@ -101,9 +120,19 @@ try {
   //
   // The Analytics tab is the right trigger: it is where all four mount at once,
   // behind an AnimatePresence that swaps panels.
+  //
+  // WATCHES THE TAB PANEL, NOT #main's LAST DIV. This probe reported
+  // `minVisible 1` for months and three docs recorded that as a known-good
+  // baseline. It was measuring nothing: the default watch target is the
+  // PageTransition wrapper, which is keyed on sectionKey(location.pathname)
+  // (App.tsx), and Tabs holds its active tab in local useState — so clicking
+  // Analytics never changes the pathname, never re-keys the wrapper, and its
+  // opacity sat at 1 for the whole window. role="tabpanel" is the thing that
+  // actually swaps. Expect gapFrames here: Tabs uses mode="wait" on purpose,
+  // because crossfading two panels of different heights makes the page jump.
   await page.goto(`${BASE}/program/mcmaster/engineering-i-co-op`, { waitUntil: 'networkidle2' })
   await page.waitForFunction(() => document.querySelector('main')?.innerText.length > 100)
-  await probe('program -> analytics (charts)', 'Analytics', '#main')
+  await probe('program -> analytics (charts)', 'Analytics', '#main', '[role="tabpanel"]')
 
   // ---- top-level route change, which uses a different transition
   await page.goto(`${BASE}/`, { waitUntil: 'networkidle2' })

@@ -220,9 +220,18 @@ export default function Home() {
                     <h3 className="text-display-4 font-600 text-ink group-hover:text-brand-600">{f.name}</h3>
                     <p className="text-sm text-slate">{f.school}</p>
                     {/* Median with its sample size — a median without an n is the
-                        kind of number this site exists to replace. */}
+                        kind of number this site exists to replace.
+
+                        THE WORD "median" SITS BETWEEN THE TWO NUMBERS ON
+                        PURPOSE. "95.9% of 210 offers" is a percentage of a
+                        count to anyone reading at speed, which is an
+                        acceptance rate; "95.9% median of 210 reported offers"
+                        cannot be read that way. Same construction as
+                        OverviewView and ProgramsView. The sweep's honesty
+                        check matches phrases, not number pairs, so it never
+                        saw this. */}
                     <p className="mt-3 text-xs text-slate">
-                      Accepted median · {f.median}% of {f.sampleSize} offers
+                      {f.median}% median of {f.sampleSize.toLocaleString()} reported offers
                     </p>
                   </div>
                 </Link>

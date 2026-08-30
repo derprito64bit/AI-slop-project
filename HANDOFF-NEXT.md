@@ -57,11 +57,13 @@ target, and `origin/account` is an obsolete orphan whose content landed in #24.
 
 ```
 npm run lint            0 errors
-npm test                357 pass          (305 before P3; 282 before the marks; 246 before both)
-npm run sweep           151 of 151        (136 before P3; 135 before the document-head check)
+npm test                361 pass          (357 before this pass; 305 before P3; 246 at the start)
+npm run sweep           165 of 165        (151 before this pass; 136 before P3)
 npm run sweep:sections  26 of 26
 npm run probe:motion    minVisible 0.55, 0 dark frames
-                        — the charts row reports 1; the panel swap never dips
+                        — five of six rows. The charts row reports minVisible 0
+                        and ~53 dark frames: the probe used to watch the wrong
+                        element and that `1` measured nothing. See CLAUDE.md.
 cd ../UniServer && npm test               133 pass
 ```
 
@@ -227,6 +229,65 @@ None of these are code. They are the whole remaining critical path.
    identify each school's programs — ordinary nominative use, and no university
    has been asked. A recorded decision rather than an oversight. Pulling any one
    mark is a one-line deletion and the monogram returns on its own.
+
+---
+
+## 3b. Found by the site sweep, 2026-08-29 — not fixed
+
+A three-audit sweep of the whole site turned these up. The rule violations and
+bugs from it shipped; these did not, and each is recorded with what is already
+known so nobody re-derives it.
+
+**The program page's tab swap has a real blink.** Now that `probe:motion`
+watches the right element, `program -> analytics` reports `minVisible 0` with
+~53 dark frames — roughly 230ms where the panel is invisible, on the most
+animation-heavy surface on the site. `Tabs` uses `AnimatePresence mode="wait"`
+with `opacity: 0` at both ends, deliberately, because crossfading panels of
+different heights makes the page jump. Fixing it means picking a different
+trade, not just raising a number — which is why it was left alone here.
+
+**Performance, the biggest single win available.** `src/App.tsx` statically
+imports all 21 page modules and has no `lazy()`, so Home downloads the entire
+dashboard (175kB of source) and the admin panel. The main bundle is 673kB raw /
+192kB gz. Separately, all 22 `motion/react` imports use the full-feature entry:
+framer-motion's own fixtures put that at 39.3kB gz against 6.4kB for `m` plus a
+lazily-fetched `domAnimation`, and `motion/react-m` is already installed and
+unused.
+
+**There is no instrument for the cost of an animation.** The 565ms-vs-18ms
+figure underpins the "transforms, never layout" rule and is quoted at five
+sites, but `.shots/flash-probe.mjs` was never committed and there is no
+CPU-accounting script anywhere. `probe:motion` finds blank frames; nothing
+measures cost. Worth adding before any animation work.
+
+**Component reuse, the next tier after the Keep button.** The program row has
+six near-identical copies (`OverviewView` ×2, `ListView`, `ProgramsView`,
+`ApplicationsView`, and `CompareTable`'s `ProgramLine`, which is the only one
+already extracted). The empty-state panel has nine. The
+section-header-with-a-right-hand-link has twelve. `Row` is byte-identical in
+`DashboardShell.tsx` and `AccountView.tsx`.
+
+**Type-scale drift.** `display-4` exists to stop exactly this and is used
+twice; `OverviewView.tsx` alone has nine unsized `<h2>`, and there are five
+different sizes in use for "the median, big".
+
+**The dashboard column gets narrower as the window gets wider** — 719px at
+767px, 464px at `md:`, 896px at 1279px, then 608px at `xl:` when the rail
+appears. `CompareTable`'s `min-w-[640px]` therefore scrolls sideways on a
+1280px desktop.
+
+**Reduced motion, four gaps.** Leaflet's `flyTo` (JS-driven, so the CSS blanket
+cannot reach it); the Roadmap marker unfurl (animates `pathLength`, which
+`MotionConfig` does not drop, and it is in the variant reduced-motion users are
+routed to); the Survey progress pips; and Home's hero, which fades from literal
+`opacity: 0` over 850ms.
+
+**The Home roadmap clips itself on a phone.** `Roadmap.tsx` pins a
+`h-screen overflow-hidden` box; below 640px the three cards stack to roughly
+780px inside it and are cut off top and bottom with no scroll.
+
+**`NotLiveYet.tsx` is dead code** — nothing imports it. `Placeholder.tsx`, still
+captioned "Coming together" / "doesn't exist yet", is the live 404.
 
 ---
 

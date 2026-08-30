@@ -24,11 +24,17 @@ export default function Navbar() {
 
   return (
     <header
-      className={`sticky top-0 z-50 transition-colors duration-700 ${
+      // Sticky lives on Layout's wrapper now, not here — see the note there.
+      className={`transition-colors duration-700 ${
         scrolled ? 'bg-paper/90 backdrop-blur border-b border-line' : 'bg-transparent border-b border-transparent'
       }`}
     >
-      <nav className="container-page flex h-16 items-center justify-between px-6">
+      {/* No px-6: container-page owns the inline padding and steps it up on
+          wide screens (1.5rem -> 2rem -> 2.5rem). This class used to be dead —
+          container-page was unlayered and won — so removing it changes nothing
+          at laptop widths and stops the header insetting 16px less than the
+          page content above 1920px. */}
+      <nav className="container-page flex h-16 items-center justify-between">
         <Link to="/" className="font-display text-xl font-600 tracking-tight text-ink">
           {BRAND}<span className="text-brand-500">.</span>
         </Link>

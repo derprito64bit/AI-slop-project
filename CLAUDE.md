@@ -120,10 +120,22 @@ of this table was copied forward and was a full cycle stale.
 | | |
 |---|---|
 | `npm run lint` | 0 errors, 14 warnings |
-| `npm test` | 357 pass |
-| `npm run sweep` | 151 of 151 |
+| `npm test` | 361 pass |
+| `npm run sweep` | 165 of 165 |
 | `npm run sweep:sections` | 26 of 26 |
-| `npm run probe:motion` | `minVisible 0.55` (the charts row reports `1`), `0 dark frames` |
+| `npm run probe:motion` | `minVisible 0.55`, `0 dark frames`, `0 gap frames` on five of six rows |
+
+**The sixth row, `program -> analytics (charts)`, reports `minVisible 0` with
+about 53 dark frames, and that is the honest reading rather than a
+regression.** This table used to say the charts row reported `1`. It did — but
+the probe was watching `#main`'s last child, which is the `PageTransition`
+wrapper, and that is keyed on the pathname. `Tabs` keeps its active tab in
+local state, so clicking Analytics never re-keyed it and its opacity never
+moved off 1. The probe now watches `[role="tabpanel"]`, the thing that
+actually swaps. The dip it found is real: `Tabs` uses `AnimatePresence
+mode="wait"` with `opacity: 0` at both ends, on purpose, because crossfading
+two panels of different heights makes the page jump. Whether that trade is
+still the right one is open — but it is now measured instead of hidden.
 
 The backend has its own suite: `cd ../UniServer && npm test` — 133 pass.
 

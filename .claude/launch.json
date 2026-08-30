@@ -19,12 +19,13 @@
         "preview",
         "--port",
         "4200",
+        "--strictPort",
         "--base",
         "/AI-slop-project/"
       ],
       "port": 4200,
       "url": "http://localhost:4200",
-      "autoPort": true
+      "autoPort": false
     }
   ]
 }

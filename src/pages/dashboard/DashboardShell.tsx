@@ -277,10 +277,18 @@ export default function DashboardShell() {
             ))}
           </nav>
 
+          {/* aria-label unconditionally, because collapsed this button's only
+              child is an aria-hidden arrow — so it had NO accessible name at
+              all in that state, which is the state a returning student is in
+              if they collapsed it last time. The visible "Collapse" text is
+              also gone then, so there is nothing for the label to duplicate.
+              aria-expanded was already here and was describing something with
+              no name. */}
           <button
             type="button"
             onClick={toggleCollapsed}
             aria-expanded={!collapsed}
+            aria-label={collapsed ? 'Expand the dashboard menu' : 'Collapse the dashboard menu'}
             className="mt-2 flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm text-slate transition-colors hover:bg-surface hover:text-ink"
           >
             <span aria-hidden="true" className="w-4 shrink-0 text-center">

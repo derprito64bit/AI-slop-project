@@ -151,20 +151,35 @@
    and the same padding reads as more there. This was ad hoc before — Explore
    was py-20 and the program page py-16, and a student moves between those two
    constantly, so the whole page appeared to shift by 16px on every click. */
-.container-page {
-  width: 100%;
-  margin-inline: auto;
-  padding-inline: 1.5rem;
-  max-width: 72rem; /* 1152px — unchanged on laptops */
-}
-@media (min-width: 1536px) {
-  .container-page { max-width: 84rem; padding-inline: 2rem; } /* 1344px */
-}
-@media (min-width: 1920px) {
-  .container-page { max-width: 96rem; padding-inline: 2.5rem; } /* 1536px */
-}
-@media (min-width: 2400px) {
-  .container-page { max-width: 108rem; } /* 1728px */
+/* IN @layer components, AND THAT IS LOAD-BEARING.
+
+   Unlayered CSS beats every cascade layer, so while this rule sat outside one
+   it won against Tailwind's `@layer utilities` — meaning `max-w-2xl` on the
+   same element did nothing at all. Two pages were silently full-width because
+   of it: the dashboard first-run screen rendered at 1152px instead of 672px
+   (and 1728px on a 2400px monitor), and the admin shell likewise ignored
+   `max-w-4xl`. Survey.tsx hit the same trap earlier and worked around it with
+   a nested wrapper rather than fixing the cause.
+
+   `components` loses to `utilities` by design, which is exactly the
+   relationship wanted: this sets the default width, a `max-w-*` utility
+   narrows it. Do not move this rule out of the layer to "simplify" it. */
+@layer components {
+  .container-page {
+    width: 100%;
+    margin-inline: auto;
+    padding-inline: 1.5rem;
+    max-width: 72rem; /* 1152px — unchanged on laptops */
+  }
+  @media (min-width: 1536px) {
+    .container-page { max-width: 84rem; padding-inline: 2rem; } /* 1344px */
+  }
+  @media (min-width: 1920px) {
+    .container-page { max-width: 96rem; padding-inline: 2.5rem; } /* 1536px */
+  }
+  @media (min-width: 2400px) {
+    .container-page { max-width: 108rem; } /* 1728px */
+  }
 }
 
 /* ============================================================
@@ -239,7 +254,12 @@ html {
 .marquee-track[data-direction="right"] {
   animation-name: marquee-right;
 }
-.marquee-paused:hover .marquee-track {
+/* :focus-within as well as :hover. The band carries real links, so tabbing
+   into it used to put keyboard focus on a moving target with no way to stop
+   it — WCAG 2.2.2. A pointer user could already pause it by hovering; this
+   gives the same escape to someone who cannot. */
+.marquee-paused:hover .marquee-track,
+.marquee-paused:focus-within .marquee-track {
   animation-play-state: paused;
 }
 @media (prefers-reduced-motion: reduce) {
