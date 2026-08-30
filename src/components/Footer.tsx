@@ -11,8 +11,16 @@ export default function Footer() {
           <div className="font-display text-lg font-600 text-ink">
             {BRAND}<span className="text-brand-500">.</span>
           </div>
+          {/* Two things wrong with the line this replaced — "Real university
+              admission requirements, personalized to your profile" — and it
+              was on all 22 routes. The site holds reported AVERAGES, not
+              requirements: verified requirements exist for 75 of 2,436
+              programs. And "personalized to your profile" describes an
+              individual assessment, which is the one thing the data cannot
+              support. No sweep caught it because it states no probability in
+              so many words; it just promises one. */}
           <p className="mt-3 max-w-xs text-sm text-slate">
-            Real university admission requirements, personalized to your profile.
+            The averages admitted students reported, program by program.
           </p>
         </div>
 
@@ -48,7 +56,10 @@ export default function Footer() {
       </div>
 
       <div className="border-t border-line">
-        <div className="container-page flex flex-col items-center justify-between gap-2 px-6 py-5 text-xs text-slate sm:flex-row">
+        {/* px-6 removed for the same reason as Navbar: container-page sets the
+            inline padding, and this override only became live when that class
+            moved into a cascade layer. */}
+        <div className="container-page flex flex-col items-center justify-between gap-2 py-5 text-xs text-slate sm:flex-row">
           <span>© {BRAND} — student project, in development.</span>
           <span>Made for students, by students.</span>
         </div>

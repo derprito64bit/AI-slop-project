@@ -262,8 +262,10 @@ Then the `vite-preview` entry in `.claude/launch.json` (port 4200, base
 npm run sweep && npm run sweep:sections && npm run probe:motion
 ```
 
-Baseline to hold: 0 lint errors, 357 tests, sweep 151/151, sections 26/26,
-motion `minVisible 0.55` and `0 dark frames` — the charts row reports `1`.
+Baseline to hold: 0 lint errors, 361 tests, sweep 165/165, sections 26/26,
+motion `minVisible 0.55` and `0 dark frames` on five of six rows. The charts
+row reports `minVisible 0` / ~53 dark frames — see `CLAUDE.md`, that is the
+first honest reading from that probe, not a regression.
 Measured 2026-08-29. `CLAUDE.md` carries the same table; if the two disagree,
 re-measure rather than believing either.
 

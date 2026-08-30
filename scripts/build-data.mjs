@@ -406,12 +406,28 @@ const cycleTotals = [...new Set(stats.map((r) => r.c))].sort().map((cycle) => ({
   reports: stats.filter((r) => r.c === cycle).length,
 }))
 
+// Reports per decision, across the whole dataset.
+//
+// Emitted for the same reason as the cycle totals above: a component was
+// printing "9,607 reported offers against 434 rejections" with both numbers
+// typed by hand. They happened to be right, which is the dangerous version —
+// the next build moves them and nothing notices. DatabaseView records the
+// previous instance of exactly this, a hard-coded 93% that had drifted to
+// 92.6% before anyone looked.
+//
+// Four entries, about 70 bytes. Same budget note as `cycles`: summary.json is
+// a static import that reaches Home.
+const decisionTotals = Object.fromEntries(
+  [...new Set(stats.map((r) => r.d))].sort().map((d) => [d, stats.filter((r) => r.d === d).length]),
+)
+
 const summary = {
   programs: programs.length,
   universities: universities.length,
   reports: programs.reduce((n, p) => n + p.totalReports, 0),
   programsWithCharts: programs.filter((p) => !p.insufficientData).length,
   cycles: cycleTotals,
+  decisions: decisionTotals,
   featured,
 }
 

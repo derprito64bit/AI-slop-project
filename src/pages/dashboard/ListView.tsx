@@ -208,12 +208,20 @@ function ProgramCard({
       </div>
 
       <div className="mt-4 flex flex-wrap items-center gap-2">
+        {/* "median" between the two numbers, not after them. As two adjacent
+            spans this read "95.9% of 210 reported offers" — a percentage of a
+            count, which is an acceptance rate at a glance. The word is the
+            whole fix, and it is the phrasing OverviewView and ProgramsView
+            already use. */}
         {program.accepted && (
           <span className="font-display text-xl font-600 text-brand-600 [font-variant-numeric:tabular-nums]">
             {program.accepted.median}%
           </span>
         )}
-        <span className="text-xs text-slate">of {program.sampleSize} reported offers</span>
+        <span className="text-xs text-slate">
+          {program.accepted ? 'median ' : ''}of {program.sampleSize.toLocaleString()} reported
+          offers
+        </span>
         {average !== null && <FitTag average={average} program={program} />}
       </div>
 

@@ -53,7 +53,10 @@ export default function DemoBanner() {
         initial={{ opacity: 0, y: -8 }}
         animate={{ opacity: 1, y: 0, transition: SPRING.panel }}
         exit={{ opacity: 0, transition: { duration: DURATION.quick, ease: EASE.in } }}
-        className="sticky top-0 z-40 border-b border-accent/40 bg-accent/10 px-6 py-2"
+        // Not sticky itself — Layout wraps this and the nav in one sticky box.
+        // bg-accent/10 over bg-paper rather than a bare tint, so page content
+        // cannot show through it while it is pinned.
+        className="border-b border-accent/40 bg-paper bg-linear-to-b from-accent/10 to-accent/10 px-6 py-2"
         role="status"
       >
         <div className="container-page flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-sm">

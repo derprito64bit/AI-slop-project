@@ -852,6 +852,17 @@ async function sweepCross() {
   // put a cycle sentence on one and a distance rollup on the other. Neither
   // carries a disclaimer phrase, so anything that trips `claims` there has no
   // escape hatch and fails, which is the intent.
+  // A PERCENTAGE FOLLOWED BY "of" AND A COUNT, which the phrase list above
+  // cannot see. "95.9% of 210 offers" is an acceptance rate to anyone reading
+  // at speed, and it was live on Home's featured cards and on My list — both
+  // of which passed every honesty check here. The fix in the copy is one word:
+  // "95.9% median of 210 reported offers" cannot be misread, and it is what
+  // OverviewView and ProgramsView already said.
+  //
+  // `median|reported|ticked` are the words that make the pair safe, so the
+  // pattern only fires when none of them sits between the two numbers.
+  const rateShaped = /(\d[\d,]*(?:\.\d+)?)\s*%\s+of\s+(?!.{0,12}(?:median|reported|ticked))[\d,]+/i
+
   const honestyPaths = [
     ['/', undefined],
     ['/explore', undefined],
@@ -859,6 +870,13 @@ async function sweepCross() {
     ['/profile/database', undefined],
     ['/profile', P3_SEED],
     ['/profile/list', P3_SEED],
+    // Four pages that had no Rule 1 coverage at all. The program page is the
+    // one that matters most: it carries OutcomeCompare and DecisionMix, the
+    // two densest numeric surfaces on the site.
+    ['/program/mcmaster/engineering-i-co-op', undefined],
+    ['/profile/compare', P3_SEED],
+    ['/profile/fields', P3_SEED],
+    ['/profile/applications', P3_SEED],
   ]
   for (const [path, seed] of honestyPaths) {
     const { page: p } = await open(path, seed ? { seed } : {})
@@ -866,6 +884,9 @@ async function sweepCross() {
     const hit = body.match(claims)
     const claimed = Boolean(hit) && !disclaimer.test(body)
     check('honesty', `${path} states no probability`, !claimed, hit ? `"${hit[0]}"` : '')
+
+    const pair = body.match(rateShaped)
+    check('honesty', `${path} prints no bare percent-of-count`, !pair, pair ? `"${pair[0]}"` : '')
     await p.close()
   }
 
