@@ -134,7 +134,7 @@ export function averageError(raw: string): string | undefined {
   if (!raw.trim()) return undefined
   const n = Number(raw)
   if (Number.isNaN(n) || n < MIN_AVERAGE || n > MAX_AVERAGE) {
-    return `Enter a number between ${MIN_AVERAGE} and ${MAX_AVERAGE}, or skip this one.`
+    return `Enter a number between ${MIN_AVERAGE} and ${MAX_AVERAGE}.`
   }
   return undefined
 }
@@ -342,14 +342,14 @@ export default function Survey() {
                     <Field
                       id="survey-field"
                       label="What do you want to study?"
-                      hint="A broad area is fine — you can change this later."
+                      hint="You can change this field later."
                     >
                       <Combobox
                         id="survey-field"
                         value={answers.field}
                         onChange={(v) => set('field', v)}
                         options={FIELD_OPTIONS}
-                        anyLabel="Anything — don’t narrow it"
+                        anyLabel="Anything. Don’t narrow it"
                         placeholder="try “computer science”"
                       />
                     </Field>
@@ -359,7 +359,7 @@ export default function Survey() {
                     <Field
                       id="survey-coop"
                       label="Do you want co-op?"
-                      hint="Co-op and non-co-op are separate programs with separate competition, so this genuinely changes the list."
+                      hint="Co-op and non-co-op are separate programs with separate competition, so this greatly changes the list."
                     >
                       <Cards
                         name="survey-coop"
@@ -382,7 +382,7 @@ export default function Survey() {
                     <Field
                       id="survey-province"
                       label="Where are you open to going?"
-                      hint="Most of our data is Ontario, so that's the default."
+                      hint="Most of our data is Ontario. But we still service students from all across Canada."
                     >
                       <Combobox
                         id="survey-province"
@@ -399,7 +399,7 @@ export default function Survey() {
                     <Field
                       id="survey-home"
                       label="Where are you coming from?"
-                      hint="Used to work out how far each campus is. A city, never an address — and only cities that already appear in the data."
+                      hint="Used to work out how far each campus is."
                     >
                       <Combobox
                         id="survey-home"
@@ -422,8 +422,8 @@ export default function Survey() {
                       // depends on whether they are signed in, so it is asked.
                       hint={
                         signedIn
-                          ? 'Saved to your account so your list works on any device. Skip it if you’d rather not say.'
-                          : 'Stays on this device — nothing is uploaded while you’re signed out. Skip it if you’d rather not say.'
+                          ? 'Don’t want to share it? Feel free to skip.'
+                          : 'Stays on this device. Skip it if you’d rather not say.'
                       }
                       error={error}
                     >
@@ -461,7 +461,7 @@ export default function Survey() {
                     <Field
                       id="survey-courses"
                       label="Which Grade 12 U courses are you taking?"
-                      hint="Tick all that apply. A missing prerequisite is the one thing that closes a door outright, so this is the answer that does the most work."
+                      hint="Check all that apply. A missing prerequisite is the one thing that closes a door outright."
                     >
                       <div className="flex flex-wrap gap-2">
                         {COURSES.map((c) => {
@@ -497,7 +497,7 @@ export default function Survey() {
                     <Field
                       id="survey-year"
                       label="When do you finish high school?"
-                      hint="So we can say which application cycle's reports describe you. Nothing about this is sent anywhere anonymous."
+                      hint="So we can say which application cycle's reports describe you."
                     >
                       <Combobox
                         id="survey-year"
@@ -569,7 +569,7 @@ export default function Survey() {
             onClick={() => finish(null, courses)}
             className="text-sm text-slate underline-offset-2 hover:text-ink hover:underline"
           >
-            Skip all — just let me browse
+            Skip all. Just let me browse
           </button>
           <span className="text-sm text-slate" aria-live="polite">
             {!data ? 'Loading programs…' : ''}
