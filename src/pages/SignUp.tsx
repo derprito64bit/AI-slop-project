@@ -107,7 +107,7 @@ export default function SignUp() {
             setUsername(v)
             setErrors((p) => ({ ...p, username: undefined }))
           }}
-          hint="Make something up — please don’t use your real name. Letters, numbers, hyphens and underscores."
+          hint="Don’t use your real name."
           error={errors.username}
           autoComplete="username"
           autoFocus
@@ -154,7 +154,7 @@ export default function SignUp() {
         </Button>
         {busy && (
           <p className="text-center text-xs text-slate" aria-live="polite">
-            Our server sleeps when nobody’s using it — the first go can take up to a minute.
+            Our server sleeps when nobody’s using it. The first go can take up to a minute.
           </p>
         )}
       </form>
@@ -163,21 +163,18 @@ export default function SignUp() {
         <p>
           <strong className="font-600 text-ink">What gets uploaded.</strong> Your username, your
           password and your answers go to our server, so your list is there when you sign in on
-          another device. That includes the average you typed into the survey — it used to stay on
-          your device, and with an account it doesn’t. Your password is scrambled the moment it
-          arrives and stored that way; nobody can read it back, including us.
+          another device.
         </p>
         <p className="mt-2">
           <strong className="font-600 text-ink">What we never ask for.</strong> No email, no real
-          name, no age, no school. One consequence: there’s no password reset. If you forget it,
-          you’d have to start a new account.
+          name, no age, no school.
         </p>
         <p className="mt-2">
           Prefer to keep everything on this device?{' '}
           <Link to="/survey" className="font-600 text-brand-600 hover:text-brand-700">
             Skip the account
           </Link>{' '}
-          — the whole site works without one, and nothing is uploaded when you’re signed out.
+          — nothing is uploaded when you’re signed out.
         </p>
       </div>
     </AuthShell>
@@ -211,10 +208,8 @@ function Created({ username, adopted }: { username: string; adopted: boolean }) 
           moment. The mitigation is boring and real: write the password down,
           and know that the list itself is still on this device either way. */}
       <p className="mb-5 rounded-lg border border-line bg-surface p-4 text-sm leading-relaxed text-slate">
-        <strong className="font-600 text-ink">There’s no password reset.</strong> We don’t ask for
-        an email, so there’s nothing to send one to — write your password down somewhere you’ll
-        find it. If you do lose it, what you’ve saved is still on this device; it’s the account
-        and your other devices you’d lose.
+        <strong className="font-600 text-ink">Write your password down.</strong> There’s no password reset. We don’t ask for
+        an email, so there’s nothing to send one to. If you do lose it, what you’ve saved is still on this device.
       </p>
 
       <div className="flex flex-col gap-3">
