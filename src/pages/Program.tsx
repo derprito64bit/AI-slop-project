@@ -320,7 +320,7 @@ function AnalyticsTab({
         <h2 className="font-600 text-ink">Not enough data yet</h2>
         <p className="mt-2 max-w-xl text-sm leading-relaxed text-slate">
           Only {program.totalReports} student{program.totalReports === 1 ? ' has' : 's have'}{' '}
-          reported on this program so far — too few to describe a typical accepted average
+          reported on this program so far. This number is too low to describe a typical accepted average
           without being misleading. We show a range once at least five students have reported
           an offer.
         </p>
@@ -381,7 +381,7 @@ function AnalyticsTab({
           </h3>
           <p className="mt-2 max-w-2xl text-sm text-slate">
             What each group reported as their average. Shown only where at least five students
-            reported a rejection average — for most programs there are too few to say anything.
+            reported a rejection average. For most programs there are too few to say anything.
           </p>
           <OutcomeCompare offers={outcome.offers} rejections={outcome.rejections} />
         </Reveal>
@@ -393,8 +393,7 @@ function AnalyticsTab({
       <p className="mt-4 max-w-2xl rounded-lg border border-line bg-surface p-4 text-sm leading-relaxed text-slate">
         <strong className="font-600 text-ink">This is not an acceptance rate.</strong> Students who
         get in are far more likely to report than students who don’t, so offers are heavily
-        over-represented here. Use the averages above to see what admitted students had — not to
-        estimate your chances.
+        over-represented here. Use the averages above to see what admitted students had.
       </p>
       <p className="mt-4 text-sm text-slate">
         Based on {program.totalReports} anonymous student report
@@ -410,7 +409,7 @@ function RequirementsTab({ program, info }: { program: ProgramType; info: Progra
     return (
       <Unverified
         what="course requirements"
-        detail={`We haven’t verified the required courses for ${program.name} against the university’s official pages yet. Rather than guess, we’re leaving this blank — check the university’s own admissions page in the meantime.`}
+        detail={`We haven’t verified the required courses for ${program.name} against the university’s official pages yet. Rather than guess, we’re leaving this blank. Check the university’s own admissions page in the meantime.`}
       />
     )
   }
@@ -461,7 +460,7 @@ function RequirementsTab({ program, info }: { program: ProgramType; info: Progra
       ) : null}
 
       <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate">
-        These are the university’s own stated requirements — separate from the community-reported
+        These are the university’s own stated requirements, separate from the community-reported
         averages under Analytics. Requirements change year to year, so confirm against the
         official page before you apply.
       </p>
