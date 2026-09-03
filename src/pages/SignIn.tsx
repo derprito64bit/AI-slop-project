@@ -130,13 +130,13 @@ export default function SignIn() {
         </Button>
         {busy && (
           <p className="text-center text-xs text-slate" aria-live="polite">
-            Our server sleeps when nobody’s using it — the first go can take up to a minute.
+            Our server sleeps when nobody’s using it. The first go can take up to a minute.
           </p>
         )}
       </form>
 
       <p className="mt-6 border-t border-line pt-5 text-xs leading-relaxed text-slate">
-        You don’t need an account to use the site — you can{' '}
+        You don’t need an account to use the site. You can{' '}
         <Link to="/survey" className="font-600 text-brand-600 hover:text-brand-700">
           answer the questions
         </Link>{' '}
