@@ -41,9 +41,9 @@ const STATS = [
 // then sorts by report volume — a popularity sort, which is precisely what step
 // 02 used to disclaim.
 const STEPS = [
-  { n: '01', title: 'Answer what you want to', body: 'Eight questions — subject, average, courses, where you want to be. Every one is skippable.' },
+  { n: '01', title: 'Answer what you want to', body: 'Eight questions: subject, average, courses, and where you want to be.' },
   { n: '02', title: 'Narrow the list', body: 'Programs filtered to your answers, ordered by how much students have reported on each.' },
-  { n: '03', title: 'See the real averages', body: 'What admitted students actually reported — medians, spread, and how many said so.' },
+  { n: '03', title: 'See the real averages', body: 'What admitted students actually reported: medians, spread, and how many said so.' },
 ]
 
 // Real programs, real medians, real links — the four most-reported, one per
@@ -52,12 +52,12 @@ const STEPS = [
 const FEATURED = SUMMARY.featured.slice(0, 4)
 
 const VALUES = [
-  { title: 'Real accepted averages', body: 'Not the vague cutoffs on official sites — the numbers students actually got in with.' },
+  { title: 'Real accepted averages', body: 'Not the inexact cutoffs on official sites, but the numbers students actually got in with.' },
   // NOT "the full picture". Students who get in are far likelier to report, so
   // the picture is tilted by construction — that is the whole subject of
   // /profile/database, and claiming completeness here contradicts it.
-  { title: 'Community-sourced stats', body: 'Students report their averages once decisions are out — and we always say how many did.' },
-  { title: 'Transparent methodology', body: 'We show where every number comes from. No black-box guessing.' },
+  { title: 'Community-sourced stats', body: 'Students report their averages once decisions are out, and we always say how many did.' },
+  { title: 'Transparent methodology', body: 'We show where every number comes from. So no black-box guessing there.' },
 ]
 
 export default function Home() {
@@ -109,7 +109,7 @@ export default function Home() {
             animate="animate"
             className="text-sm font-500 uppercase tracking-wider text-brand-500"
           >
-            For Ontario high schoolers
+            For Canadian high schoolers
           </motion.p>
 
           <motion.h1
@@ -130,7 +130,7 @@ export default function Home() {
             className="mt-6 max-w-xl text-lead text-slate"
           >
             Official sites give vague cutoffs. We show what admitted students actually
-            reported — the real averages behind the programs you&rsquo;re considering.
+            reported. In other words, the real averages behind the programs you&rsquo;re considering.
           </motion.p>
 
           <motion.div
@@ -207,7 +207,7 @@ export default function Home() {
                   Where the data runs deepest
                 </h2>
                 <p className="mt-2 text-slate">
-                  The programs the most students have told us about — one from each school.
+                  The programs the most students have told us about.
                 </p>
               </div>
               <Link to="/explore" className="hidden text-sm font-600 text-brand-600 hover:text-brand-700 sm:block">
@@ -273,7 +273,7 @@ export default function Home() {
       <Section>
         <Reveal>
           <h2 className="max-w-2xl font-display text-display-2 font-600 text-ink">
-            Built to be honest — the part other sites skip.
+            Built to be honest.
           </h2>
         </Reveal>
         <div className="mt-12 grid gap-8 md:grid-cols-3">
@@ -305,11 +305,11 @@ export default function Home() {
                 Stop guessing. See the real numbers.
               </h2>
               <p className="mx-auto mt-4 max-w-lg text-white/80">
-                Answer eight questions — all of them skippable — and see what students actually
+                Answer eight questions and see what students actually
                 reported.
               </p>
               <Button to="/profile" variant="inverse" className="mt-8 px-7 py-3">
-                Get started — it’s free
+                Get started for free
               </Button>
             </div>
           </Reveal>
