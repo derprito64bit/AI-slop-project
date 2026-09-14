@@ -26,7 +26,8 @@ Three things, all on `feature/uncropped-marks`:
    The audit read components; `index.html` is not one. The sweep now has a
    fifth honesty check that reads the document head, so it cannot come back.
 3. **P2 is done** — Compare's zero state, Balance, Applications and Deadlines.
-   Details in §4.
+   Details in §4. (Applications and Deadlines have since been removed
+   outright; see §4.)
 
 **Two claims in the 2026-08-28 pass were already stale when it was written**,
 which is the thing to take from this rather than the fixes: both were about work
@@ -286,9 +287,8 @@ CPU-accounting script anywhere. `probe:motion` finds blank frames; nothing
 measures cost. Worth adding before any animation work.
 
 **Component reuse, the next tier after the Keep button.** The program row has
-six near-identical copies (`OverviewView` ×2, `ListView`, `ProgramsView`,
-`ApplicationsView`, and `CompareTable`'s `ProgramLine`, which is the only one
-already extracted). The empty-state panel has nine. The
+five near-identical copies (`OverviewView` ×2, `ListView`, `ProgramsView`,
+and `CompareTable`'s `ProgramLine`, which is the only one already extracted). The empty-state panel has nine. The
 section-header-with-a-right-hand-link has twelve. `Row` is byte-identical in
 `DashboardShell.tsx` and `AccountView.tsx`.
 
@@ -337,11 +337,9 @@ the dashboard:
     the param is a step ID, never an index). It also grew a **third** empty
     state that used to be a blank page — `BalanceCheck` returns null when no
     kept program has a median, and 132 programs have none.
-  - **Applications** offers "Add your N kept programs to the tracker", only
-    while nothing is tracked. `withTracked` is a no-op for ids it already
-    holds, so a second press cannot reset a stage.
-  - **Deadlines** shows the shape of an entry and **no date**, not even a
-    greyed-out example. That is the one thing this page must never do.
+  - ~~**Applications**~~ and ~~**Deadlines**~~ — **REMOVED.** Both views,
+    `src/lib/tracker.ts`, the `acceptiversity.tracker.v1` localStorage key,
+    their routes, their nav group and their sweep/section checks are all gone.
 
   One defect surfaced while building it and is worth knowing about generally:
   **`accepted !== null` is not the reporting threshold, `insufficientData`
@@ -411,8 +409,11 @@ survey answer is still a four-place change — `SurveyAnswers`,
 `cleanAnswers`. Miss one and the answer is erased from the device on the next
 sign-in elsewhere. Tests on both sides assert the full key set.
 
-`src/lib/tracker.ts` stays outside the profile. The one place it is now cleared
-is `deleteAccount`, because "Delete everything" has to mean everything.
+`src/lib/tracker.ts` has been deleted along with the Applications and
+Deadlines tools it backed, so nothing outside the profile holds student data
+any more. The rule it existed to demonstrate still stands: a key kept outside
+the profile must not be moved in until `sync.ts` and the server both know the
+field.
 
 Motion tokens live in `src/lib/motion.ts` and nowhere else. The CSS-not-JS scroll
 reveals, the `ENTER_FROM = 0.55` floor, and the `vite-preview` launch config are

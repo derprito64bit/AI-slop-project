@@ -35,18 +35,18 @@ import type { Program, University } from '../../data/types'
 //   Overview   where am I
 //   Plan       the list I am building          (built)
 //   Discover   how I find more to put on it    (built)
-//   Track      what I have to actually do      (built)
 //   Understand where all of this came from     (built)
 //
-// There was a fifth group, Community, holding a single "Global posts" item:
-// real layout, mock content, a banner saying so. It is gone. A feed needs a
-// server and needs moderation for an audience that is mostly minors, and
-// neither was any closer than the day it was drawn — meanwhile it sat in the
-// sidebar duplicating the idea of the /community page. Understand is what
-// replaced both: the data, its bias, and what it cannot tell you, in one place.
+// There was a Community group, holding a single "Global posts" item: real
+// layout, mock content, a banner saying so. It is gone. A feed needs a server
+// and needs moderation for an audience that is mostly minors, and neither was
+// any closer than the day it was drawn — meanwhile it sat in the sidebar
+// duplicating the idea of the /community page. Understand is what replaced
+// both: the data, its bias, and what it cannot tell you, in one place.
 //
-// Track became real once its blocker turned out to be a design question rather
-// than missing infrastructure: see lib/tracker.ts.
+// There was also a Track group — an application-status tracker and a deadline
+// recorder, both kept in their own localStorage key outside the synced
+// profile. Both are gone, along with that key.
 
 const COLLAPSE_KEY = 'acceptiversity.dash.collapsed'
 
@@ -179,13 +179,6 @@ export default function DashboardShell() {
       ],
     },
     {
-      label: 'Track',
-      items: [
-        { to: 'applications', label: 'Applications', icon: '↗' },
-        { to: 'deadlines', label: 'Deadlines', icon: '◷' },
-      ],
-    },
-    {
       label: 'Understand',
       items: [{ to: 'database', label: 'The data', icon: '▤' }],
     },
@@ -306,7 +299,7 @@ export default function DashboardShell() {
 
             The minimum height is part of the transition, not the layout. Views
             differ enormously in length — Programs runs to hundreds of rows,
-            Deadlines is a short list — and without a floor the footer flew up
+            Courses is a short list — and without a floor the footer flew up
             the screen on every switch, which reads as a jolt however smooth
             the fade on top of it is. */}
         <div className="min-h-[60vh] min-w-0 flex-1">

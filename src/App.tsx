@@ -21,8 +21,6 @@ import CompareView from './pages/dashboard/CompareView'
 import ProgramsView from './pages/dashboard/ProgramsView'
 import FieldsView from './pages/dashboard/FieldsView'
 import MapView from './pages/dashboard/MapView'
-import ApplicationsView from './pages/dashboard/ApplicationsView'
-import DeadlinesView from './pages/dashboard/DeadlinesView'
 import DatabaseView from './pages/dashboard/DatabaseView'
 import AdminShell from './pages/admin/AdminShell'
 
@@ -95,8 +93,6 @@ export default function App() {
                 {/* The old /about and /community pages, merged. Reachable
                     without a saved profile — see the gate in DashboardShell. */}
                 <Route path="database" element={<DatabaseView />} />
-                <Route path="applications" element={<ApplicationsView />} />
-                <Route path="deadlines" element={<DeadlinesView />} />
               </Route>
               {/* Redirects, not 404s. Both were in the navbar of a deployed
                   site for months, so they are in the sitemap and in whatever

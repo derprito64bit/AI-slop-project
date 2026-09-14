@@ -295,7 +295,7 @@ export default function DatabaseView() {
         <Limit
           stat="No deadlines"
           label="are published here"
-          detail="They change between cycles and a wrong one could cost you a year. Track lets you record the dates you find, with a link back to the page you read them on."
+          detail="They change between cycles and a wrong one could cost you a year. Read the date off the university’s own admissions page, every time."
         />
       </ul>
 

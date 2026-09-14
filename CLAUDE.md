@@ -60,9 +60,10 @@ and nothing in any log.
 
 Tests on both sides assert the full key set. Keep them.
 
-`src/lib/tracker.ts` lives in its own localStorage key *outside* the profile for
-this exact reason. Do not move it in until the field exists in both maps in
-`sync.ts` and on the server.
+Anything kept in its own localStorage key *outside* the profile is there for
+this exact reason. Do not move such a key in until the field exists in both
+maps in `sync.ts` and on the server. (`src/lib/tracker.ts` was the standing
+example; the application/deadline tracker it backed has been removed.)
 
 ## The design system, in four places
 
@@ -113,17 +114,25 @@ exactly like a broken build. Restart preview after every rebuild.
 npm run sweep && npm run sweep:sections && npm run probe:motion
 ```
 
-**Baseline as of 2026-08-29** — anything else failing is new. Every number here
-was measured on this machine in the session that wrote it; the previous version
-of this table was copied forward and was a full cycle stale.
+**Baseline as of 2026-09-14** — anything else failing is new. The lint and test
+rows were measured on this machine in the session that wrote them. The two
+sweep rows are **counted, not measured**: removing the Applications and
+Deadlines tools deleted 10 checks from each sweep, and neither sweep could be
+run here (both hard-code a Windows Chrome path and want a served build), so
+those two numbers are arithmetic off the 2026-08-29 measurement and want a real
+run to confirm.
 
 | | |
 |---|---|
 | `npm run lint` | 0 errors, 14 warnings |
-| `npm test` | 361 pass |
-| `npm run sweep` | 165 of 165 |
-| `npm run sweep:sections` | 26 of 26 |
+| `npm test` | 344 pass |
+| `npm run sweep` | 155 of 155 *(counted)* |
+| `npm run sweep:sections` | 16 of 16 *(counted)* |
 | `npm run probe:motion` | `minVisible 0.55`, `0 dark frames`, `0 gap frames` on five of six rows |
+
+The dashboard rows `programs -> deadlines` and `deadlines -> dashboard` in
+`probe:motion` are now `programs -> fields` and `fields -> dashboard`; the route
+went away, the probe did not.
 
 **The sixth row, `program -> analytics (charts)`, reports `minVisible 0` with
 about 53 dark frames, and that is the honest reading rather than a
