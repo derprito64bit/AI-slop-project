@@ -35,8 +35,6 @@ Measured on the live site with a profile that has answers but nothing kept:
 | Balance | 504 | 827px \* |
 | Courses | 706 | 827px \* |
 | Compare | 506 | 827px \* |
-| Applications | 723 | 827px \* |
-| Deadlines | 822 | 827px \* |
 | Account | 907 | 827px \* |
 | **Map** | 2,222 | 1,389px |
 | **Programs** | 3,601 | 2,496px |
@@ -161,10 +159,9 @@ Each should answer "what will this look like once I have used it?", not only
   card: how many courses the list names, how many the student holds, which one
   the most programs want, and which ticked course nothing asks for. It states
   its own coverage, because most shortlists are mostly unresearched.
-- **Applications / Deadlines** are real tools with nothing in them. Offer to seed
-  from the kept list: "Add your 3 kept programs to the tracker". `src/lib/
-  tracker.ts` owns that state — **do not move it into the profile**, see
-  `HANDOFF-NEXT.md` §5 on the sync whitelist erasing it.
+- ~~**Applications / Deadlines**~~ — **REMOVED.** Both tools, and the
+  `acceptiversity.tracker.v1` key behind them, are gone. Nothing in the
+  dashboard stores application status or deadline dates any more.
 
 ---
 

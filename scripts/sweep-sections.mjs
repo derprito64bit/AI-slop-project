@@ -1,7 +1,9 @@
-// Checks the sections that were filled in on 2026-08-27: the applications
-// tracker, the deadlines recorder, and the methodology/reporting-bias content
-// that used to live at /about and /community and is now one dashboard tool at
-// /profile/database.
+// Checks the sections that were filled in on 2026-08-27: the
+// methodology/reporting-bias content that used to live at /about and
+// /community and is now one dashboard tool at /profile/database.
+//
+// The applications tracker and the deadlines recorder were checked here too.
+// Both features have been removed, and so have their checks.
 //
 //   npm run sweep:sections                                  against the live site
 //   SWEEP_BASE=http://localhost:4200/AI-slop-project npm run sweep:sections
@@ -109,69 +111,6 @@ for (const from of ['/about', '/community']) {
   await new Promise((r) => setTimeout(r, 1500))
   const tabs = await p.evaluate(() => [...document.querySelectorAll('[role="tab"]')].map((t) => t.innerText.trim()))
   check('program tabs no longer include Extras', !tabs.includes('Extras'), tabs.join(' | '))
-  await p.close()
-}
-
-// --- applications tracker
-{
-  const { p, errs } = await page()
-  await p.goto(`${BASE}/profile/applications`, { waitUntil: 'networkidle2' })
-  await new Promise((r) => setTimeout(r, 2000))
-  const before = await textOf(p)
-  check('applications is no longer a mock', !/Not live yet/.test(before), before.slice(0, 46).replace(/\n/g, ' '))
-
-  await p.evaluate(() => [...document.querySelectorAll('button')].find((b) => b.innerText.trim() === '+ Track')?.click())
-  await new Promise((r) => setTimeout(r, 700))
-  await p.evaluate(() => [...document.querySelectorAll('button')].find((b) => b.innerText.trim() === 'Applied')?.click())
-  await new Promise((r) => setTimeout(r, 700))
-  const stored = await p.evaluate(() => localStorage.getItem('acceptiversity.tracker.v1'))
-  check('tracking a program persists a status', /"status":"applied"/.test(stored ?? ''), (stored ?? '').slice(0, 60))
-
-  await p.reload({ waitUntil: 'networkidle2' })
-  await new Promise((r) => setTimeout(r, 2000))
-  check('status survives a reload', /1 applied/i.test(await textOf(p)))
-
-  // The whole reason for a separate key: a profile rewrite must not touch it.
-  await p.evaluate(() => localStorage.setItem('acceptiversity.profile.v2', JSON.stringify({
-    answers: null, shortlist: ['mcmaster::engineering-i-co-op'], courses: [], notes: {}, tags: {},
-    savedAt: new Date().toISOString(),
-  })))
-  await p.reload({ waitUntil: 'networkidle2' })
-  await new Promise((r) => setTimeout(r, 2000))
-  const after = await p.evaluate(() => localStorage.getItem('acceptiversity.tracker.v1'))
-  check('a profile rewrite leaves the tracker alone', /"status":"applied"/.test(after ?? ''))
-  check('applications: no errors', errs.length === 0, errs[0] ?? '')
-  await p.close()
-}
-
-// --- deadlines
-{
-  const { p, errs } = await page()
-  await p.goto(`${BASE}/profile/deadlines`, { waitUntil: 'networkidle2' })
-  await new Promise((r) => setTimeout(r, 2000))
-  const t = await textOf(p)
-  check('deadlines is no longer a mock', !/Not live yet/.test(t))
-  check('deadlines asserts no dates of its own', /We do not publish deadlines/i.test(t))
-  check('deadlines shows no invented example dates', !/Example . early autumn/i.test(t))
-
-  await p.evaluate(() => [...document.querySelectorAll('button')].find((b) => b.innerText.trim() === '+ Add a date')?.click())
-  await new Promise((r) => setTimeout(r, 600))
-  await p.evaluate(() => {
-    const set = (el, v) => {
-      Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, v)
-      el.dispatchEvent(new Event('input', { bubbles: true }))
-    }
-    const inputs = [...document.querySelectorAll('form input')]
-    set(inputs[0], 'Supplementary due')
-    set(inputs[1], '2026-02-01')
-    set(inputs[2], 'https://example.edu/admissions')
-  })
-  await new Promise((r) => setTimeout(r, 400))
-  await p.evaluate(() => [...document.querySelectorAll('button')].find((b) => b.innerText.trim() === 'Save')?.click())
-  await new Promise((r) => setTimeout(r, 900))
-  const saved = await textOf(p)
-  check('a recorded date appears in the timeline', /1 Feb 2026/.test(saved) && /Supplementary due/.test(saved))
-  check('deadlines: no errors', errs.length === 0, errs[0] ?? '')
   await p.close()
 }
 

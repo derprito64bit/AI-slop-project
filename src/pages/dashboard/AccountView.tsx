@@ -354,15 +354,10 @@ function DangerZone() {
 
   return (
     <Panel title="Delete my account" tone="danger">
-      {/* The tracker is named explicitly because it is the one thing here that
-          never leaves the device, so a student could reasonably assume deleting
-          a SERVER account leaves it alone. It does not — "Delete everything"
-          means everything, and it used to quietly survive. */}
       <p className="mt-2 text-sm leading-relaxed text-slate">
         Removes your account and everything saved under it — your answers, your shortlist, your
-        courses and your notes — from our server and from this device. Your application statuses and
-        the deadlines you recorded go too, even though those never left this device. This can’t be
-        undone and there is no backup to restore from.
+        courses and your notes — from our server and from this device. This can’t be undone and
+        there is no backup to restore from.
       </p>
 
       {!arming ? (

@@ -102,8 +102,8 @@ try {
   await page.goto(`${BASE}/profile`, { waitUntil: 'networkidle2' })
   await page.waitForFunction(() => document.querySelector('main')?.innerText.length > 100)
   await probe('overview -> programs', 'Programs', '#main div.flex-1')
-  await probe('programs -> deadlines', 'Deadlines', '#main div.flex-1')
-  await probe('deadlines -> dashboard', 'Dashboard', '#main div.flex-1')
+  await probe('programs -> fields', 'Fields', '#main div.flex-1')
+  await probe('fields -> dashboard', 'Dashboard', '#main div.flex-1')
 
   // ---- survey steps, which slide rather than fade
   await page.goto(`${BASE}/survey`, { waitUntil: 'networkidle2' })

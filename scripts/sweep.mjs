@@ -469,8 +469,6 @@ const VIEWS = [
   ['/compare', 'Compare', ''],
   ['/programs', 'Programs', 'programs match'],
   ['/fields', 'Fields', 'Engineering'],
-  ['/applications', 'Applications', 'stays on this device'],
-  ['/deadlines', 'Deadlines', 'We do not publish deadlines'],
   ['/database', 'The data', 'not an acceptance rate'],
   ['/account', '', 'account'],
 ]
@@ -870,13 +868,12 @@ async function sweepCross() {
     ['/profile/database', undefined],
     ['/profile', P3_SEED],
     ['/profile/list', P3_SEED],
-    // Four pages that had no Rule 1 coverage at all. The program page is the
+    // Three pages that had no Rule 1 coverage at all. The program page is the
     // one that matters most: it carries OutcomeCompare and DecisionMix, the
     // two densest numeric surfaces on the site.
     ['/program/mcmaster/engineering-i-co-op', undefined],
     ['/profile/compare', P3_SEED],
     ['/profile/fields', P3_SEED],
-    ['/profile/applications', P3_SEED],
   ]
   for (const [path, seed] of honestyPaths) {
     const { page: p } = await open(path, seed ? { seed } : {})
