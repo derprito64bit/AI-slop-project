@@ -57,15 +57,18 @@ target, and `origin/account` is an obsolete orphan whose content landed in #24.
 **Baseline, measured against a production build served at the deploy base:**
 
 ```
-npm run lint            0 errors
-npm test                361 pass          (357 before this pass; 305 before P3; 246 at the start)
-npm run sweep           165 of 165        (151 before this pass; 136 before P3)
-npm run sweep:sections  26 of 26
-npm run probe:motion    minVisible 0.55, 0 dark frames
+npm run lint            0 errors, 14 warnings
+npm test                344 pass          (361 before the tracker was removed)
+npm run sweep           160 of 160        (155 before the survey geometry checks)
+npm run sweep:sections  16 of 16          (26 before the tracker was removed)
+npm run probe:motion    minVisible 0.55, 0 dark frames, 0 gap frames
                         — five of six rows. The charts row reports minVisible 0
-                        and ~53 dark frames: the probe used to watch the wrong
+                        and ~54 dark frames: the probe used to watch the wrong
                         element and that `1` measured nothing. See CLAUDE.md.
 cd ../UniServer && npm test               133 pass
+
+Re-measured 2026-09-18. The test and sections drops are #49 removing the
+application and deadline tracker, not a regression.
 ```
 
 **Both sweeps default to the LIVE site.** Point them at a local build with
