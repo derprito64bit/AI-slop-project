@@ -259,10 +259,11 @@ Then the `vite-preview` entry in `.claude/launch.json` (port 4200, base
 npm run sweep && npm run sweep:sections && npm run probe:motion
 ```
 
-Baseline to hold: 0 lint errors, 361 tests, sweep 165/165, sections 26/26,
+Baseline to hold: 0 lint errors, 344 tests, sweep 160/160, sections 16/16,
 motion `minVisible 0.55` and `0 dark frames` on five of six rows. The charts
-row reports `minVisible 0` / ~53 dark frames — see `CLAUDE.md`, that is the
-first honest reading from that probe, not a regression.
+row reports `minVisible 0` / ~54 dark frames — see `CLAUDE.md`, that is the
+first honest reading from that probe, not a regression. The test and sections
+numbers fell when #49 removed the application and deadline tracker.
 Measured 2026-08-29. `CLAUDE.md` carries the same table; if the two disagree,
 re-measure rather than believing either.
 

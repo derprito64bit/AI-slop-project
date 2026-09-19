@@ -455,6 +455,77 @@ async function sweepSurvey() {
     JSON.stringify(state.profile?.answers))
   await p2.close()
 
+  // --- the question box does not move the page underneath the student ------
+  //
+  // At 390x844 the eight question panels run 106px to 524px. The box that
+  // holds them used to have a 240px floor and no ceiling, so three of the
+  // eight overflowed it: the card resized between questions, the document
+  // grew and shrank by 284px, and at the course question the Next button
+  // dropped 101px below the fold — after five questions of sitting still.
+  // The student's own measurements of that are in the comment on the box in
+  // Survey.tsx. None of it is visible to any other check here, because every
+  // other check reads text.
+  const { page: p4 } = await open('/survey', { width: 390, height: 844 })
+  const geometry = await p4.evaluate(async () => {
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms))
+    const nextBtn = () =>
+      [...document.querySelectorAll('button')].find((b) =>
+        /^(Next|Show my matches)$/.test(b.textContent.trim()),
+      )
+    const box = () => document.querySelector('form > div[class*="min-h-"]')
+    const rows = []
+    await sleep(400)
+    for (let i = 0; i < 8; i += 1) {
+      const b = nextBtn()
+      const bx = box()
+      if (!b || !bx) break
+      // Read where the button LANDED first. Measuring after the scroll below
+      // would be measuring the scroll, and the check would pass on anything.
+      const belowFold = Math.max(
+        0,
+        Math.round(b.getBoundingClientRect().bottom) - window.innerHeight,
+      )
+      // Then put it just above the fold, which is where a student on a phone
+      // taps it from, and read what moves when it is tapped.
+      const shove = b.getBoundingClientRect().bottom - (window.innerHeight - 24)
+      if (shove > 0) document.scrollingElement.scrollTop += shove
+      await sleep(150)
+      const yBefore = Math.round(window.scrollY)
+      rows.push({
+        boxH: Math.round(bx.getBoundingClientRect().height),
+        overflowY: getComputedStyle(bx).overflowY,
+        belowFold,
+        forcedScroll: Math.round(Math.max(0, shove)),
+      })
+      if (i === 7) break
+      nextBtn().click()
+      await sleep(520)
+      rows[rows.length - 1].pageMoved = Math.round(window.scrollY) - yBefore
+    }
+    return rows
+  })
+  const worstJump = Math.max(...geometry.map((g) => Math.abs(g.pageMoved ?? 0)))
+  const worstFold = Math.max(...geometry.map((g) => g.belowFold))
+  const forced = geometry.reduce((a, g) => a + g.forcedScroll, 0)
+  const boxes = [...new Set(geometry.map((g) => g.boxH))].sort((a, b) => a - b)
+  // A guard rather than a reproduction: the old box did not move the page at
+  // THIS viewport either. What did was `autoFocus` on the average input, which
+  // threw a scrolled phone 599px upward, and this is what would catch it, or
+  // anything else that scrolls on a question change, coming back.
+  check('survey', 'answering never scrolls the page on a phone', worstJump <= 2, `${worstJump}px`)
+  check('survey', 'Next never leaves the screen on a phone', worstFold === 0, `${worstFold}px below`)
+  check('survey', 'the student is never made to scroll to reach Next', forced === 0, `${forced}px`)
+  // The floor is 15rem and the ceiling is calc(100svh - 32rem) = 332px here.
+  // A box outside that means one of the two stopped applying.
+  check('survey', 'the question box stays between its floor and its ceiling',
+    boxes.length > 0 && boxes[0] >= 240 && boxes[boxes.length - 1] <= 332, boxes.join('/'))
+  // The four typeahead questions must NOT be scrollers: their option list is
+  // absolutely positioned and a scroll container would clip it.
+  const visible = geometry.filter((g) => g.overflowY === 'visible').length
+  check('survey', 'only the tall questions become scrollers', visible >= 4 && visible <= 6,
+    `${visible} of ${geometry.length} visible`)
+  await p4.close()
+
   check('survey', 'no console errors', errors.length === 0, errors.slice(0, 2).join(' | '))
   check('survey', 'no failed requests', bad.length === 0, bad.slice(0, 2).join(' | '))
 }

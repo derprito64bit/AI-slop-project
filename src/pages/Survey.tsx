@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent, ReactNode } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
@@ -225,6 +225,70 @@ export default function Survey() {
   const current: StepId = STEPS[step]
   const isLast = step === STEPS.length - 1
 
+  // -------------------------------------------------- sizing the question ---
+  // Whether this question overflows its box has to be measured, not assumed:
+  // the course grid is 348px at 1440 and 524px at 390, and the box's own
+  // ceiling is a function of the viewport. See the comment on the box below.
+  const boxRef = useRef<HTMLDivElement>(null)
+  const [scrolls, setScrolls] = useState(false)
+  const [more, setMore] = useState(false)
+
+  const measure = useCallback(() => {
+    const box = boxRef.current
+    const panel = box?.firstElementChild as HTMLElement | null
+    if (!box || !panel) return
+    // The PANEL's height, not the box's scrollHeight. An open option list is
+    // absolutely positioned, so it inflates scrollHeight without being
+    // laid-out content — measuring that way would turn the box into a scroller
+    // the moment a combobox opened, and then clip the list it opened.
+    const over = panel.offsetHeight > box.clientHeight + 2
+    setScrolls(over)
+    setMore(over && box.scrollTop + box.clientHeight < box.scrollHeight - 2)
+  }, [])
+
+  useEffect(() => {
+    measure()
+    window.addEventListener('resize', measure)
+    return () => window.removeEventListener('resize', measure)
+  }, [measure])
+
+  /**
+   * Runs when the question that just arrived attaches to the DOM.
+   *
+   * A callback ref rather than an effect because `AnimatePresence` is in
+   * `mode="wait"`: on Next the outgoing question plays its exit first, so an
+   * effect on `step` would fire while the OLD panel was still the one mounted.
+   * The ref fires when the new node actually attaches, which is the moment
+   * that matters. It is stable on purpose — the panel is keyed on `current`,
+   * so React remounts it per question and calls this once each time.
+   */
+  const first = useRef(true)
+  const onPanel = useCallback(
+    (node: HTMLDivElement | null) => {
+      if (!node) return
+      measure()
+
+      // Move focus to the question. Nothing did before, so a keyboard user
+      // pressing Next kept focus on the button and a screen reader was told
+      // nothing at all — eight questions went by in silence. preventScroll for
+      // the reason the old `autoFocus` was removed: focusing must never be
+      // allowed to move the page.
+      const typed = node.querySelector<HTMLInputElement>('input[type="number"]')
+      if (first.current) {
+        first.current = false
+        // On the first paint PageTransition has already put focus on <main>,
+        // and its effect runs after this ref attaches, so anything set here is
+        // overwritten. The one case worth winning that race is `?step=average`
+        // — a dashboard tool sent the student here to type one number, and it
+        // should be the thing under the cursor.
+        if (typed) requestAnimationFrame(() => typed.focus({ preventScroll: true }))
+        return
+      }
+      ;(typed ?? node).focus({ preventScroll: true })
+    },
+    [measure],
+  )
+
   const go = (delta: number) => {
     setDir(delta)
     setError(undefined)
@@ -324,19 +388,56 @@ export default function Survey() {
           <Progress step={step} total={STEPS.length} />
 
           <form onSubmit={onNext} noValidate>
-            {/* Fixed minimum height: without it the card resizes between a
-                one-box question and a nine-chip one, and the buttons underneath
-                jump out from under the cursor mid-answer. Sized to the tallest
-                question (the course grid) so nothing ever shrinks. */}
-            <div className="relative mt-6 min-h-[15rem]">
+            {/* A FLOOR AND A CEILING, because the questions are nowhere near
+                the same size and the page paid for the difference.
+
+                MEASURED at 390x844, the width most of them are read at: the
+                panels run 106px (a single combobox) to 524px (the nine
+                course chips), against a box whose floor was 240px and which
+                had no ceiling at all. Three of the eight overflowed it. So the
+                card resized between questions, the document grew and shrank by
+                284px, and a student who had scrolled at all got the page
+                yanked up to 284px when it shrank back — the browser clamping
+                scrollY to a document that had just got shorter. At the course
+                question the Next button they had been clicking in one spot for
+                five questions left the screen entirely, 101px below the fold.
+
+                The comment that used to sit here claimed the floor was "sized
+                to the tallest question ... so nothing ever shrinks". It was
+                not, and things shrank. Reserving the real tallest is not the
+                fix either: 524px of box would put the buttons permanently off
+                the bottom of a phone.
+
+                So the box is capped instead, at the space the card actually
+                has above the fold, and a question taller than that scrolls
+                itself. `svh` rather than `vh` or `dvh` on purpose — a mobile
+                URL bar hiding mid-scroll must not resize this box, or the
+                jumping comes straight back. */}
+            <div
+              ref={boxRef}
+              onScroll={measure}
+              className={`relative mt-6 min-h-[15rem] max-h-[calc(100svh_-_32rem)] ${
+                // Only a question that genuinely overflows makes this a
+                // scroller. The rest of the time it stays `overflow: visible`,
+                // because field / province / city / year hang an absolutely
+                // positioned option list below their input and a scroll
+                // container would clip it. Note both axes have to move
+                // together: `overflow-x: hidden` alone computes the visible
+                // y-axis to `auto`, which would clip that list anyway.
+                scrolls ? 'scroll-slim overflow-y-auto overflow-x-hidden' : ''
+              }`}
+            >
               <AnimatePresence mode="wait" custom={dir} initial={false}>
                 <motion.div
                   key={current}
+                  ref={onPanel}
+                  tabIndex={-1}
                   custom={dir}
                   variants={STEP_VARIANTS}
                   initial="initial"
                   animate="animate"
                   exit="exit"
+                  className="focus-visible:outline-none"
                 >
                   {current === 'field' && (
                     <Field
@@ -433,7 +534,12 @@ export default function Survey() {
                           name="average"
                           type="number"
                           inputMode="numeric"
-                          autoFocus
+                          // `autoFocus` used to sit here and it was the single
+                          // largest scroll jump on the page: arriving at this
+                          // question on a scrolled phone threw the page 599px
+                          // upward, because the browser scrolls a freshly
+                          // focused control into view. `onPanel` above focuses
+                          // it with preventScroll instead.
                           min={MIN_AVERAGE}
                           max={MAX_AVERAGE}
                           value={rawAverage}
@@ -531,6 +637,16 @@ export default function Survey() {
                 </motion.div>
               </AnimatePresence>
             </div>
+            {/* The one cue that the question continues below. Shown only while
+                there is something left to scroll to, so it disappears at the
+                bottom of the course list rather than implying a tenth
+                course. Pointer-events off: it sits over the chips. */}
+            <div
+              aria-hidden="true"
+              className={`pointer-events-none relative z-10 -mt-10 h-10 bg-gradient-to-b from-transparent to-paper transition-opacity duration-200 motion-reduce:transition-none ${
+                more ? 'opacity-100' : 'opacity-0'
+              }`}
+            />
 
             {/* ------------------------------------------------ controls --- */}
             <div className="mt-8 flex items-center gap-3 border-t border-line pt-5">

@@ -180,6 +180,18 @@
   @media (min-width: 2400px) {
     .container-page { max-width: 108rem; } /* 1728px */
   }
+
+  /* A scroll region inside a card, rather than the page's own.
+
+     The platform scrollbar is the wrong object here: on Windows it is a 17px
+     track with arrow buttons, and in a 332px box it lands on top of the
+     question text. `thin` plus the theme's own line colour makes it read as
+     part of the card. Both properties are Chrome 121+ / Firefox, and a browser
+     without them simply gets the platform bar — the region still scrolls. */
+  .scroll-slim {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-line) transparent;
+  }
 }
 
 /* ============================================================

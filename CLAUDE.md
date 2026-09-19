@@ -114,21 +114,23 @@ exactly like a broken build. Restart preview after every rebuild.
 npm run sweep && npm run sweep:sections && npm run probe:motion
 ```
 
-**Baseline as of 2026-09-14** — anything else failing is new. The lint and test
-rows were measured on this machine in the session that wrote them. The two
-sweep rows are **counted, not measured**: removing the Applications and
-Deadlines tools deleted 10 checks from each sweep, and neither sweep could be
-run here (both hard-code a Windows Chrome path and want a served build), so
-those two numbers are arithmetic off the 2026-08-29 measurement and want a real
-run to confirm.
+**Baseline as of 2026-09-18** — anything else failing is new. Every row here
+was measured on this machine against a production build served at the deploy
+base. That settles the previous entry, which had to *count* the two sweep rows
+rather than run them: removing the Applications and Deadlines tools deleted 10
+checks from each sweep, and the arithmetic (155 and 16) was right.
 
 | | |
 |---|---|
 | `npm run lint` | 0 errors, 14 warnings |
 | `npm test` | 344 pass |
-| `npm run sweep` | 155 of 155 *(counted)* |
-| `npm run sweep:sections` | 16 of 16 *(counted)* |
+| `npm run sweep` | 160 of 160 — 155 before the survey geometry checks |
+| `npm run sweep:sections` | 16 of 16 |
 | `npm run probe:motion` | `minVisible 0.55`, `0 dark frames`, `0 gap frames` on five of six rows |
+
+The sixth row is the charts one, at `minVisible 0` with ~54 dark frames. That
+is the honest reading, not a regression — the probe used to watch an element
+the tabs never re-key, and the `1` it reported measured nothing.
 
 The dashboard rows `programs -> deadlines` and `deadlines -> dashboard` in
 `probe:motion` are now `programs -> fields` and `fields -> dashboard`; the route
